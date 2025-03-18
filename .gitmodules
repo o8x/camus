@@ -1,0 +1,3 @@
+[submodule "third-party/maddy"]
+	path = third-party/maddy
+	url = https://github.com/progsource/maddy.git
