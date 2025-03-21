@@ -1,6 +1,5 @@
 /cmake-build-debug
 /cmake-build-release
-/third-party/*
 /posts
 /html
 /.idea
