@@ -5,13 +5,15 @@
 #include <fstream>
 #include <filesystem>
 #include <string>
+#include <unistd.h>
 #include <vector>
 #include "log.h"
 #include "utils.h"
 #include <maddy/parser.h>
+#include "config.h"
 
 namespace camus {
-    std::optional<article> parse_article_params(const std::string &path, const std::string &out_directory) {
+    std::optional<article> parse_article_params(const std::string& path) {
         std::ifstream file(path);
 
         if (!file.is_open()) {
@@ -41,7 +43,7 @@ namespace camus {
 
             // 当参数出现两次时，开始处理 markdown
             if (params_count < 2) {
-                auto set_string_parma = [&](const std::string &name, std::string &out) {
+                auto set_string_parma = [&](const std::string& name, std::string& out) {
                     if (line.find(name) != std::string::npos) {
                         const std::vector<std::string> res = util::split(line, name);
                         out = util::trim_space(res[1]);
@@ -71,11 +73,24 @@ namespace camus {
             name = article.uuid;
         }
 
-        article.out_filename = out_directory + "/" + name.string() + ".html";
+        article.out_filename = ini::all().out_directory + "/" + name.string() + ".html";
         return article;
     }
 
-    article get_article_template(const std::string &filename) {
+    article get_index_template_from_file(const std::string& filename) {
+        article home_template = get_page_template_from_file(filename);
+        home_template.ready = true;
+        home_template.uuid = util::uuid_v4();
+        home_template.date = util::get_now_time("%Y-%m-%d");
+        home_template.filename = filename;
+        home_template.short_path = "index";
+        home_template.display_name = "Home Page";
+        home_template.out_filename = ini::all().out_directory + "/index.html";
+
+        return home_template;
+    }
+
+    article get_page_template_from_file(const std::string& filename) {
         std::ifstream file(filename);
 
         if (!file.is_open()) {
@@ -101,7 +116,7 @@ namespace camus {
      * 页面标题 {{page-title}}
      * 页面内容 {{page-content}}
      */
-    void generate_article_page(const article &tpl, const article &article) {
+    void generate_article_page(const article& tpl, const article& article) {
         std::stringstream input;
         input << util::join(article.content, "\n");
 
@@ -114,48 +129,39 @@ namespace camus {
         log::info(htmlOutput);
     }
 
-    void generate_index_page(const article &index) {
+    void generate_index_page(const article& index) {
         log::info("generate index page ...");
 
-        std::filesystem::copy_file(index.filename, index.out_filename);
+        std::string content = util::join(index.content, "\n");
+
+        ini::fill(content);
+        util::write_file(index.out_filename, content);
     }
 
-    void generate_by_directory(const std::string &read_directory, const std::string &out_directory) {
-        article index_page;
-        article page_template;
+    void generate_by_directory() {
+        const std::string& read_directory = ini::all().posts_directory;
+        const article page_template = get_page_template_from_file(ini::all().page_template_file);
+        const article home_template = get_index_template_from_file(ini::all().home_template_file);
+
         std::vector<article> pages;
-        for (const auto &entry: std::filesystem::directory_iterator(read_directory)) {
+        for (const auto& entry : std::filesystem::directory_iterator(read_directory)) {
             if (!entry.is_regular_file()) {
                 throw std::runtime_error("File is not a regular file " + entry.path().string());
             }
 
-            if (entry.path().filename() == "article_template.html") {
-                page_template = get_article_template(entry.path().string());
+            if (entry.path().filename().string().find(".html") != std::string::npos) {
                 continue;
             }
 
-            if (entry.path().filename() == "index_template.html") {
-                index_page = article{
-                    .ready = true,
-                    .uuid = util::uuid_v4(),
-                    .date = "",
-                    .filename = entry.path().string(),
-                    .short_path = "index",
-                    .display_name = "主页",
-                    .out_filename = out_directory + "/index.html",
-                };
-                continue;
-            }
-
-            std::optional<article> article = parse_article_params(entry.path().string(), out_directory);
+            std::optional<article> article = parse_article_params(entry.path().string());
             pages.push_back(article.value());
         }
 
         // 生成 index
-        generate_index_page(index_page);
+        generate_index_page(home_template);
 
         // 生成文章
-        for (const article &page: pages) {
+        for (const article& page : pages) {
             if (!page.ready) {
                 log::info("ignore article: " + page.display_name);
                 continue;

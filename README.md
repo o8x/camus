@@ -5,8 +5,16 @@ Camus
 
 ## 用法
 
+直接读取当前目录
+
 ```shell
-camus [./posts]
+camus
+```
+
+设置工作目录
+
+```shell
+camus [./blog]
 ```
 
 ## 参数
@@ -22,9 +30,40 @@ ready: true
 ---
 ```
 
+### 配置文件
+
+目录结构
+
+```shell
+├── blog
+│     ├── camus.ini
+│     ├── html
+│     │     └── index.html
+│     ├── posts
+│     │     └── first page.md
+│     └── template
+│         ├── home_template.html
+│         └── page_template.html
+```
+
+程序启动将会自动加载 ${work_dir}/camus.ini
+
+```ini
+[camus]
+posts_directory=posts
+out_directory=html
+main_title=main title
+main_subtitle=main subtitle
+main_description=main description
+
+[template]
+home_template_file=template/home_template.html
+page_template_file=template/page_template.html
+```
+
 ## 模板
 
-首页 (index_template.html)
+首页 (template/home_template.html)
 
 ```html 
 <!DOCTYPE html>
@@ -52,7 +91,7 @@ ready: true
 </html>
 ```
 
-内页 (article_template.html)
+内页 (template/page_template.html)
 
 ```html
 <!DOCTYPE html>

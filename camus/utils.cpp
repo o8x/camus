@@ -2,11 +2,13 @@
 
 #include <fstream>
 #include <iomanip>
+#include <random>
 #include <sstream>
 #include <vector>
+#include <__random/random_device.h>
 
 namespace camus::util {
-    std::string get_now_time(const std::string &format) {
+    std::string get_now_time(const std::string& format) {
         const std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
         const std::time_t now_c = std::chrono::system_clock::to_time_t(now);
         const std::tm now_tm = *std::localtime(&now_c);
@@ -16,7 +18,7 @@ namespace camus::util {
         return ss.str();
     }
 
-    std::vector<std::string> split(const std::string &str, const std::string &delimiter) {
+    std::vector<std::string> split(const std::string& str, const std::string& delimiter) {
         std::vector<std::string> tokens;
         size_t start = 0;
         size_t end = str.find(delimiter);
@@ -33,7 +35,7 @@ namespace camus::util {
         return tokens;
     }
 
-    std::vector<std::string> split(const std::string &str, const char delimiter) {
+    std::vector<std::string> split(const std::string& str, const char delimiter) {
         std::vector<std::string> tokens;
         std::string token;
         std::istringstream tokenStream(str);
@@ -83,7 +85,7 @@ namespace camus::util {
         return ss.str();
     }
 
-    std::string trim_space(const std::string &str) {
+    std::string trim_space(const std::string& str) {
         const size_t first = str.find_first_not_of(" \n\r\t\f\v");
         if (first == std::string::npos) {
             return ""; // 如果全是空白字符，则返回空字符串
@@ -93,7 +95,7 @@ namespace camus::util {
         return str.substr(first, (last - first + 1));
     }
 
-    bool write_file(const std::string &filename, const std::string &content) {
+    bool write_file(const std::string& filename, const std::string& content) {
         std::ofstream outfile(filename);
 
         if (!outfile.is_open()) {
@@ -106,7 +108,7 @@ namespace camus::util {
         return true;
     }
 
-    void replace_all(std::string &str, const std::string &from, const std::string &to) {
+    void replace_all(std::string& str, const std::string& from, const std::string& to) {
         size_t start_pos = 0;
         while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
             str.replace(start_pos, from.length(), to);
@@ -114,7 +116,7 @@ namespace camus::util {
         }
     }
 
-    std::string join(const std::vector<std::string> &vec, const std::string &delimiter) {
+    std::string join(const std::vector<std::string>& vec, const std::string& delimiter) {
         std::string result;
 
         for (size_t i = 0; i < vec.size(); ++i) {
@@ -126,5 +128,12 @@ namespace camus::util {
         }
 
         return result;
+    }
+
+    std::string get_cwd() {
+        char buffer[1024];
+        getcwd(buffer, sizeof(buffer));
+
+        return std::string{buffer, sizeof(buffer)};
     }
 }
