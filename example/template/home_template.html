@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="{{main-subtitle}}">
+    <title>{{main-title}} - {{main-subtitle}}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.9.0/css/foundation.min.css">
+</head>
+
+<style>
+    body {
+        font-family: 'Open Sans', sans-serif;
+        line-height: 1.75;
+        color: #333;
+        margin: 0;
+        padding: 2rem 0 4rem;
+        overflow: scroll;
+    }
+
+    .main-container {
+        background: white;
+        padding: 3rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        border-radius: 8px;
+    }
+
+    /* 标题区域 */
+    .main-title {
+        font-family: 'Lora', serif;
+        color: #2c3e50;
+        border-bottom: 2px solid #e74c3c;
+        padding-bottom: 0.5rem;
+        margin-bottom: 2rem;
+        font-size: 2.5rem;
+    }
+
+    .main-description {
+        color: #7f8c8d;
+        margin-bottom: 2rem;
+        font-style: italic;
+        line-height: 1.5;
+        text-indent: 2rem;
+    }
+
+    .posts-items ul {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+    }
+
+    .posts-items li {
+        padding: 1rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .posts-items li:last-child {
+        border-bottom: none;
+    }
+
+    .posts-items a {
+        color: #e74c3c;
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+
+    .posts-items a:hover {
+        color: #c0392b;
+        text-decoration: underline;
+    }
+
+    .posts-items span {
+        color: #7f8c8d;
+        margin-left: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 800px) {
+        .main-container {
+            padding: 2rem 1rem;
+        }
+
+        .main-title {
+            font-size: 2rem;
+        }
+    }
+</style>
+
+<script>
+    const ul = document.createElement("ul")
+    const posts = JSON.parse(`{{posts-item-json}}`)
+
+    posts.forEach(post => {
+        const li = document.createElement("li")
+        const a = document.createElement("a")
+        const dateSpan = document.createElement("span")
+
+        a.href = post.link
+        a.textContent = post.name
+        dateSpan.textContent = post.date
+
+        li.appendChild(a)
+        li.appendChild(dateSpan)
+        ul.appendChild(li)
+    })
+
+    window.onload = function () {
+        document.querySelector(".posts-items").appendChild(ul)
+    }
+</script>
+
+<body>
+<div class="main-container">
+    <h1 class="main-title">{{main-title}}</h1>
+    <p class="main-description">{{main-description}}</p>
+
+    <h4>Posts:</h4>
+    <div class="posts-items"></div>
+</div>
+</body>
+
+</html>
