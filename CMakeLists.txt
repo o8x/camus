@@ -15,9 +15,9 @@ file(GLOB SOURCE_FILES
 add_library(camus STATIC ${SOURCE_FILES})
 target_include_directories(camus PUBLIC camus)
 target_include_directories(camus PUBLIC src third-party/cmdline)
-target_link_libraries(camus PUBLIC maddy)
+target_link_libraries(camus PUBLIC cmark)
 
-add_subdirectory(third-party/maddy)
+add_subdirectory(third-party/cmark)
 
 add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE camus)
