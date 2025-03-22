@@ -12,7 +12,7 @@ namespace camus {
     struct article {
         bool ready;
         std::string uuid;
-        std::string date;
+        time_t create_time;
         std::string filename;
         std::string full_filename;
         std::string out_filename;
@@ -31,7 +31,7 @@ namespace camus {
             ss << "{" << std::endl
                 << "  ready: " << (ready ? "true" : "false") << "," << std::endl
                 << "  uuid: " << uuid << "," << std::endl
-                << "  date: " << date << "," << std::endl
+                << "  date: " << util::format_time_t(create_time) << "," << std::endl
                 << "  filename: " << filename << "," << std::endl
                 << "  full_filename: " << full_filename << "," << std::endl
                 << "  short_path: " << short_path << "," << std::endl
@@ -41,6 +41,10 @@ namespace camus {
                 << "}";
 
             return ss.str();
+        }
+
+        bool operator<(const article& other) const {
+            return create_time > other.create_time;
         }
     };
 

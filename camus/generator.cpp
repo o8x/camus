@@ -22,7 +22,7 @@ namespace camus {
         article article{
             .ready = true, // 默认已经就绪
             .uuid = util::uuid_v4(),
-            .date = util::get_now_time("%Y-%m-%d %H:%M:%S"),
+            .create_time = time(nullptr),
             .filename = path.filename().string(),
             .full_filename = path.string(),
         };
@@ -45,16 +45,21 @@ namespace camus {
             // 当参数出现两次时，开始处理 markdown
             if (params_count < 2) {
                 auto set_string_parma = [&](const std::string& name, std::string& out) {
-                    if (line.find(name) != std::string::npos) {
+                    if (out.empty() && line.find(name) != std::string::npos) {
                         const std::vector<std::string> res = util::split(line, name);
                         out = util::trim_space(res[1]);
                     }
                 };
 
+                std::string datetime;
                 // 解析参数
-                set_string_parma("date: ", article.date);
-                set_string_parma("short_path: ", article.short_path);
+                set_string_parma("date: ", datetime);
+                set_string_parma("short-path: ", article.short_path);
                 set_string_parma("display-name: ", article.display_name);
+
+                if (!datetime.empty()) {
+                    article.create_time = util::datetime_to_unix(util::trim_space(datetime));
+                }
 
                 if (line.find("ready: ") != std::string::npos) {
                     std::vector<std::string> res = util::split(line, "ready: ");
@@ -92,7 +97,7 @@ namespace camus {
         article home_template = get_page_template_from_file(filename);
         home_template.ready = true;
         home_template.uuid = util::uuid_v4();
-        home_template.date = util::get_now_time("%Y-%m-%d");
+        home_template.create_time = time(nullptr);
         home_template.filename = filename;
         home_template.short_path = "index";
         home_template.display_name = "Home Page";
@@ -109,7 +114,6 @@ namespace camus {
         }
 
         article data{
-            .date = "",
             .filename = filename,
         };
 
@@ -135,12 +139,16 @@ namespace camus {
 
         // 替换参数
         std::string t = tpl.join_content();
+        std::string html_str{html, strlen(html)};
+        util::replace_all(html_str, "<hr />", ""); // 去掉自动生成的 hr 标记
+        std::string date_str = util::format_time_t(article.create_time);
+        util::replace_all(date_str, " 00:00:00", ""); // 去掉无用的时间部分
 
         ini::fill(t);
         util::replace_all(t, "{{page-title}}", article.display_name);
-        util::replace_all(t, "{{page-date}}", article.date);
+        util::replace_all(t, "{{page-date}}", date_str);
         util::replace_all(t, "{{page-description}}", "");
-        util::replace_all(t, "{{page-content}}", html);
+        util::replace_all(t, "{{page-content}}", html_str);
 
         // 写入文件
         std::ofstream writer(article.out_filename, std::ios::out);
@@ -180,7 +188,7 @@ namespace camus {
 
             items.push_back(std::format(
                 R"({{"name":"{}", "date":"{}", "link":"{}"}})",
-                it.display_name, it.date, it.url
+                it.display_name, util::format_time_t(it.create_time, "%Y-%m-%d"), it.url
             ));
         }
 
@@ -217,6 +225,9 @@ namespace camus {
             article.value().filename = filename;
             pages.push_back(article.value());
         }
+
+        // 按日期排序
+        std::sort(pages.begin(), pages.end());
 
         // 生成 index
         generate_index_page(home_template, pages);
