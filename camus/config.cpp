@@ -64,6 +64,10 @@ namespace camus {
             config_.out_directory = result["camus::out_directory"];
         }
 
+        if (!result["camus::markdown_engine"].empty()) {
+            config_.markdown_engine = result["camus::markdown_engine"];
+        }
+
         if (!result["camus::filename_type"].empty()) {
             config_.filename_type = result["camus::filename_type"];
         }

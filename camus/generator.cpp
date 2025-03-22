@@ -1,6 +1,5 @@
 #include "generator.h"
 
-#include <cmark.h>
 #include <fstream>
 #include <filesystem>
 #include <string>
@@ -133,12 +132,12 @@ namespace camus {
     bool generate_article_page(const article& tpl, const article& article) {
         log::info(std::format("generating article page: {}", article.out_filename));
 
-        const std::string markdown = util::join(article.content, "\n");
-        char* html = cmark_markdown_to_html(markdown.c_str(), markdown.length(), CMARK_OPT_DEFAULT);
+        std::string markdown = util::join(article.content, "\n");
+        char* to_html = util::markdown_to_html(markdown.data(), ini::all().markdown_engine == "cmark");
 
         // 替换参数
         std::string t = tpl.join_content();
-        std::string html_str{html, strlen(html)};
+        std::string html_str{to_html, strlen(to_html)};
         util::replace_all(html_str, "<hr />", ""); // 去掉自动生成的 hr 标记
         std::string date_str = util::format_time_t(article.create_time);
         util::replace_all(date_str, " 00:00:00", ""); // 去掉无用的时间部分
@@ -158,7 +157,7 @@ namespace camus {
         writer << t;
         writer.close();
 
-        free(html);
+        free(to_html);
 
         return true;
     }
