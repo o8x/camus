@@ -1,5 +1,7 @@
 #pragma once
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -22,4 +24,6 @@ namespace camus::util {
     std::string join(const std::vector<std::string>& vec, const std::string& delimiter);
 
     std::string get_cwd();
+
+    std::string url_encode(const std::string& value);
 }

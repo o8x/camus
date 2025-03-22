@@ -64,16 +64,20 @@ namespace camus {
             config_.out_directory = result["camus::out_directory"];
         }
 
-        if (!result["camus::main_title"].empty()) {
-            config_.main_title = result["camus::main_title"];
+        if (!result["camus::filename_type"].empty()) {
+            config_.filename_type = result["camus::filename_type"];
         }
 
-        if (!result["camus::main_description"].empty()) {
-            config_.main_description = result["camus::main_description"];
+        if (!result["template::main_title"].empty()) {
+            config_.main_title = result["template::main_title"];
         }
 
-        if (!result["camus::main_subtitle"].empty()) {
-            config_.main_subtitle = result["camus::main_subtitle"];
+        if (!result["template::main_description"].empty()) {
+            config_.main_description = result["template::main_description"];
+        }
+
+        if (!result["template::main_subtitle"].empty()) {
+            config_.main_subtitle = result["template::main_subtitle"];
         }
 
         if (!result["template::home_template_file"].empty()) {

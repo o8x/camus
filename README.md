@@ -19,11 +19,11 @@ camus [./blog]
 
 ## 参数
 
-位于 markdown 头部
+位于 markdown 文件头部
 
 ```yaml
 ---
-short_path: 短链接名
+short-path: 短链接名
 display-name: 标题
 date: 日期
 ready: true
@@ -59,64 +59,4 @@ main_description=main description
 [template]
 home_template_file=template/home_template.html
 page_template_file=template/page_template.html
-```
-
-## 模板
-
-首页 (template/home_template.html)
-
-```html 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8"/>
-    <meta name="description" content="{{main-description}}">
-    <title>{{main-title}} - {{main-description}}</title>
-</head>
-
-{{main-script}}
-{{main-style}}
-
-<body>
-<div class="main-container">
-    <h1 class="main-title">{{main-title}}</h1>
-    <p class="main-description">{{main-description}}</p>
-
-    <h4>Posts:</h4>
-    <div class="posts">{{posts}}</div>
-</div>
-</body>
-
-</html>
-```
-
-内页 (template/page_template.html)
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8"/>
-    <meta name="description" content="{{page-description}}">
-    <title>{{main-title}} - {{page-title}}</title>
-</head>
-
-<body>
-<div class="page-container">
-    <h1 class="page-title">
-        {{page-title}}
-    </h1>
-    <p class="page-description">
-        {{page-description}}
-    </p>
-
-    <div class="post">
-        {{page-content}}
-    </div>
-</div>
-</body>
-
-</html>
 ```

@@ -1,29 +1,30 @@
 #include "generator.h"
 
-#include <sstream>
-#include <iostream>
+#include <cmark.h>
 #include <fstream>
 #include <filesystem>
 #include <string>
 #include <unistd.h>
 #include <vector>
+
 #include "log.h"
 #include "utils.h"
-#include <maddy/parser.h>
 #include "config.h"
 
 namespace camus {
-    std::optional<article> parse_article_params(const std::string& path) {
+    std::optional<article> parse_article_params(const std::filesystem::path& path) {
         std::ifstream file(path);
 
         if (!file.is_open()) {
-            throw std::runtime_error("Could not open file " + path);
+            return std::nullopt;
         }
 
         article article{
+            .ready = true, // 默认已经就绪
             .uuid = util::uuid_v4(),
             .date = util::get_now_time("%Y-%m-%d %H:%M:%S"),
-            .filename = path
+            .filename = path.filename().string(),
+            .full_filename = path.string(),
         };
 
         /**
@@ -68,12 +69,22 @@ namespace camus {
 
         file.close();
 
-        std::filesystem::path name = article.short_path;
+        std::string name = article.short_path;
         if (name.empty()) {
-            name = article.uuid;
+            if (ini::all().filename_type == "original_filename") {
+                name = article.filename;
+                util::replace_all(name, ".md", "");
+
+                article.url = util::url_encode(name) + ".html";
+            } else {
+                name = article.uuid;
+                article.url = name + ".html";
+            }
+        } else {
+            article.url = name + ".html";
         }
 
-        article.out_filename = ini::all().out_directory + "/" + name.string() + ".html";
+        article.out_filename = ini::all().out_directory + "/" + name + ".html";
         return article;
     }
 
@@ -116,23 +127,65 @@ namespace camus {
      * 页面标题 {{page-title}}
      * 页面内容 {{page-content}}
      */
-    void generate_article_page(const article& tpl, const article& article) {
-        std::stringstream input;
-        input << util::join(article.content, "\n");
+    bool generate_article_page(const article& tpl, const article& article) {
+        log::info(std::format("generating article page: {}", article.out_filename));
 
-        std::shared_ptr<maddy::ParserConfig> config = std::make_shared<maddy::ParserConfig>();
-        config->enabledParsers |= maddy::types::ALL;
+        const std::string markdown = util::join(article.content, "\n");
+        char* html = cmark_markdown_to_html(markdown.c_str(), markdown.length(), CMARK_OPT_DEFAULT);
 
-        std::shared_ptr<maddy::Parser> parser = std::make_shared<maddy::Parser>(config);
-        std::string htmlOutput = parser->Parse(input);
+        // 替换参数
+        std::string t = tpl.join_content();
 
-        log::info(htmlOutput);
+        ini::fill(t);
+        util::replace_all(t, "{{page-title}}", article.display_name);
+        util::replace_all(t, "{{page-date}}", article.date);
+        util::replace_all(t, "{{page-description}}", "");
+        util::replace_all(t, "{{page-content}}", html);
+
+        // 写入文件
+        std::ofstream writer(article.out_filename, std::ios::out);
+        if (!writer.is_open()) {
+            return false;
+        }
+
+        writer << t;
+        writer.close();
+
+        free(html);
+
+        return true;
     }
 
-    void generate_index_page(const article& index) {
-        log::info("generate index page ...");
+    void generate_index_page(const article& index, std::vector<article> pages) {
+        log::info("generating index page ...");
 
-        std::string content = util::join(index.content, "\n");
+        std::string content = index.join_content();
+
+        // 生成目录
+        // name date link
+        struct directory_item {
+            std::string name;
+            std::string date;
+            std::string link;
+        };
+
+
+        std::vector<std::string> items;
+        for (article& it : pages) {
+            if (!it.ready) {
+                continue;
+            }
+
+            util::replace_all(it.display_name, "\"", "'");
+
+            items.push_back(std::format(
+                R"({{"name":"{}", "date":"{}", "link":"{}"}})",
+                it.display_name, it.date, it.url
+            ));
+        }
+
+        const std::string items_string = util::join(items, ",\n");
+        util::replace_all(content, "{{posts-item-json}}", "[" + items_string + "]");
 
         ini::fill(content);
         util::write_file(index.out_filename, content);
@@ -145,20 +198,28 @@ namespace camus {
 
         std::vector<article> pages;
         for (const auto& entry : std::filesystem::directory_iterator(read_directory)) {
+            const std::string full_filename = entry.path().string();
+            const std::string filename = entry.path().filename().string();
             if (!entry.is_regular_file()) {
-                throw std::runtime_error("File is not a regular file " + entry.path().string());
+                throw std::runtime_error("File is not a regular file " + full_filename);
             }
 
             if (entry.path().filename().string().find(".html") != std::string::npos) {
                 continue;
             }
 
-            std::optional<article> article = parse_article_params(entry.path().string());
+            std::optional<article> article = parse_article_params(full_filename);
+            if (!article.has_value()) {
+                log::info("parse params failed, ignore: " + full_filename);
+                continue;
+            }
+
+            article.value().filename = filename;
             pages.push_back(article.value());
         }
 
         // 生成 index
-        generate_index_page(home_template);
+        generate_index_page(home_template, pages);
 
         // 生成文章
         for (const article& page : pages) {
@@ -167,7 +228,6 @@ namespace camus {
                 continue;
             }
 
-            log::info("generate article page '" + page.out_filename + "': " + page.display_name);
             generate_article_page(page_template, page);
         }
     }
