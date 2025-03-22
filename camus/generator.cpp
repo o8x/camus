@@ -1,6 +1,5 @@
 #include "generator.h"
 
-#include <cmark.h>
 #include <fstream>
 #include <filesystem>
 #include <string>
@@ -43,7 +42,7 @@ namespace camus {
             }
 
             // 当参数出现两次时，开始处理 markdown
-            if (params_count < 2) {
+            if (params_count < 2 || line == "---") {
                 auto set_string_parma = [&](const std::string& name, std::string& out) {
                     if (out.empty() && line.find(name) != std::string::npos) {
                         const std::vector<std::string> res = util::split(line, name);
@@ -134,21 +133,23 @@ namespace camus {
     bool generate_article_page(const article& tpl, const article& article) {
         log::info(std::format("generating article page: {}", article.out_filename));
 
-        const std::string markdown = util::join(article.content, "\n");
-        char* html = cmark_markdown_to_html(markdown.c_str(), markdown.length(), CMARK_OPT_DEFAULT);
+        std::string markdown = util::join(article.content, "\n");
+        auto [length , to_html] = util::markdown_to_html(markdown.data(), ini::all().markdown_engine == "cmark");
+
+        std::string t = tpl.join_content();
+        std::string date_str = util::format_time_t(article.create_time);
+        std::string html_content(to_html, length); // 固定长度，避免读到脏内存
+
+        free(to_html);
 
         // 替换参数
-        std::string t = tpl.join_content();
-        std::string html_str{html, strlen(html)};
-        util::replace_all(html_str, "<hr />", ""); // 去掉自动生成的 hr 标记
-        std::string date_str = util::format_time_t(article.create_time);
-        util::replace_all(date_str, " 00:00:00", ""); // 去掉无用的时间部分
-
         ini::fill(t);
+        util::replace_all(date_str, " 00:00:00", ""); // 去掉无用的时间部分
+        util::replace_all(html_content, "<hr />", ""); // 去掉自动生成的 hr 标记
         util::replace_all(t, "{{page-title}}", article.display_name);
         util::replace_all(t, "{{page-date}}", date_str);
         util::replace_all(t, "{{page-description}}", "");
-        util::replace_all(t, "{{page-content}}", html_str);
+        util::replace_all(t, "{{page-content}}", html_content);
 
         // 写入文件
         std::ofstream writer(article.out_filename, std::ios::out);
@@ -157,9 +158,8 @@ namespace camus {
         }
 
         writer << t;
+        writer.flush();
         writer.close();
-
-        free(html);
 
         return true;
     }
@@ -233,7 +233,7 @@ namespace camus {
         generate_index_page(home_template, pages);
 
         // 生成文章
-        for (const article& page : pages) {
+        for (const article page : pages) {
             if (!page.ready) {
                 log::info("ignore article: " + page.display_name);
                 continue;

@@ -1,7 +1,8 @@
 #pragma once
+
+#include <cmark.h>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -30,4 +31,6 @@ namespace camus::util {
     time_t datetime_to_unix(const std::string& datetime);
 
     std::string format_time_t(const time_t timestamp, const std::string& format = "%Y-%m-%d %H:%M:%S");
+
+    std::pair<uint32_t, char*> markdown_to_html(char* html, const bool cmark = false);
 }

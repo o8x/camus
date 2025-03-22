@@ -5,6 +5,7 @@
 #include <random>
 #include <sstream>
 #include <vector>
+#include "libgomarkdown.h"
 #include <__random/random_device.h>
 
 namespace camus::util {
@@ -170,5 +171,15 @@ namespace camus::util {
         std::ostringstream oss;
         oss << std::put_time(tm, format.c_str());
         return oss.str();
+    }
+
+    std::pair<uint32_t, char*> markdown_to_html(char* html, const bool cmark) {
+        if (cmark) {
+            char* to_html = cmark_markdown_to_html(html, strlen(html), CMARK_OPT_DEFAULT);
+            return std::make_pair(strlen(to_html), to_html);
+        }
+
+        auto [r0, r1] = MarkdownToHTML(html);
+        return std::make_pair(r0, r1);
     }
 }
