@@ -155,4 +155,20 @@ namespace camus::util {
 
         return escaped.str();
     }
+
+    time_t datetime_to_unix(const std::string& datetime) {
+        std::tm tm = {};
+        std::istringstream ss(datetime);
+        ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+
+        return timegm(&tm);
+    }
+
+    std::string format_time_t(const time_t timestamp, const std::string& format) {
+        const std::tm* tm = std::gmtime(&timestamp);
+
+        std::ostringstream oss;
+        oss << std::put_time(tm, format.c_str());
+        return oss.str();
+    }
 }

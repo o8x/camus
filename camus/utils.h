@@ -26,4 +26,8 @@ namespace camus::util {
     std::string get_cwd();
 
     std::string url_encode(const std::string& value);
+
+    time_t datetime_to_unix(const std::string& datetime);
+
+    std::string format_time_t(const time_t timestamp, const std::string& format = "%Y-%m-%d %H:%M:%S");
 }
