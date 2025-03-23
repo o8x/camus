@@ -60,3 +60,15 @@ main_description=main description
 home_template_file=template/home_template.html
 page_template_file=template/page_template.html
 ```
+
+## 隐藏内容
+
+支持使用 `--hidden-section-start|end` 标记隐藏多行内容
+
+```
+...
+--hidden-section-start
+这里的内容将不会被渲染
+--hidden-section-end
+...
+```

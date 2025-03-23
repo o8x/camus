@@ -24,6 +24,7 @@ namespace camus {
             .create_time = time(nullptr),
             .filename = path.filename().string(),
             .full_filename = path.string(),
+            .hidden_lines = 0,
         };
 
         /**
@@ -36,6 +37,7 @@ namespace camus {
          */
         std::string line;
         uint32_t params_count = 0;
+        bool hidden_flag = false;
         while (getline(file, line)) {
             if (line == "---") {
                 params_count++;
@@ -65,6 +67,20 @@ namespace camus {
                     article.ready = res[1].find("true") != std::string::npos;
                 }
 
+                continue;
+            }
+
+            if (hidden_flag) {
+                article.hidden_lines++;
+            }
+
+            if (util::trim_space(line) == "--hidden-section-start") {
+                hidden_flag = true;
+                continue;
+            }
+
+            if (util::trim_space(line) == "--hidden-section-end") {
+                hidden_flag = false;
                 continue;
             }
 
@@ -131,7 +147,14 @@ namespace camus {
      * 页面内容 {{page-content}}
      */
     bool generate_article_page(const article& tpl, const article& article) {
-        log::info(std::format("generating article page: {}", article.out_filename));
+        std::string hidden_flag;
+        if (article.hidden_lines > 0) {
+            hidden_flag = std::format(", hidden: {} line", article.hidden_lines);
+        }
+
+        log::info(std::format(
+            "generating: {}", article.out_filename, hidden_flag
+        ));
 
         std::string markdown = util::join(article.content, "\n");
         auto [length , to_html] = util::markdown_to_html(markdown.data(), ini::all().markdown_engine == "cmark");
@@ -165,7 +188,7 @@ namespace camus {
     }
 
     void generate_index_page(const article& index, std::vector<article> pages) {
-        log::info("generating index page ...");
+        log::info(std::format("generating: {}", index.out_filename));
 
         std::string content = index.join_content();
 
@@ -176,7 +199,6 @@ namespace camus {
             std::string date;
             std::string link;
         };
-
 
         std::vector<std::string> items;
         for (article& it : pages) {

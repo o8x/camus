@@ -15,6 +15,7 @@ namespace camus {
         time_t create_time;
         std::string filename;
         std::string full_filename;
+        uint32_t hidden_lines;
         std::string out_filename;
         std::string short_path;
         std::string url;
@@ -34,6 +35,7 @@ namespace camus {
                 << "  date: " << util::format_time_t(create_time) << "," << std::endl
                 << "  filename: " << filename << "," << std::endl
                 << "  full_filename: " << full_filename << "," << std::endl
+                << "  hidden_lines: " << hidden_lines << "," << std::endl
                 << "  short_path: " << short_path << "," << std::endl
                 << "  url: " << url << "," << std::endl
                 << "  display_name: " << display_name << "," << std::endl
