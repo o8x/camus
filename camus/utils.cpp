@@ -117,6 +117,17 @@ namespace camus::util {
         }
     }
 
+    std::string replace(const std::string& str, const std::string& from, const std::string& to) {
+        std::string data = str;
+        size_t start_pos = 0;
+        while ((start_pos = data.find(from, start_pos)) != std::string::npos) {
+            data.replace(start_pos, from.length(), to);
+            start_pos += to.length();
+        }
+
+        return data;
+    }
+
     std::string join(const std::vector<std::string>& vec, const std::string& delimiter) {
         std::string result;
 

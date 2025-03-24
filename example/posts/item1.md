@@ -2,7 +2,7 @@
 short-path: item1
 display-name: 第一个示例
 date: 2025-03-16
-ready: true
+visibility: open
 ---
 
 # 一级标题

@@ -21,6 +21,7 @@ namespace camus::util {
     bool write_file(const std::string& filename, const std::string& content);
 
     void replace_all(std::string& str, const std::string& from, const std::string& to);
+    std::string replace(const std::string& str, const std::string& from, const std::string& to);
 
     std::string join(const std::vector<std::string>& vec, const std::string& delimiter);
 

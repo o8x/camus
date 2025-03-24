@@ -19,12 +19,12 @@ namespace camus {
         }
 
         article article{
-            .ready = true, // 默认已经就绪
             .uuid = util::uuid_v4(),
             .create_time = time(nullptr),
             .filename = path.filename().string(),
             .full_filename = path.string(),
             .hidden_lines = 0,
+            .visibility = article::open,
         };
 
         /**
@@ -53,18 +53,24 @@ namespace camus {
                 };
 
                 std::string datetime;
+                std::string visibility;
                 // 解析参数
                 set_string_parma("date: ", datetime);
                 set_string_parma("short-path: ", article.short_path);
                 set_string_parma("display-name: ", article.display_name);
+                set_string_parma("visibility: ", visibility);
+
+                article.visibility = article::open;
+                if (visibility == "hidden") {
+                    article.visibility = article::hidden;
+                }
+
+                if (visibility == "hidden-in-toc") {
+                    article.visibility = article::hidden_in_toc;
+                }
 
                 if (!datetime.empty()) {
                     article.create_time = util::datetime_to_unix(util::trim_space(datetime));
-                }
-
-                if (line.find("ready: ") != std::string::npos) {
-                    std::vector<std::string> res = util::split(line, "ready: ");
-                    article.ready = res[1].find("true") != std::string::npos;
                 }
 
                 continue;
@@ -110,7 +116,7 @@ namespace camus {
 
     article get_index_template_from_file(const std::string& filename) {
         article home_template = get_page_template_from_file(filename);
-        home_template.ready = true;
+        home_template.visibility = article::open;
         home_template.uuid = util::uuid_v4();
         home_template.create_time = time(nullptr);
         home_template.filename = filename;
@@ -187,38 +193,31 @@ namespace camus {
         return true;
     }
 
-    void generate_index_page(const article& index, std::vector<article> pages) {
+    void generate_index_page(const article& index, const std::string& toc) {
         log::info(std::format("generating: {}", index.out_filename));
 
         std::string content = index.join_content();
+        util::replace_all(content, "{{posts-item-json}}", toc);
 
+        ini::fill(content);
+        util::write_file(index.out_filename, content);
+    }
+
+    std::string generate_directory_json(std::vector<article>& pages) {
         // 生成目录
-        // name date link
-        struct directory_item {
-            std::string name;
-            std::string date;
-            std::string link;
-        };
-
         std::vector<std::string> items;
         for (article& it : pages) {
-            if (!it.ready) {
+            // 不在目录中生成
+            if (it.visibility == article::hidden || it.visibility == article::hidden_in_toc) {
                 continue;
             }
 
             util::replace_all(it.display_name, "\"", "'");
-
-            items.push_back(std::format(
-                R"({{"name":"{}", "date":"{}", "link":"{}"}})",
-                it.display_name, util::format_time_t(it.create_time, "%Y-%m-%d"), it.url
-            ));
+            items.push_back(it.to_json());
         }
 
         const std::string items_string = util::join(items, ",\n");
-        util::replace_all(content, "{{posts-item-json}}", "[" + items_string + "]");
-
-        ini::fill(content);
-        util::write_file(index.out_filename, content);
+        return "[" + items_string + "]";
     }
 
     void generate_by_directory() {
@@ -252,11 +251,12 @@ namespace camus {
         std::sort(pages.begin(), pages.end());
 
         // 生成 index
-        generate_index_page(home_template, pages);
+        const std::string toc = generate_directory_json(pages);
+        generate_index_page(home_template, toc);
 
         // 生成文章
-        for (const article page : pages) {
-            if (!page.ready) {
+        for (article& page : pages) {
+            if (page.is_visible()) {
                 log::info("ignore article: " + page.display_name);
                 continue;
             }
