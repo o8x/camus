@@ -60,7 +60,6 @@ namespace camus {
                 set_string_parma("display-name: ", article.display_name);
                 set_string_parma("visibility: ", visibility);
 
-                article.visibility = article::open;
                 if (visibility == "hidden") {
                     article.visibility = article::hidden;
                 }
@@ -256,7 +255,7 @@ namespace camus {
 
         // 生成文章
         for (article& page : pages) {
-            if (page.is_visible()) {
+            if (!page.is_visible()) {
                 log::info("ignore article: " + page.display_name);
                 continue;
             }
