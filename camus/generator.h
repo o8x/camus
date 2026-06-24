@@ -89,8 +89,8 @@ namespace camus
 	// 生产主页
 	void generate_index_page(const article &index, const std::string &toc);
 
-	article get_index_template_from_file(const std::string &filename);
-	article get_page_template_from_file(const std::string &filename);
+	article get_index_theme_from_file(const std::string &filename);
+	article get_page_theme_from_file(const std::string &filename);
 
 	// 生成文章
 	bool generate_article_page(const article &tpl, const article &article);

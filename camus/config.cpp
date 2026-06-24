@@ -20,16 +20,15 @@ namespace camus
 
 	void ini::fill(std::string &data)
 	{
-		util::replace_all(data, "{{main-title}}", all().main_title);
-		util::replace_all(data, "{{main-subtitle}}", all().main_subtitle);
-		util::replace_all(data, "{{main-description}}", all().main_description);
-		util::replace_all(data, "{{markdown-engine}}", all().markdown_engine);
+		for (const auto &[key, value] : all().config_map) {
+			util::replace_all(data, std::format("{{{{{}}}}}", key), value);
+		}
 
 		const time_t unix = std::time(nullptr);
 		char buf[20];
 		std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&unix));
-		util::replace_all(data, "{{build-timestamp}}", std::to_string(unix));
-		util::replace_all(data, "{{build-time}}", buf);
+		util::replace_all(data, "{{build.timestamp}}", std::to_string(unix));
+		util::replace_all(data, "{{build.time}}", buf);
 	}
 
 	std::string ini::make_key(const std::string &section, const std::string &key)
@@ -89,24 +88,16 @@ namespace camus
 			config_.filename_type = result["camus::filename_type"];
 		}
 
-		if (!result["template::main_title"].empty()) {
-			config_.main_title = result["template::main_title"];
+		if (!result["site::title"].empty()) {
+			config_.site_title = result["site::title"];
 		}
 
-		if (!result["template::main_description"].empty()) {
-			config_.main_description = result["template::main_description"];
+		if (!result["site::description"].empty()) {
+			config_.site_description = result["site::description"];
 		}
 
-		if (!result["template::main_subtitle"].empty()) {
-			config_.main_subtitle = result["template::main_subtitle"];
-		}
-
-		if (!result["template::home_template_file"].empty()) {
-			config_.home_template_file = result["template::home_template_file"];
-		}
-
-		if (!result["template::page_template_file"].empty()) {
-			config_.page_template_file = result["template::page_template_file"];
+		if (!result["site::subtitle"].empty()) {
+			config_.site_subtitle = result["site::subtitle"];
 		}
 
 		file_ = name;

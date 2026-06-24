@@ -115,26 +115,26 @@ namespace camus
 		return article;
 	}
 
-	article get_index_template_from_file(const std::string &filename)
+	article get_index_theme_from_file(const std::string &filename)
 	{
-		article home_template = get_page_template_from_file(filename);
-		home_template.visibility = article::open;
-		home_template.uuid = util::uuid_v4();
-		home_template.create_time = time(nullptr);
-		home_template.filename = filename;
-		home_template.short_path = "index";
-		home_template.display_name = "Home Page";
-		home_template.out_filename = ini::all().out_directory + "/index.html";
+		article home_theme = get_page_theme_from_file(filename);
+		home_theme.visibility = article::open;
+		home_theme.uuid = util::uuid_v4();
+		home_theme.create_time = time(nullptr);
+		home_theme.filename = filename;
+		home_theme.short_path = "index";
+		home_theme.display_name = "Home Page";
+		home_theme.out_filename = ini::all().out_directory + "/index.html";
 
-		return home_template;
+		return home_theme;
 	}
 
-	article get_page_template_from_file(const std::string &filename)
+	article get_page_theme_from_file(const std::string &filename)
 	{
 		std::ifstream file(filename);
 
 		if (!file.is_open()) {
-			throw std::runtime_error("Could not open file " + filename);
+			throw std::runtime_error("Could not open theme file " + filename);
 		}
 
 		article data{
@@ -150,10 +150,10 @@ namespace camus
 	}
 
 	/**
-	 * 页面介绍 {{page-description}}
-	 * 主标题 {{main-title}}
-	 * 页面标题 {{page-title}}
-	 * 页面内容 {{page-content}}
+	 * 页面介绍 {{page.description}}
+	 * 主标题 {{site.title}}
+	 * 页面标题 {{page.title}}
+	 * 页面内容 {{page.content}}
 	 */
 	bool generate_article_page(const article &tpl, const article &article)
 	{
@@ -177,10 +177,10 @@ namespace camus
 		ini::fill(t);
 		util::replace_all(date_str, " 00:00:00", "");  // 去掉无用的时间部分
 		util::replace_all(html_content, "<hr />", ""); // 去掉自动生成的 hr 标记
-		util::replace_all(t, "{{page-title}}", article.display_name);
-		util::replace_all(t, "{{page-date}}", date_str);
-		util::replace_all(t, "{{page-description}}", "");
-		util::replace_all(t, "{{page-content}}", html_content);
+		util::replace_all(t, "{{page.title}}", article.display_name);
+		util::replace_all(t, "{{page.date}}", date_str);
+		util::replace_all(t, "{{page.description}}", "");
+		util::replace_all(t, "{{page.content}}", html_content);
 
 		// 写入文件
 		std::ofstream writer(article.out_filename, std::ios::out);
@@ -227,8 +227,8 @@ namespace camus
 	void generate_by_directory()
 	{
 		const std::string &read_directory = ini::all().posts_directory;
-		const article page_template = get_page_template_from_file(ini::all().page_template_file);
-		const article home_template = get_index_template_from_file(ini::all().home_template_file);
+		const article page_theme = get_page_theme_from_file(ini::all().page_template);
+		const article home_theme = get_index_theme_from_file(ini::all().home_template);
 
 		std::vector<article> pages;
 		for (const auto &entry : std::filesystem::directory_iterator(read_directory)) {
@@ -258,7 +258,7 @@ namespace camus
 
 		// 生成 index
 		const std::string toc = generate_directory_json(pages);
-		generate_index_page(home_template, toc);
+		generate_index_page(home_theme, toc);
 
 		// 生成文章
 		for (article &page : pages) {
@@ -267,7 +267,7 @@ namespace camus
 				continue;
 			}
 
-			generate_article_page(page_template, page);
+			generate_article_page(page_theme, page);
 		}
 
 		// 整体拷贝资源文件夹

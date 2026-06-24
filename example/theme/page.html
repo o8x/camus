@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="{{page.description}}">
+    <title>{{page.title}} - {{site.title}}</title>
+    <meta name="build-time" content="{{build.time}}">
+    <link id="favicon" rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/css/page.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.9.0/css/foundation.min.css">
+</head>
+
+<body>
+<div class="page-container">
+    <h1 class="page-title">{{page.title}}</h1>
+    <span class="page-date">
+        Publish Time: {{page.date}}
+    </span>
+
+    <p class="page-description">{{page.description}}</p>
+    <div class="page-content">
+        {{page.content}}
+    </div>
+    <footer style="color: darkgray; font-size: 13px">
+        Powered by <a href="https://github.com/o8x/camus">Camus</a> built with {{camus.markdown_engine}}
+    </footer>
+</div>
+</body>
+
+</html>

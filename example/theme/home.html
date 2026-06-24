@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="{{site.subtitle}}">
+    <meta name="build-time" content="{{build.time}}">
+    <title>{{site.title}} - {{site.subtitle}}</title>
+    <link id="favicon" rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/css/home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.9.0/css/foundation.min.css">
+</head>
+
+<script>
+    const ul = document.createElement("ul")
+    const posts = JSON.parse(`{{posts-item-json}}`)
+
+    posts.forEach(post => {
+        const li = document.createElement("li")
+        const a = document.createElement("a")
+        const dateSpan = document.createElement("span")
+
+        a.href = post.link
+        a.textContent = post.name
+        dateSpan.textContent = post.date
+
+        li.appendChild(a)
+        li.appendChild(dateSpan)
+        ul.appendChild(li)
+    })
+
+    window.onload = function () {
+        document.querySelector(".posts-items").appendChild(ul)
+    }
+</script>
+
+<body>
+<div class="main-container">
+    <h1 class="main-title">{{site.title}}</h1>
+    <p class="main-description">{{site.description}}</p>
+
+    <h4>Posts:</h4>
+    <div class="posts-items"></div>
+    <footer style="color: darkgray; font-size: 13px">
+        Powered by <a href="https://github.com/o8x/camus">Camus</a> built with {{camus.markdown_engine}}
+    </footer>
+</div>
+</body>
+
+</html>

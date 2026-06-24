@@ -28,9 +28,9 @@ camus [./blog]
 │     │     └── index.html
 │     ├── posts
 │     │     └── first page.md
-│     └── template
-│         ├── home_template.html
-│         └── page_template.html
+│     └── theme
+│         ├── home.html
+│         └── page.html
 ```
 
 程序启动将会自动加载 ${work_dir}/camus.ini
@@ -46,11 +46,8 @@ filename_type=original_filename
 ; 渲染引擎，可切换 gomarkdown 和 cmark，cmark 不支持表格
 markdown_engine=gomarkdown
 
-[template]
-; 主页模板
-home_template_file=template/home_template.html
-; 文章内页模板
-page_template_file=template/page_template.html
+[theme]
+; 主页模板和文章内页模板会自动加载 theme/home.html 和 theme/page.html
 ; 主标题，显示在首页的 title 中
 main_title=Just Another Camus blog
 ; 副标题，显示在首页的描述中
