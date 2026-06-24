@@ -1,5 +1,7 @@
 #pragma once
 
+#include <format>
+#include <iostream>
 #include <map>
 #include <string>
 
@@ -19,6 +21,7 @@ namespace camus
 		std::string site_title;
 		std::string site_subtitle;
 		std::string site_description;
+		std::string theme_name;
 		const std::unordered_map<std::string, std::string> config_map;
 
 		explicit config(const std::unordered_map<std::string, std::string> &data) : config_map(data)
@@ -36,6 +39,7 @@ namespace camus
 			site_description = "Rome was not built in one day.";
 			site_homepage = "";
 			site_github_repo = "";
+			theme_name = "default";
 
 			if (data.contains("camus.posts_directory")) {
 				posts_directory = data.at("camus.posts_directory");
@@ -80,6 +84,13 @@ namespace camus
 			if (data.contains("site.sitemap")) {
 				sitemap = data.at("site.sitemap") == "true";
 			}
+
+			if (data.contains("theme.theme")) {
+				theme_name = data.at("theme.theme");
+			}
+
+			home_template = std::format("theme/{}/home.html", theme_name);
+			page_template = std::format("theme/{}/page.html", theme_name);
 		}
 	};
 

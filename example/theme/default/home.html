@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="{{site.subtitle}}">
+    <meta name="build-time" content="{{build.time}}">
+    <title>{{site.title}} - {{site.subtitle}}</title>
+    <link id="favicon" rel="icon" href="/favicon.ico">
+</head>
+<body>
+<center>
+    <h1>{{site.title}}</h1>
+    <p><em>{{site.subtitle}}</em></p>
+</center>
+
+<blockquote>
+    <p>{{site.description}}</p>
+</blockquote>
+
+<h3>&#9733; Index of Posts</h3>
+
+<ul id="toc-list">
+    <li><em>Loading...</em></li>
+</ul>
+
+<center>
+    <small>
+        <em>Powered by <a href="https://github.com/o8x/camus">Camus</a>
+        &mdash; built with {{camus.markdown_engine}}</em>
+    </small>
+</center>
+
+<script>
+    (function() {
+        var formatDate = function(ts) {
+            var d = new Date(ts * 1000);
+            return d.getFullYear() + '-' +
+                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0');
+        };
+
+        var renderToc = function(posts) {
+            var html = posts.map(function(item, i) {
+                return '<li>' +
+                    '<a href="' + item.url + '">' + item.display_name + '</a>' +
+                    ' <small>(' + formatDate(item.create_time) + ')</small>' +
+                    '</li>';
+            }).join('');
+            document.getElementById('toc-list').innerHTML = html;
+        };
+
+        fetch('/toc.json')
+            .then(function(res) { return res.json(); })
+            .then(renderToc)
+            .catch(function(err) { console.error('Failed to load toc.json:', err); });
+    })();
+</script>
+</body>
+</html>

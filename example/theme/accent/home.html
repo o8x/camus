@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="{{site.subtitle}}">
+    <meta name="build-time" content="{{build.time}}">
+    <title>{{site.title}} - {{site.subtitle}}</title>
+    <link id="favicon" rel="icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <style id="novel-style">
+        :root {
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-secondary: #6b7280;
+            --accent: #10b981;
+            --accent-hover: #059669;
+            --border: #e5e7eb;
+            --divider: #d1d5db;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .cover {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem 2rem 2rem
+        }
+
+        .cover-header {
+            text-align: center;
+            padding: 4rem 0 2rem;
+            border-bottom: 1px solid var(--divider);
+            margin-bottom: 2.5rem;
+        }
+
+        .cover-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+        }
+
+        .cover-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            letter-spacing: 0.1em;
+        }
+
+        .cover-description {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.9;
+            padding: 1.5rem 0;
+            margin: 0 auto;
+            text-indent: 2rem;
+        }
+
+        .toc-header {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-align: center;
+            margin-bottom: 2rem;
+            letter-spacing: 0.2em;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc-item {
+            display: flex;
+            align-items: baseline;
+            padding: 0.75rem 0;
+            border-bottom: 1px dashed var(--border);
+            transition: background 0.2s;
+        }
+
+        .toc-item:hover {
+            background: rgba(16, 185, 129, 0.04);
+        }
+
+        .toc-item:last-child {
+            border-bottom: none;
+        }
+
+        .toc-num {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            min-width: 3rem;
+            text-align: right;
+            margin-right: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .toc-link {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 1.05rem;
+            flex: 1;
+            transition: color 0.2s;
+        }
+
+        .toc-link:hover {
+            color: var(--accent);
+        }
+
+        .toc-date {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-left: 1rem;
+            flex-shrink: 0;
+        }
+
+        .cover-footer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .cover-footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .cover-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        @media (max-width: 640px) {
+            .cover {
+                padding: 2rem 1rem 4rem;
+            }
+            .cover-title {
+                font-size: 1.8rem;
+            }
+            .toc-item {
+                flex-wrap: wrap;
+            }
+            .toc-date {
+                width: 100%;
+                margin-left: 4.2rem;
+                margin-top: 0.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">&#9788;</button>
+
+    <div class="cover">
+        <header class="cover-header">
+            <h1 class="cover-title">{{site.title}}</h1>
+            <p class="cover-subtitle">{{site.subtitle}}</p>
+        </header>
+
+        <p class="cover-description">{{site.description}}</p>
+
+        <div class="toc-header">目&emsp;录</div>
+
+        <ul class="toc-list" id="toc-list"></ul>
+
+        <footer class="cover-footer">
+            Powered by <a href="https://github.com/o8x/camus">Camus</a> built with {{camus.markdown_engine}}
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            var formatDate = function(ts) {
+                var d = new Date(ts * 1000);
+                return d.getFullYear() + '-' +
+                    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(d.getDate()).padStart(2, '0');
+            };
+
+            var renderToc = function(posts) {
+                var html = posts.map(function(item, i) {
+                    return '<li class="toc-item">' +
+                        '<span class="toc-num">' + String(i + 1).padStart(3, '0') + '</span>' +
+                        '<a class="toc-link" href="' + item.url + '">' + item.display_name + '</a>' +
+                        '<span class="toc-date">' + formatDate(item.create_time) + '</span>' +
+                        '</li>';
+                }).join('');
+
+                document.getElementById('toc-list').innerHTML = html;
+            };
+
+            var initTheme = function() {
+                var saved = localStorage.getItem('noval-theme');
+                if (saved === 'dark') {
+                    applyDarkTheme();
+                }
+            };
+
+            var applyDarkTheme = function() {
+                var style = document.getElementById('novel-style');
+                style.textContent = style.textContent.replace(/:root\s*\{[^}]*\}/, function() {
+                    return ':root {' +
+                        '--bg: #111827;' +
+                        '--card-bg: #1f2937;' +
+                        '--text: #e5e7eb;' +
+                        '--text-secondary: #9ca3af;' +
+                        '--accent: #34d399;' +
+                        '--accent-hover: #6ee7b7;' +
+                        '--border: #374151;' +
+                        '--divider: #374151;' +
+                        '}';
+                });
+                document.getElementById('theme-toggle').innerHTML = '&#9790;';
+                localStorage.setItem('noval-theme', 'dark');
+            };
+
+            var applyLightTheme = function() {
+                var style = document.getElementById('novel-style');
+                style.textContent = style.textContent.replace(/:root\s*\{[^}]*\}/, function() {
+                    return ':root {' +
+                        '--bg: #f3f4f6;' +
+                        '--card-bg: #ffffff;' +
+                        '--text: #1f2937;' +
+                        '--text-secondary: #6b7280;' +
+                        '--accent: #10b981;' +
+                        '--accent-hover: #059669;' +
+                        '--border: #e5e7eb;' +
+                        '--divider: #d1d5db;' +
+                        '}';
+                });
+                document.getElementById('theme-toggle').innerHTML = '&#9788;';
+                localStorage.setItem('noval-theme', 'light');
+            };
+
+            document.getElementById('theme-toggle').addEventListener('click', function() {
+                if (localStorage.getItem('noval-theme') === 'dark') {
+                    applyLightTheme();
+                } else {
+                    applyDarkTheme();
+                }
+            });
+
+            fetch('/toc.json')
+                .then(function(res) { return res.json(); })
+                .then(renderToc)
+                .catch(function(err) { console.error('Failed to load toc.json:', err); });
+
+            initTheme();
+        })();
+    </script>
+</body>
+</html>

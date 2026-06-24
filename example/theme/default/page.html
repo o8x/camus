@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="{{page.description}}">
+    <meta name="build-time" content="{{build.time}}">
+    <title>{{page.title}} - {{site.title}}</title>
+    <link id="favicon" rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" id="hljs-theme" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+</head>
+<body>
+
+<center>
+    <small>{{page.date}}</small>
+    <h1>{{page.title}}</h1>
+    <p><small id="word-count" style="color:#888"></small></p>
+    <hr width="40%">
+</center>
+
+<article>
+    {{page.content}}
+</article>
+
+<hr>
+
+<table width="100%" id="chapter-nav">
+    <tr>
+        <td width="33%" align="left">
+            <a id="prev-link" href="#">&laquo; Previous</a>
+        </td>
+        <td width="34%" align="center">
+            <a href="/">[ Index ]</a>
+        </td>
+        <td width="33%" align="right">
+            <a id="next-link" href="#">Next &raquo;</a>
+        </td>
+    </tr>
+</table>
+
+<center>
+    <small>
+        <em>Powered by <a href="https://github.com/o8x/camus">Camus</a>
+        &mdash; built with {{camus.markdown_engine}}</em>
+    </small>
+</center>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+    (function() {
+        var currentUrl = window.location.pathname.split('/').pop() || '';
+
+        var countWords = function() {
+            var a = document.querySelector('article');
+            if (!a) return 0;
+            var t = a.textContent || '';
+            return (t.match(/[\u4e00-\u9fff]/g) || []).length +
+                t.replace(/[\u4e00-\u9fff]/g, '').split(/\s+/).filter(Boolean).length;
+        };
+
+        var c = countWords();
+        if (c > 0) {
+            var m = Math.max(1, Math.ceil(c / 400));
+            document.getElementById('word-count').textContent = c + ' words  ~' + m + ' min';
+        }
+
+        var setupNavigation = function(tocData) {
+            if (!tocData || tocData.length === 0) return;
+            var idx = -1;
+            for (var i = 0; i < tocData.length; i++) {
+                if (tocData[i].url === currentUrl) { idx = i; break; }
+            }
+            if (idx === -1) return;
+
+            var prev = document.getElementById('prev-link');
+            var next = document.getElementById('next-link');
+            if (idx > 0) { prev.href = tocData[idx - 1].url; prev.textContent = '\u00ab ' + tocData[idx - 1].display_name; }
+            else { prev.style.visibility = 'hidden'; }
+            if (idx < tocData.length - 1) { next.href = tocData[idx + 1].url; next.textContent = tocData[idx + 1].display_name + ' \u00bb'; }
+            else { next.style.visibility = 'hidden'; }
+        };
+
+        fetch('/toc.json')
+            .then(function(res) { return res.json(); })
+            .then(setupNavigation)
+            .catch(function(err) { console.error('Failed to load toc.json:', err); });
+
+        hljs.highlightAll();
+    })();
+</script>
+
+</body>
+</html>
