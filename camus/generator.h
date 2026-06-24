@@ -59,17 +59,12 @@ namespace camus
 		{
 			std::ostringstream oss;
 
-			oss << "{"
-				<< R"("uuid":")" << uuid << "\","
-				<< R"("create_time":)" << create_time << ","
-				<< R"("visibility":")" << visibility << "\","
-				<< R"("filename":")" << filename << "\","
-				<< R"("full_filename":")" << full_filename << "\","
-				<< R"("hidden_lines":)" << hidden_lines << ","
-				<< R"("out_filename":")" << out_filename << "\","
-				<< R"("short_path":")" << short_path << "\","
-				<< R"("url":")" << url << "\","
-				<< R"("display_name":")" << util::replace(display_name, R"(")", R"(\")") << "\""
+			oss << "{" << std::endl
+				<< R"(    "uuid": ")" << uuid << "\"," << std::endl
+				<< R"(    "create_time": )" << create_time << "," << std::endl
+				<< R"(    "short_path": ")" << short_path << "\"," << std::endl
+				<< R"(    "url": ")" << url << "\"," << std::endl
+				<< R"(    "display_name": ")" << util::replace(display_name, R"(")", R"(\")") << "\"" << std::endl
 				<< "}";
 
 			return oss.str();

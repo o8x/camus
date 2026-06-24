@@ -12,30 +12,6 @@
     <link rel="stylesheet" type="text/css" href="/css/home.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.9.0/css/foundation.min.css">
 </head>
-
-<script>
-    const ul = document.createElement("ul")
-    const posts = JSON.parse(`{{posts-item-json}}`)
-
-    posts.forEach(post => {
-        const li = document.createElement("li")
-        const a = document.createElement("a")
-        const dateSpan = document.createElement("span")
-
-        a.href = post.link
-        a.textContent = post.name
-        dateSpan.textContent = post.date
-
-        li.appendChild(a)
-        li.appendChild(dateSpan)
-        ul.appendChild(li)
-    })
-
-    window.onload = function () {
-        document.querySelector(".posts-items").appendChild(ul)
-    }
-</script>
-
 <body>
 <div class="main-container">
     <h1 class="main-title">{{site.title}}</h1>
@@ -48,5 +24,32 @@
     </footer>
 </div>
 </body>
+<script>
+    const format_date = ts => {
+        const d = new Date(ts * 1000)
+        return `${d.getFullYear()}-` +
+            `${String(d.getMonth() + 1).padStart(2, "0")}-` +
+            `${String(d.getDate()).padStart(2, "0")}`
+    }
 
+    const render_toc = posts => {
+        const html = posts
+            .map(({url, display_name, create_time}) => `<li>
+                <a href="${url}">${display_name}</a>
+                <span>${format_date(create_time)}</span>
+            </li>`)
+            .join("")
+
+        document.querySelector(".posts-items").innerHTML = `<ul>${html}</ul>`
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const data = await (await fetch("/toc.json")).json()
+            render_toc(data)
+        } catch (err) {
+            console.error(err)
+        }
+    })
+</script>
 </html>

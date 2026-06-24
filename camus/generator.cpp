@@ -181,6 +181,7 @@ namespace camus
 		util::replace_all(t, "{{page.date}}", date_str);
 		util::replace_all(t, "{{page.description}}", "");
 		util::replace_all(t, "{{page.content}}", html_content);
+		util::replace_all(t, "{{page.info}}", article.to_json());
 
 		// 写入文件
 		std::ofstream writer(article.out_filename, std::ios::out);
@@ -204,6 +205,7 @@ namespace camus
 
 		ini::fill(content);
 		util::write_file(index.out_filename, content);
+		util::write_file(std::format("{}/toc.json", ini::all().out_directory), toc);
 	}
 
 	std::string generate_directory_json(std::vector<article> &pages)
@@ -298,6 +300,38 @@ namespace camus
 					)
 				);
 			}
+		}
+
+		if (ini::all().sitemap) {
+			std::vector<std::string> items;
+
+			for (const auto &it : pages) {
+				std::string url = std::format("{}/{}", ini::all().site_homepage, it.url);
+				util::replace_all(url, "//", "/");
+
+				std::string loc = std::format(
+					"<url><loc>{}</loc><lastmod>{}</lastmod></url>",
+					url,
+					util::format_time_t(it.create_time, "%Y-%m-%d")
+				);
+
+				items.push_back(loc);
+			}
+
+			const std::string filename = std::format("{}/sitemap.xml", ini::all().out_directory);
+
+			log::info(
+				std::format("generating: sitemap file={} url={}/sitemap.xml", filename, ini::all().site_homepage)
+			);
+
+			util::write_file(
+				filename,
+				std::format(
+					R"(<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{}</urlset>)",
+					util::join(items, "\n\t")
+				)
+			);
 		}
 	}
 } // namespace camus

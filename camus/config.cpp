@@ -13,9 +13,9 @@ namespace camus
 		return i;
 	}
 
-	config &ini::all()
+	config ini::all()
 	{
-		return get().config_;
+		return *get().config_;
 	}
 
 	void ini::fill(std::string &data)
@@ -33,7 +33,7 @@ namespace camus
 
 	std::string ini::make_key(const std::string &section, const std::string &key)
 	{
-		return section + "::" + key;
+		return section + "." + key;
 	}
 
 	std::unordered_map<std::string, std::string> ini::parse(const std::string &name)
@@ -61,45 +61,14 @@ namespace camus
 				if (size_t delimiter = line.find('='); delimiter != std::string::npos) {
 					std::string key = line.substr(0, delimiter);
 					std::string value = line.substr(delimiter + 1);
-					result[make_key(section, key)] = value;
+					result[make_key(section, key)] = util::trim_space(value);
 				}
 			}
 		}
 
 		file.close();
 
-		if (!result["camus::posts_directory"].empty()) {
-			config_.posts_directory = result["camus::posts_directory"];
-		}
-
-		if (!result["camus::assets_directory"].empty()) {
-			config_.assets_directory = result["camus::assets_directory"];
-		}
-
-		if (!result["camus::out_directory"].empty()) {
-			config_.out_directory = result["camus::out_directory"];
-		}
-
-		if (!result["camus::markdown_engine"].empty()) {
-			config_.markdown_engine = result["camus::markdown_engine"];
-		}
-
-		if (!result["camus::filename_type"].empty()) {
-			config_.filename_type = result["camus::filename_type"];
-		}
-
-		if (!result["site::title"].empty()) {
-			config_.site_title = result["site::title"];
-		}
-
-		if (!result["site::description"].empty()) {
-			config_.site_description = result["site::description"];
-		}
-
-		if (!result["site::subtitle"].empty()) {
-			config_.site_subtitle = result["site::subtitle"];
-		}
-
+		config_ = new config(result);
 		file_ = name;
 
 		return result;

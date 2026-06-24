@@ -15,8 +15,8 @@ int main(const int argc, char** argv) {
     chdir(path.c_str());
 
     camus::ini::get().parse("camus.ini");
-    const std::string read_directory = camus::ini::get().config_.posts_directory;
-    const std::string out_directory = camus::ini::get().config_.out_directory;
+    const std::string read_directory = camus::ini::get().all().posts_directory;
+    const std::string out_directory = camus::ini::get().all().out_directory;
 
     std::filesystem::remove_all(out_directory);
     std::filesystem::create_directory(out_directory);
