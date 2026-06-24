@@ -1,12 +1,14 @@
 #include "utils.h"
 
+#include "cmark-gfm.h"
+
+#include "libgomarkdown.h"
+#include <__random/random_device.h>
 #include <fstream>
 #include <iomanip>
 #include <random>
 #include <sstream>
 #include <vector>
-#include "libgomarkdown.h"
-#include <__random/random_device.h>
 
 namespace camus::util {
     std::string get_now_time(const std::string& format) {

@@ -22,9 +22,9 @@ namespace camus {
             .uuid = util::uuid_v4(),
             .create_time = time(nullptr),
             .filename = path.filename().string(),
+            .visibility = article::open,
             .full_filename = path.string(),
             .hidden_lines = 0,
-            .visibility = article::open,
         };
 
         /**
