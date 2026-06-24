@@ -19,6 +19,13 @@ namespace camus {
         util::replace_all(data, "{{main-title}}", all().main_title);
         util::replace_all(data, "{{main-subtitle}}", all().main_subtitle);
         util::replace_all(data, "{{main-description}}", all().main_description);
+        util::replace_all(data, "{{markdown-engine}}", all().markdown_engine);
+
+        const time_t unix = std::time(nullptr);
+        char buf[20];
+        std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&unix));
+        util::replace_all(data, "{{build-timestamp}}", std::to_string(unix));
+        util::replace_all(data, "{{build-time}}", buf);
     }
 
     std::string ini::make_key(const std::string& section, const std::string& key) {
