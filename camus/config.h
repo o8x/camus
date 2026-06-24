@@ -8,6 +8,7 @@ namespace camus
 	struct config {
 		std::string posts_directory;
 		std::string out_directory;
+		std::string assets_directory;
 		std::string filename_type;
 		std::string markdown_engine;
 		std::string main_title;
@@ -25,6 +26,7 @@ namespace camus
 		config config_ = {
 			.posts_directory = "posts",
 			.out_directory = "html",
+			.assets_directory = "assets",
 			.filename_type = "uuid",
 			.markdown_engine = "gomarkdown",
 			.main_title = "Just Another Camus blog",

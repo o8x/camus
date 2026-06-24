@@ -73,6 +73,10 @@ namespace camus
 			config_.posts_directory = result["camus::posts_directory"];
 		}
 
+		if (!result["camus::assets_directory"].empty()) {
+			config_.assets_directory = result["camus::assets_directory"];
+		}
+
 		if (!result["camus::out_directory"].empty()) {
 			config_.out_directory = result["camus::out_directory"];
 		}

@@ -238,13 +238,14 @@ namespace camus
 				throw std::runtime_error("File is not a regular file " + full_filename);
 			}
 
-			if (entry.path().filename().string().find(".html") != std::string::npos) {
+			// 只处理 md
+			if (entry.path().extension() != ".md") {
 				continue;
 			}
 
 			std::optional<article> article = parse_article_params(full_filename);
 			if (!article.has_value()) {
-				log::info("parse params failed, ignore: " + full_filename);
+				log::info("parse params failed, skip: " + full_filename);
 				continue;
 			}
 
@@ -262,11 +263,41 @@ namespace camus
 		// 生成文章
 		for (article &page : pages) {
 			if (!page.is_visible()) {
-				log::info("ignore article: " + page.display_name);
+				log::info("skip article: " + page.display_name);
 				continue;
 			}
 
 			generate_article_page(page_template, page);
+		}
+
+		// 整体拷贝资源文件夹
+		if (std::filesystem::exists(ini::all().assets_directory)) {
+			if (std::filesystem::is_empty(ini::all().assets_directory)) {
+				log::info(std::format("skip empty assets directory: {}", ini::all().assets_directory));
+			} else {
+				// 默认会将资源文件都提升到输出文件夹中
+				std::filesystem::copy(
+					ini::all().assets_directory,
+					ini::all().out_directory,
+					std::filesystem::copy_options::recursive
+				);
+
+				size_t count = 0;
+				for (const auto &entry : std::filesystem::recursive_directory_iterator(ini::all().assets_directory)) {
+					if (entry.is_regular_file()) {
+						++count;
+					}
+				}
+
+				log::info(
+					std::format(
+						"assets: promote copy {}/* to {}/* files={}",
+						ini::all().assets_directory,
+						ini::all().out_directory,
+						count
+					)
+				);
+			}
 		}
 	}
 } // namespace camus

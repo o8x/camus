@@ -1,5 +1,4 @@
 REPO_URL ?= git@github.com:o8x/o8x.github.io.git
-REPO_DOMAIN ?= stdout.com.cn
 
 all: build
 
@@ -15,7 +14,6 @@ release:
 
 push: build
 	cmake-build-debug/Camus site
-	echo "$(REPO_DOMAIN)" > site/html/CNAME
 	git -C site/html init
 	git -C site/html remote add origin $(REPO_URL)
 	git -C site/html add .
