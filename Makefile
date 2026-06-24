@@ -1,21 +1,24 @@
+SITE_ROOT ?= site
 REPO_URL ?= git@github.com:o8x/o8x.github.io.git
 
 all: build
 
-configure:
-	@cmake -G Ninja -B cmake-build-debug -S .
+.PHONY: build
+build:
+	@cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G Ninja -B build/release -S .
+	@cmake --build build/release --target all -j 10
 
-build: configure
-	@cmake --build cmake-build-debug --target all -j 10
+.PHONY: serve
+serve: build
+	@build/release/Camus $(SITE_ROOT)
+	@echo "listen on http://localhost:8000"
+	@python3 -m http.server --bind localhost 8000 --directory $(SITE_ROOT)/html
 
-release:
-	@cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G Ninja -B cmake-build-release -S .
-	@cmake --build cmake-build-release --target all -j 10
-
+.PHONY: push
 push: build
-	cmake-build-debug/Camus site
-	git -C site/html init
-	git -C site/html remote add origin $(REPO_URL)
-	git -C site/html add .
-	git -C site/html commit -qm "init project"
-	git -C site/html push -f origin main
+	@build/release/Camus $(SITE_ROOT)
+	@git -C $(SITE_ROOT)/html init
+	@git -C $(SITE_ROOT)/html remote add origin $(REPO_URL)
+	@git -C $(SITE_ROOT)/html add .
+	@git -C $(SITE_ROOT)/html commit -qm "$(shell date +'%Y-%m-%d %H:%M:%S'), push project"
+	@git -C $(SITE_ROOT)/html push -f origin main
