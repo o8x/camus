@@ -1,0 +1,26 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+Cpp11BracedListStyle: true
+SortIncludes: false
+ColumnLimit: 120
+# 强制使用TAB缩进，并展示为4个宽度
+UseTab: Always
+TabWidth: 4
+IndentWidth: 4
+ContinuationIndentWidth: 4
+NamespaceIndentation: All
+# 保留至少一个空行，不删除所有空行
+MaxEmptyLinesToKeep: 1
+# 核心：禁止将参数“打包”到少数几行
+BinPackArguments: false
+# 禁止把所有参数挤到第二行
+AllowAllArgumentsOnNextLine: false
+# 控制换行后的对齐方式
+AlignAfterOpenBracket: BlockIndent
+BreakBeforeBraces: Linux
+# 控制短函数/内联函数是否保持单行
+AllowShortFunctionsOnASingleLine: None
+# 函数之间强制换一行
+SeparateDefinitionBlocks: Always
+...
