@@ -165,7 +165,7 @@ namespace camus
 		log::info(std::format("generating: {}", article.out_filename, hidden_flag));
 
 		std::string markdown = util::join(article.content, "\n");
-		auto [length, to_html] = util::markdown_to_html(markdown.data(), ini::all().markdown_engine == "cmark");
+		auto [length, to_html] = util::markdown_to_html(markdown.data(), ini::all().markdown_engine);
 
 		std::string t = tpl.join_content();
 		std::string date_str = util::format_time_t(article.create_time);

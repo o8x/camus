@@ -2,7 +2,6 @@
 
 #include "cmark-gfm.h"
 
-#include "libgomarkdown.h"
 #include <__random/random_device.h>
 #include <fstream>
 #include <iomanip>
@@ -200,14 +199,13 @@ namespace camus::util
 		return oss.str();
 	}
 
-	std::pair<uint32_t, char *> markdown_to_html(char *html, const bool cmark)
+	std::pair<uint32_t, char *> markdown_to_html(const char *html, const std::string &engine)
 	{
-		if (cmark) {
+		if (engine == "cmark") {
 			char *to_html = cmark_markdown_to_html(html, strlen(html), CMARK_OPT_DEFAULT);
 			return std::make_pair(strlen(to_html), to_html);
 		}
 
-		auto [r0, r1] = MarkdownToHTML(html);
-		return std::make_pair(r0, r1);
+		throw std::runtime_error("Invalid engine specified");
 	}
 } // namespace camus::util

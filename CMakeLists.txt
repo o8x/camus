@@ -10,22 +10,22 @@ file(GLOB SOURCE_FILES
         camus/*.h
         camus/*.cpp
         third-party/cmdline/*.h
-        third-party/gomarkdown/*.h
 )
 
 add_library(camus STATIC ${SOURCE_FILES})
-target_include_directories(camus PUBLIC camus)
-target_include_directories(camus PUBLIC third-party/cmdline third-party/gomarkdown)
-target_link_libraries(camus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third-party/gomarkdown/libgomarkdown.a)
 
-target_link_libraries(camus PRIVATE libcmark-gfm_static)
-target_include_directories(camus PRIVATE
+target_include_directories(camus PUBLIC
+        camus
+        third-party/cmdline
         ${CMAKE_SOURCE_DIR}/third-party/cmark-gfm/src
         ${CMAKE_BINARY_DIR}/third-party/cmark-gfm/src
 )
 
+target_link_libraries(camus PUBLIC
+        libcmark-gfm_static
+)
+
 add_subdirectory(third-party/cmark-gfm EXCLUDE_FROM_ALL)
-add_subdirectory(third-party/gomarkdown)
 
 add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE camus)

@@ -33,5 +33,5 @@ namespace camus::util
 
 	std::string format_time_t(const time_t timestamp, const std::string &format = "%Y-%m-%d %H:%M:%S");
 
-	std::pair<uint32_t, char *> markdown_to_html(char *html, const bool cmark = false);
+	std::pair<uint32_t, char *> markdown_to_html(const char *html, const std::string &engine  = "cmark");
 } // namespace camus::util
