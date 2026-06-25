@@ -1,9 +1,9 @@
 #include "config.h"
 
+#include "common/functions/functions.h"
+
 #include <fstream>
 #include <iostream>
-
-#include "utils.h"
 
 namespace camus
 {
@@ -21,14 +21,14 @@ namespace camus
 	void ini::fill(std::string &data)
 	{
 		for (const auto &[key, value] : all().config_map) {
-			util::replace_all(data, std::format("{{{{{}}}}}", key), value);
+			functions::replace_all(data, std::format("{{{{{}}}}}", key), value);
 		}
 
 		const time_t unix = std::time(nullptr);
 		char buf[20];
 		std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&unix));
-		util::replace_all(data, "{{build.timestamp}}", std::to_string(unix));
-		util::replace_all(data, "{{build.time}}", buf);
+		functions::replace_all(data, "{{build.timestamp}}", std::to_string(unix));
+		functions::replace_all(data, "{{build.time}}", buf);
 	}
 
 	std::string ini::make_key(const std::string &section, const std::string &key)
@@ -61,7 +61,7 @@ namespace camus
 				if (size_t delimiter = line.find('='); delimiter != std::string::npos) {
 					std::string key = line.substr(0, delimiter);
 					std::string value = line.substr(delimiter + 1);
-					result[make_key(section, key)] = util::trim_space(value);
+					result[make_key(section, key)] = functions::trim_space(value);
 				}
 			}
 		}

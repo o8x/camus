@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <vector>
 
-#include "utils.h"
+#include "common/functions/functions.h"
 
 namespace camus
 {
@@ -27,7 +27,7 @@ namespace camus
 
 		std::string join_content() const
 		{
-			return util::join(content, "\n");
+			return functions::string_join(content, "\n");
 		}
 
 		bool is_visible()
@@ -41,7 +41,7 @@ namespace camus
 
 			ss << "{" << std::endl
 			   << "  uuid: " << uuid << "," << std::endl
-			   << "  date: " << util::format_time_t(create_time) << "," << std::endl
+			   << "  date: " << functions::format_time_t(create_time) << "," << std::endl
 			   << "  filename: " << filename << "," << std::endl
 			   << "  visibility: " << visibility << "," << std::endl
 			   << "  full_filename: " << full_filename << "," << std::endl
@@ -64,7 +64,7 @@ namespace camus
 				<< R"(    "create_time": )" << create_time << "," << std::endl
 				<< R"(    "short_path": ")" << short_path << "\"," << std::endl
 				<< R"(    "url": ")" << url << "\"," << std::endl
-				<< R"(    "display_name": ")" << util::replace(display_name, R"(")", R"(\")") << "\"" << std::endl
+				<< R"(    "display_name": ")" << functions::replace(display_name, R"(")", R"(\")") << "\"" << std::endl
 				<< "}";
 
 			return oss.str();

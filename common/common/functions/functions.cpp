@@ -1,6 +1,4 @@
-#include "utils.h"
-
-#include "cmark-gfm.h"
+#include "functions.h"
 
 #include <__random/random_device.h>
 #include <fstream>
@@ -9,7 +7,7 @@
 #include <sstream>
 #include <vector>
 
-namespace camus::util
+namespace functions
 {
 	std::string get_now_time(const std::string &format)
 	{
@@ -103,20 +101,6 @@ namespace camus::util
 		return str.substr(first, (last - first + 1));
 	}
 
-	bool write_file(const std::string &filename, const std::string &content)
-	{
-		std::ofstream outfile(filename);
-
-		if (!outfile.is_open()) {
-			return false;
-		}
-
-		outfile << content;
-		outfile.close();
-
-		return true;
-	}
-
 	void replace_all(std::string &str, const std::string &from, const std::string &to)
 	{
 		size_t start_pos = 0;
@@ -138,7 +122,7 @@ namespace camus::util
 		return data;
 	}
 
-	std::string join(const std::vector<std::string> &vec, const std::string &delimiter)
+	std::string string_join(const std::vector<std::string> &vec, const std::string &delimiter)
 	{
 		std::string result;
 
@@ -198,14 +182,4 @@ namespace camus::util
 		oss << std::put_time(tm, format.c_str());
 		return oss.str();
 	}
-
-	std::pair<uint32_t, char *> markdown_to_html(const char *html, const std::string &engine)
-	{
-		if (engine == "cmark") {
-			char *to_html = cmark_markdown_to_html(html, strlen(html), CMARK_OPT_DEFAULT);
-			return std::make_pair(strlen(to_html), to_html);
-		}
-
-		throw std::runtime_error("Invalid engine specified");
-	}
-} // namespace camus::util
+} // namespace functions

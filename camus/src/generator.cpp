@@ -6,9 +6,12 @@
 #include <unistd.h>
 #include <vector>
 
-#include "log.h"
-#include "utils.h"
 #include "config.h"
+#include "common/error/error.h"
+#include "common/filesystem/filesystem.h"
+#include "common/functions/functions.h"
+#include "common/logging/logging.h"
+#include "common/markdown/markdown.h"
 
 namespace camus
 {
@@ -21,7 +24,7 @@ namespace camus
 		}
 
 		article article{
-			.uuid = util::uuid_v4(),
+			.uuid = functions::uuid_v4(),
 			.create_time = time(nullptr),
 			.filename = path.filename().string(),
 			.visibility = article::open,
@@ -49,8 +52,8 @@ namespace camus
 			if (params_count < 2 || line == "---") {
 				auto set_string_parma = [&](const std::string &name, std::string &out) {
 					if (out.empty() && line.find(name) != std::string::npos) {
-						const std::vector<std::string> res = util::split(line, name);
-						out = util::trim_space(res[1]);
+						const std::vector<std::string> res = functions::split(line, name);
+						out = functions::trim_space(res[1]);
 					}
 				};
 
@@ -71,7 +74,7 @@ namespace camus
 				}
 
 				if (!datetime.empty()) {
-					article.create_time = util::datetime_to_unix(util::trim_space(datetime));
+					article.create_time = functions::datetime_to_unix(functions::trim_space(datetime));
 				}
 
 				continue;
@@ -81,12 +84,12 @@ namespace camus
 				article.hidden_lines++;
 			}
 
-			if (util::trim_space(line) == "--hidden-section-start") {
+			if (functions::trim_space(line) == "--hidden-section-start") {
 				hidden_flag = true;
 				continue;
 			}
 
-			if (util::trim_space(line) == "--hidden-section-end") {
+			if (functions::trim_space(line) == "--hidden-section-end") {
 				hidden_flag = false;
 				continue;
 			}
@@ -100,9 +103,9 @@ namespace camus
 		if (name.empty()) {
 			if (ini::all().filename_type == "original_filename") {
 				name = article.filename;
-				util::replace_all(name, ".md", "");
+				functions::replace_all(name, ".md", "");
 
-				article.url = util::url_encode(name) + ".html";
+				article.url = functions::url_encode(name) + ".html";
 			} else {
 				name = article.uuid;
 				article.url = name + ".html";
@@ -119,7 +122,7 @@ namespace camus
 	{
 		article home_theme = get_page_theme_from_file(filename);
 		home_theme.visibility = article::open;
-		home_theme.uuid = util::uuid_v4();
+		home_theme.uuid = functions::uuid_v4();
 		home_theme.create_time = time(nullptr);
 		home_theme.filename = filename;
 		home_theme.short_path = "index";
@@ -134,7 +137,7 @@ namespace camus
 		std::ifstream file(filename);
 
 		if (!file.is_open()) {
-			throw std::runtime_error("Could not open theme file " + filename);
+			error::panic("could not open theme name={}", filename);
 		}
 
 		article data{
@@ -162,26 +165,26 @@ namespace camus
 			hidden_flag = std::format(", hidden: {} line", article.hidden_lines);
 		}
 
-		log::info(std::format("generating: {}", article.out_filename, hidden_flag));
+		logging::info(std::format("generating: {}", article.out_filename, hidden_flag));
 
-		std::string markdown = util::join(article.content, "\n");
-		auto [length, to_html] = util::markdown_to_html(markdown.data(), ini::all().markdown_engine);
+		std::string markdown = functions::string_join(article.content, "\n");
+		auto [length, to_html] = markdown::markdown_to_html(markdown.data(), ini::all().markdown_engine);
 
 		std::string t = tpl.join_content();
-		std::string date_str = util::format_time_t(article.create_time);
+		std::string date_str = functions::format_time_t(article.create_time);
 		std::string html_content(to_html, length); // 固定长度，避免读到脏内存
 
 		free(to_html);
 
 		// 替换参数
 		ini::fill(t);
-		util::replace_all(date_str, " 00:00:00", "");  // 去掉无用的时间部分
-		util::replace_all(html_content, "<hr />", ""); // 去掉自动生成的 hr 标记
-		util::replace_all(t, "{{page.title}}", article.display_name);
-		util::replace_all(t, "{{page.date}}", date_str);
-		util::replace_all(t, "{{page.description}}", "");
-		util::replace_all(t, "{{page.content}}", html_content);
-		util::replace_all(t, "{{page.info}}", article.to_json());
+		functions::replace_all(date_str, " 00:00:00", "");	// 去掉无用的时间部分
+		functions::replace_all(html_content, "<hr />", ""); // 去掉自动生成的 hr 标记
+		functions::replace_all(t, "{{page.title}}", article.display_name);
+		functions::replace_all(t, "{{page.date}}", date_str);
+		functions::replace_all(t, "{{page.description}}", "");
+		functions::replace_all(t, "{{page.content}}", html_content);
+		functions::replace_all(t, "{{page.info}}", article.to_json());
 
 		// 写入文件
 		std::ofstream writer(article.out_filename, std::ios::out);
@@ -198,14 +201,14 @@ namespace camus
 
 	void generate_index_page(const article &index, const std::string &toc)
 	{
-		log::info(std::format("generating: {}", index.out_filename));
+		logging::info(std::format("generating: {}", index.out_filename));
 
 		std::string content = index.join_content();
-		util::replace_all(content, "{{posts-item-json}}", toc);
+		functions::replace_all(content, "{{posts-item-json}}", toc);
 
 		ini::fill(content);
-		util::write_file(index.out_filename, content);
-		util::write_file(std::format("{}/toc.json", ini::all().out_directory), toc);
+		filesystem::write_file(index.out_filename, content);
+		filesystem::write_file(std::format("{}/toc.json", ini::all().out_directory), toc);
 	}
 
 	std::string generate_directory_json(std::vector<article> &pages)
@@ -218,11 +221,11 @@ namespace camus
 				continue;
 			}
 
-			util::replace_all(it.display_name, "\"", "'");
+			functions::replace_all(it.display_name, "\"", "'");
 			items.push_back(it.to_json());
 		}
 
-		const std::string items_string = util::join(items, ",\n");
+		const std::string items_string = functions::string_join(items, ",\n");
 		return "[" + items_string + "]";
 	}
 
@@ -237,7 +240,7 @@ namespace camus
 			const std::string full_filename = entry.path().string();
 			const std::string filename = entry.path().filename().string();
 			if (!entry.is_regular_file()) {
-				throw std::runtime_error("File is not a regular file " + full_filename);
+				error::panic("file is not a regular file={}", full_filename);
 			}
 
 			// 只处理 md
@@ -247,7 +250,7 @@ namespace camus
 
 			std::optional<article> article = parse_article_params(full_filename);
 			if (!article.has_value()) {
-				log::info("parse params failed, skip: " + full_filename);
+				logging::info("parse params failed, skip: " + full_filename);
 				continue;
 			}
 
@@ -265,7 +268,7 @@ namespace camus
 		// 生成文章
 		for (article &page : pages) {
 			if (!page.is_visible()) {
-				log::info("skip article: " + page.display_name);
+				logging::info("skip article: " + page.display_name);
 				continue;
 			}
 
@@ -275,7 +278,7 @@ namespace camus
 		// 整体拷贝资源文件夹
 		if (std::filesystem::exists(ini::all().assets_directory)) {
 			if (std::filesystem::is_empty(ini::all().assets_directory)) {
-				log::info(std::format("skip empty assets directory: {}", ini::all().assets_directory));
+				logging::info(std::format("skip empty assets directory: {}", ini::all().assets_directory));
 			} else {
 				// 默认会将资源文件都提升到输出文件夹中
 				std::filesystem::copy(
@@ -291,7 +294,7 @@ namespace camus
 					}
 				}
 
-				log::info(
+				logging::info(
 					std::format(
 						"assets: promote copy {}/* to {}/* files={}",
 						ini::all().assets_directory,
@@ -307,12 +310,12 @@ namespace camus
 
 			for (const auto &it : pages) {
 				std::string url = std::format("{}/{}", ini::all().site_homepage, it.url);
-				util::replace_all(url, "//", "/");
+				functions::replace_all(url, "//", "/");
 
 				std::string loc = std::format(
 					"<url><loc>{}</loc><lastmod>{}</lastmod></url>",
 					url,
-					util::format_time_t(it.create_time, "%Y-%m-%d")
+					functions::format_time_t(it.create_time, "%Y-%m-%d")
 				);
 
 				items.push_back(loc);
@@ -320,16 +323,16 @@ namespace camus
 
 			const std::string filename = std::format("{}/sitemap.xml", ini::all().out_directory);
 
-			log::info(
+			logging::info(
 				std::format("generating: sitemap file={} url={}/sitemap.xml", filename, ini::all().site_homepage)
 			);
 
-			util::write_file(
+			filesystem::write_file(
 				filename,
 				std::format(
 					R"(<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{}</urlset>)",
-					util::join(items, "\n\t")
+					functions::string_join(items, "\n\t")
 				)
 			);
 		}

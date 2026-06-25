@@ -10,13 +10,13 @@ build:
 
 .PHONY: serve
 serve: build
-	@build/release/Camus $(SITE_ROOT)
+	@build/release/camus/Camus $(SITE_ROOT)
 	@echo "listen on http://localhost:8000"
 	@python3 -m http.server --bind localhost 8000 --directory $(SITE_ROOT)/html
 
 .PHONY: push
 push: build
-	@build/release/Camus $(SITE_ROOT)
+	@build/release/camus/Camus $(SITE_ROOT)
 	@git -C $(SITE_ROOT)/html init
 	@git -C $(SITE_ROOT)/html remote add origin $(REPO_URL)
 	@git -C $(SITE_ROOT)/html add .
