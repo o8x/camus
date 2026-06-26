@@ -7,7 +7,6 @@
 #include "yaml-cpp/yaml.h"
 
 #include <fstream>
-#include <iostream>
 
 namespace camus
 {
@@ -39,8 +38,6 @@ namespace camus
 				camus.theme_page = std::format("theme/{}/page.html", value);
 			} else if (key == "filename_case") {
 				camus.filename_case = value;
-			} else if (key == "toc") {
-				camus.toc = value;
 			}
 
 			flattened_map.emplace(std::format("camus.{}", key), value);
@@ -115,20 +112,26 @@ namespace camus
 		return get().config_->site;
 	}
 
-	void conf_loader::parse_yaml(const std::string &name)
+	void conf_loader::parse_yaml(const std::string &work_dir, const std::string &name)
 	{
-		if (!std::filesystem::exists(name)) {
-			error::panic("config file not fount name={}", name);
+		const std::string filename = std::format("{}/{}", work_dir, name);
+		if (!std::filesystem::exists(filename)) {
+			error::panic("config file not fount name={}", filename);
 		}
 
-		file_ = name;
-		config_ = new config(YAML::LoadFile(name));
+		file_ = filename;
+		config_ = new config(YAML::LoadFile(filename));
+		config_->camus.work_dir = work_dir;
+		logging::info("with config name={}", filename);
 	}
 
-	void conf_loader::render_var(std::string &data)
+	std::string conf_loader::render_var(const std::string &data)
 	{
+		std::string res = data;
 		for (const auto &[key, value] : get().config_->map()) {
-			functions::replace_all(data, "{{" + key + "}}", value);
+			res = functions::replace(res, "{{" + key + "}}", value);
 		}
+
+		return res;
 	}
 } // namespace camus

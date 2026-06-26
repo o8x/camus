@@ -17,8 +17,6 @@ namespace functions
 
 	std::string trim_space(const std::string &str);
 
-	void replace_all(std::string &str, const std::string &from, const std::string &to);
-
 	std::string replace(const std::string &str, const std::string &from, const std::string &to);
 
 	std::string string_join(const std::vector<std::string> &vec, const std::string &delimiter);
