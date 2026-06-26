@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content="{{site.subtitle}}">
     <meta name="build-time" content="{{build.time}}">
+    <meta name="build-type" content="{{build.build-type}}">
+    <meta name="cmake-version" content="{{build.cmake-version}}">
+    <meta name="cxx-standard" content="{{build.cxx-standard}}">
     <title>{{site.title}} - {{site.subtitle}}</title>
     <link id="favicon" rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1049,10 +1052,7 @@
 
             <ul class="toc-list" id="toc-list" style="display:none"></ul>
 
-            <footer class="cover-footer">
-                Powered by <a href="https://github.com/o8x/camus" tabindex="-1">Camus</a> built with
-                {{camus.markdown_engine}}
-            </footer>
+            <footer class="cover-footer">{{build.powered-by}}</footer>
         </div>
 
         <div class="keyboard-hint" id="keyboard-hint">

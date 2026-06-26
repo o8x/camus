@@ -1,98 +1,134 @@
 #include "config.h"
 
+#include "common/error/error.h"
 #include "common/functions/functions.h"
+
+// 只包含这一个即可，分别包含会模板出错
+#include "yaml-cpp/yaml.h"
 
 #include <fstream>
 #include <iostream>
 
 namespace camus
 {
-	ini &ini::get()
+	config::config(const YAML::Node &root)
 	{
-		static ini i;
-		return i;
-	}
-
-	config ini::all()
-	{
-		return *get().config_;
-	}
-
-	void ini::fill(std::string &data)
-	{
-		for (const auto &[key, value] : all().config_map) {
-			functions::replace_all(data, std::format("{{{{{}}}}}", key), value);
+		YAML::Node camus_data = root["camus"];
+		if (!camus_data.IsMap()) {
+			error::panic("config file parse failed");
 		}
+
+		YAML::Node site_data = root["site"];
+		if (!site_data.IsMap()) {
+			error::panic("parse site config failed");
+		}
+
+		for (auto it : camus_data) {
+			const auto key = functions::trim_space(it.first.as<std::string>());
+			const auto value = functions::trim_space(it.second.as<std::string>());
+			if (key == "source_dir") {
+				camus.source_dir = value;
+			} else if (key == "output_dir") {
+				camus.output_dir = value;
+			} else if (key == "assets_dir") {
+				camus.assets_dir = value;
+			} else if (key == "sitemap") {
+				camus.sitemap = value == "true";
+			} else if (key == "theme") {
+				camus.theme_home = std::format("theme/{}/home.html", value);
+				camus.theme_page = std::format("theme/{}/page.html", value);
+			} else if (key == "filename_case") {
+				camus.filename_case = value;
+			} else if (key == "toc") {
+				camus.toc = value;
+			}
+
+			flattened_map.emplace(std::format("camus.{}", key), value);
+		}
+
+		for (auto it : site_data) {
+			const auto key = functions::trim_space(it.first.as<std::string>());
+			const auto value = functions::trim_space(it.second.as<std::string>());
+			if (key == "title") {
+				site.title = value;
+			} else if (key == "subtitle") {
+				site.subtitle = value;
+			} else if (key == "description") {
+				site.description = value;
+			} else if (key == "url") {
+				site.url = value;
+			} else if (key == "repo") {
+				site.repo = value;
+			}
+
+			flattened_map.emplace(std::format("site.{}", key), value);
+		}
+
+		std::string compiler_version = "unknown";
+#if defined(__clang__)
+		compiler_version = std::format("clang v{}.{}.{}", __clang_major__, __clang_minor__, __clang_patchlevel__);
+#elif defined(__GNUC__) || defined(__GNUG__)
+		compiler_version = std::format("gcc v{}.{}.{}", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+#elif defined(_MSC_VER)
+		compiler_version = std::format("msvc v{}", _MSC_VER);
+#endif
 
 		const time_t unix = std::time(nullptr);
 		char buf[20];
 		std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&unix));
-		functions::replace_all(data, "{{build.timestamp}}", std::to_string(unix));
-		functions::replace_all(data, "{{build.time}}", buf);
+		flattened_map.emplace("build.timestamp", std::to_string(unix * 1000));
+		flattened_map.emplace("build.time", buf);
+		flattened_map.emplace("build.build-type", BUILD_TYPE);
+		flattened_map.emplace("build.cmake-version", CMAKE_VERSION);
+		flattened_map.emplace("build.cxx-standard", CXX_STANDARD);
+		flattened_map.emplace("build.version", PROJECT_VERSION);
+		flattened_map.emplace("build.version_major", PROJECT_VERSION_MAJOR);
+		flattened_map.emplace("build.compiler", compiler_version);
+		flattened_map.emplace("git.repo", GIT_REPO);
+		flattened_map.emplace("git.branch", GIT_BRANCH);
+		flattened_map.emplace("git.commit-hash", GIT_COMMIT_LONG);
+		flattened_map.emplace("git.repo-clean", GIT_IS_CLEAN);
+		flattened_map.emplace(
+			"build.powered-by",
+			std::format(
+				"<small><em>Powered by <a href=\"{}\">Camus</a> v{} built with {}</em></small>",
+				GIT_REPO,
+				PROJECT_VERSION,
+				compiler_version
+			)
+		);
 	}
 
-	std::string ini::make_key(const std::string &section, const std::string &key)
+	conf_loader &conf_loader::get()
 	{
-		return section + "." + key;
+		static conf_loader i;
+		return i;
 	}
 
-	std::unordered_map<std::string, std::string> ini::parse(const std::string &name)
+	camus_conf conf_loader::camus()
 	{
-		std::ifstream file(name);
-		std::string line, section;
+		return get().config_->camus;
+	}
 
-		std::unordered_map<std::string, std::string> result;
+	site_conf conf_loader::site()
+	{
+		return get().config_->site;
+	}
 
-		while (std::getline(file, line)) {
-			// 去除行首尾的空白字符
-			line.erase(line.find_last_not_of(" \r\n\t") + 1);
-			if (line.empty() || line[0] == ';' || line[0] == '#') {
-				// 跳过空行和注释
-				continue;
-			}
-
-			if (line[0] == '[') {
-				// 新的节开始
-				if (size_t end = line.find(']'); end != std::string::npos) {
-					section = line.substr(1, end - 1);
-				}
-			} else {
-				// 读取键值对
-				if (size_t delimiter = line.find('='); delimiter != std::string::npos) {
-					std::string key = line.substr(0, delimiter);
-					std::string value = line.substr(delimiter + 1);
-					result[make_key(section, key)] = functions::trim_space(value);
-				}
-			}
+	void conf_loader::parse_yaml(const std::string &name)
+	{
+		if (!std::filesystem::exists(name)) {
+			error::panic("config file not fount name={}", name);
 		}
 
-		file.close();
-
-		config_ = new config(result);
 		file_ = name;
-
-		return result;
+		config_ = new config(YAML::LoadFile(name));
 	}
 
-	void ini::write(const std::unordered_map<std::string, std::string> &config) const
+	void conf_loader::render_var(std::string &data)
 	{
-		std::ofstream file(file_);
-		std::string current_section;
-
-		for (const auto &pair : config) {
-			size_t delimiter = pair.first.find("::");
-			std::string section = pair.first.substr(0, delimiter);
-			std::string key = pair.first.substr(delimiter + 2);
-			if (section != current_section) {
-				// 写入新的节
-				file << "[" << section << "]\n";
-				current_section = section;
-			}
-
-			// 写入键值对
-			file << key << "=" << pair.second << "\n";
+		for (const auto &[key, value] : get().config_->map()) {
+			functions::replace_all(data, "{{" + key + "}}", value);
 		}
-
-		file.close();
 	}
 } // namespace camus

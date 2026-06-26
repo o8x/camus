@@ -101,7 +101,7 @@ namespace camus
 
 		std::string name = article.short_path;
 		if (name.empty()) {
-			if (ini::all().filename_type == "original_filename") {
+			if (conf_loader::camus().filename_case == "keep") {
 				name = article.filename;
 				functions::replace_all(name, ".md", "");
 
@@ -114,7 +114,7 @@ namespace camus
 			article.url = name + ".html";
 		}
 
-		article.out_filename = ini::all().out_directory + "/" + name + ".html";
+		article.out_filename = conf_loader::camus().output_dir + "/" + name + ".html";
 		return article;
 	}
 
@@ -127,7 +127,7 @@ namespace camus
 		home_theme.filename = filename;
 		home_theme.short_path = "index";
 		home_theme.display_name = "Home Page";
-		home_theme.out_filename = ini::all().out_directory + "/index.html";
+		home_theme.out_filename = conf_loader::camus().output_dir + "/index.html";
 
 		return home_theme;
 	}
@@ -168,7 +168,7 @@ namespace camus
 		logging::info(std::format("generating: {}", article.out_filename, hidden_flag));
 
 		std::string markdown = functions::string_join(article.content, "\n");
-		auto [length, to_html] = markdown::markdown_to_html(markdown.data(), ini::all().markdown_engine);
+		auto [length, to_html] = markdown::markdown_to_html(markdown.data());
 
 		std::string t = tpl.join_content();
 		std::string date_str = functions::format_time_t(article.create_time);
@@ -177,7 +177,6 @@ namespace camus
 		free(to_html);
 
 		// 替换参数
-		ini::fill(t);
 		functions::replace_all(date_str, " 00:00:00", "");	// 去掉无用的时间部分
 		functions::replace_all(html_content, "<hr />", ""); // 去掉自动生成的 hr 标记
 		functions::replace_all(t, "{{page.title}}", article.display_name);
@@ -185,6 +184,7 @@ namespace camus
 		functions::replace_all(t, "{{page.description}}", "");
 		functions::replace_all(t, "{{page.content}}", html_content);
 		functions::replace_all(t, "{{page.info}}", article.to_json());
+		conf_loader::render_var(t);
 
 		// 写入文件
 		std::ofstream writer(article.out_filename, std::ios::out);
@@ -206,9 +206,9 @@ namespace camus
 		std::string content = index.join_content();
 		functions::replace_all(content, "{{posts-item-json}}", toc);
 
-		ini::fill(content);
+		conf_loader::render_var(content);
 		filesystem::write_file(index.out_filename, content);
-		filesystem::write_file(std::format("{}/toc.json", ini::all().out_directory), toc);
+		filesystem::write_file(std::format("{}/toc.json", conf_loader::camus().output_dir), toc);
 	}
 
 	std::string generate_directory_json(std::vector<article> &pages)
@@ -229,14 +229,18 @@ namespace camus
 		return "[" + items_string + "]";
 	}
 
-	void generate_by_directory()
+	void generate_from_directory(const std::string &read_dir, const std::string &write_dir)
 	{
-		const std::string &read_directory = ini::all().posts_directory;
-		const article page_theme = get_page_theme_from_file(ini::all().page_template);
-		const article home_theme = get_index_theme_from_file(ini::all().home_template);
+		const article page_theme = get_page_theme_from_file(conf_loader::camus().theme_page);
+		const article home_theme = get_index_theme_from_file(conf_loader::camus().theme_home);
+
+		std::filesystem::remove_all(write_dir);
+		std::filesystem::create_directory(write_dir);
+
+		logging::info("into posts directory: {}", read_dir);
 
 		std::vector<article> pages;
-		for (const auto &entry : std::filesystem::directory_iterator(read_directory)) {
+		for (const auto &entry : std::filesystem::directory_iterator(read_dir)) {
 			const std::string full_filename = entry.path().string();
 			const std::string filename = entry.path().filename().string();
 			if (!entry.is_regular_file()) {
@@ -275,20 +279,20 @@ namespace camus
 			generate_article_page(page_theme, page);
 		}
 
-		// 整体拷贝资源文件夹
-		if (std::filesystem::exists(ini::all().assets_directory)) {
-			if (std::filesystem::is_empty(ini::all().assets_directory)) {
-				logging::info(std::format("skip empty assets directory: {}", ini::all().assets_directory));
+		if (const std::string assets_dir = conf_loader::camus().assets_dir; std::filesystem::exists(assets_dir)) {
+			// 整体拷贝资源文件夹
+			if (std::filesystem::is_empty(assets_dir)) {
+				logging::info(std::format("skip empty assets directory: {}", assets_dir));
 			} else {
 				// 默认会将资源文件都提升到输出文件夹中
 				std::filesystem::copy(
-					ini::all().assets_directory,
-					ini::all().out_directory,
+					assets_dir,
+					conf_loader::camus().output_dir,
 					std::filesystem::copy_options::recursive
 				);
 
 				size_t count = 0;
-				for (const auto &entry : std::filesystem::recursive_directory_iterator(ini::all().assets_directory)) {
+				for (const auto &entry : std::filesystem::recursive_directory_iterator(assets_dir)) {
 					if (entry.is_regular_file()) {
 						++count;
 					}
@@ -297,19 +301,19 @@ namespace camus
 				logging::info(
 					std::format(
 						"assets: promote copy {}/* to {}/* files={}",
-						ini::all().assets_directory,
-						ini::all().out_directory,
+						assets_dir,
+						conf_loader::camus().output_dir,
 						count
 					)
 				);
 			}
 		}
 
-		if (ini::all().sitemap) {
+		if (conf_loader::camus().sitemap) {
 			std::vector<std::string> items;
 
 			for (const auto &it : pages) {
-				std::string url = std::format("{}/{}", ini::all().site_homepage, it.url);
+				std::string url = std::format("{}/{}", conf_loader::site().url, it.url);
 				functions::replace_all(url, "//", "/");
 
 				std::string loc = std::format(
@@ -321,10 +325,10 @@ namespace camus
 				items.push_back(loc);
 			}
 
-			const std::string filename = std::format("{}/sitemap.xml", ini::all().out_directory);
+			const std::string filename = std::format("{}/sitemap.xml", conf_loader::camus().output_dir);
 
 			logging::info(
-				std::format("generating: sitemap file={} url={}/sitemap.xml", filename, ini::all().site_homepage)
+				std::format("generating: sitemap file={} url={}/sitemap.xml", filename, conf_loader::site().url)
 			);
 
 			filesystem::write_file(

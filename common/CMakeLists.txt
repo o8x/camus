@@ -20,4 +20,5 @@ target_include_directories(common PUBLIC
 
 target_link_libraries(common PUBLIC
         libcmark-gfm_static
+        yaml-cpp::yaml-cpp
 )

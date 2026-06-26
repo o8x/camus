@@ -91,5 +91,5 @@ namespace camus
 	bool generate_article_page(const article &tpl, const article &article);
 
 	// 生成全部
-	void generate_by_directory();
+	void generate_from_directory(const std::string &read_dir, const std::string &write_dir);
 } // namespace camus
