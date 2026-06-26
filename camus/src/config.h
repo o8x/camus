@@ -17,7 +17,7 @@ namespace camus
 
 	struct camus_conf {
 		bool sitemap;
-		std::string toc = "auto";
+		std::string work_dir;
 		std::string source_dir = "posts";
 		std::string output_dir = "html";
 		std::string assets_dir = "assets";
@@ -51,9 +51,9 @@ namespace camus
 		static conf_loader &get();
 		static camus_conf camus();
 		static site_conf site();
-		static void render_var(std::string &data);
+		static std::string render_var(const std::string &data);
 
-		void parse_yaml(const std::string &name);
+		void parse_yaml(const std::string &work_dir, const std::string &name);
 	};
 
 } // namespace camus

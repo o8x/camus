@@ -1,7 +1,8 @@
 #pragma once
 
+#include "config.h"
+
 #include <optional>
-#include <ostream>
 #include <sstream>
 #include <filesystem>
 #include <vector>
@@ -30,42 +31,25 @@ namespace camus
 			return functions::string_join(content, "\n");
 		}
 
-		bool is_visible()
+		bool is_visible() const
 		{
 			return visibility != hidden;
-		}
-
-		std::string to_string() const
-		{
-			std::stringstream ss;
-
-			ss << "{" << std::endl
-			   << "  uuid: " << uuid << "," << std::endl
-			   << "  date: " << functions::format_time_t(create_time) << "," << std::endl
-			   << "  filename: " << filename << "," << std::endl
-			   << "  visibility: " << visibility << "," << std::endl
-			   << "  full_filename: " << full_filename << "," << std::endl
-			   << "  hidden_lines: " << hidden_lines << "," << std::endl
-			   << "  short_path: " << short_path << "," << std::endl
-			   << "  url: " << url << "," << std::endl
-			   << "  display_name: " << display_name << "," << std::endl
-			   << "  out_filename: " << out_filename << "," << std::endl
-			   << "}";
-
-			return ss.str();
 		}
 
 		std::string to_json() const
 		{
 			std::ostringstream oss;
 
-			oss << "{" << std::endl
-				<< R"(    "uuid": ")" << uuid << "\"," << std::endl
-				<< R"(    "create_time": )" << create_time << "," << std::endl
-				<< R"(    "short_path": ")" << short_path << "\"," << std::endl
-				<< R"(    "url": ")" << url << "\"," << std::endl
-				<< R"(    "display_name": ")" << functions::replace(display_name, R"(")", R"(\")") << "\"" << std::endl
-				<< "}";
+			oss << "{";
+			if (conf_loader::camus().filename_case == "uuid") {
+				oss << R"("uuid": ")" << uuid << "\",";
+			}
+
+			oss << R"("create_time": )" << create_time << ",";
+			oss << R"("short_path": ")" << short_path << "\",";
+			oss << R"("url": ")" << url << "\",";
+			oss << R"("display_name": ")" << display_name << "\"";
+			oss << "}";
 
 			return oss.str();
 		}
@@ -78,17 +62,14 @@ namespace camus
 
 	std::optional<article> parse_article_params(const std::filesystem::path &path);
 
-	// 生成目录
-	std::string generate_directory_json(std::vector<article> &pages);
-
 	// 生产主页
-	void generate_index_page(const article &index, const std::string &toc);
+	void generate_toc_home(const std::vector<article> &pages);
 
 	article get_index_theme_from_file(const std::string &filename);
 	article get_page_theme_from_file(const std::string &filename);
 
 	// 生成文章
-	bool generate_article_page(const article &tpl, const article &article);
+	bool generate_article_page(const article &article);
 
 	// 生成全部
 	void generate_from_directory(const std::string &read_dir, const std::string &write_dir);

@@ -101,3 +101,10 @@ visibility: open
 --hidden-section-end
 ...
 ```
+
+git clone --recursive https://github.com/biojppm/rapidyaml third-party/rapidyaml
+
+1. 压缩 toc.json
+2. 支持从章节生成文件，并支持二级目录。并支持自动扫描同步目录文件
+	1. 小说模式：切换字体，颜色，主题，支持分卷，和自动合并为连续单页，只在屏幕中心展示，记录阅读进度、左右分页等
+3. 支持切换为小说视图
