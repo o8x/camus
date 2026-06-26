@@ -23,4 +23,7 @@ BreakBeforeBraces: Linux
 AllowShortFunctionsOnASingleLine: None
 # 函数之间强制换一行
 SeparateDefinitionBlocks: Always
+# 构造函数初始化列表每个成员独占一行，冒号在第一行
+BreakConstructorInitializers: AfterColon
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ...
