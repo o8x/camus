@@ -10,7 +10,7 @@ file(GLOB SOURCES
         common/filesystem/*.cpp
 )
 
-add_library(common ${SOURCES})
+add_library(common STATIC ${SOURCES})
 
 target_include_directories(common PUBLIC
         .

@@ -1,0 +1,58 @@
+name: CMake on multiple platforms
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-24.04
+    container:
+      image: docker.io/ubuntu:24.04
+
+    steps:
+    - name: Install dependencies
+      run: |
+        apt update -y
+        apt install -y git ninja-build make cmake gcc g++ mold dpkg-dev 
+
+    - uses: actions/checkout@v4
+
+    - name: Build
+      run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
+        git submodule update --init --recursive
+        make build
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: Ubuntu-Artifacts
+        path: build/release/packages
+        if-no-files-found: error
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install git make cmake ninja gcc@13
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule update --init --recursive
+          make build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacOS-Artifacts
+          path: build/release/packages
+          if-no-files-found: error
