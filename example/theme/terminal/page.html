@@ -5,7 +5,6 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content="{{page.description}}">
-    <meta name="build-time" content="{{build.time}}">
     <title>{{page.title}} - {{site.title}}</title>
     <link id="favicon" rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,7 +86,7 @@
                     'Noto Sans SC',
                     serif,
                     monospace;
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             background: #000;
             color: var(--text);
             line-height: 1.4;
@@ -392,12 +391,11 @@
         }
 
         .chapter-title {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1.3rem;
+            font-size: 1.8rem;
             color: var(--accent);
             letter-spacing: 0.05em;
             line-height: 1.6;
-            text-shadow: 0 0 2px var(--accent), 0 0 30px var(--accent);
+            text-shadow: 0 0 30px var(--accent-dim);
             image-rendering: pixelated;
         }
 
@@ -435,6 +433,20 @@
         .chapter-content h2 { font-size: 1.5rem; }
         .chapter-content h3 { font-size: 1rem; }
 
+        @media (max-width: 768px) {
+            body {
+                font-size: 1rem !important;
+            }
+
+            .chapter-content h1 { font-size: 1.2rem !important; }
+            .chapter-content h2 { font-size: 1.1rem !important; }
+            .chapter-content h3 { font-size: 1.0rem !important; }
+
+            .keyboard-hint {
+                display: none !important;
+            }
+        }
+
         .chapter-content blockquote {
             margin: 1rem 0;
             padding: 0.8rem 1rem;
@@ -468,7 +480,6 @@
         .chapter-content code:not(.hljs) {
             background: var(--code-bg);
             padding: 0.1em 0.3em;
-            font-size: 1.2rem;
             color: var(--accent);
             border: 1px solid var(--border);
             text-shadow: 0 0 2px var(--text);
@@ -478,7 +489,6 @@
             display: block;
             overflow-x: auto;
             padding: 0.8rem 1rem;
-            font-size: 1.1rem;
             line-height: 1.5;
             border: 1px solid var(--border);
             background: var(--code-bg);
@@ -495,7 +505,6 @@
 
         .chapter-content pre code.hljs {
             padding: 1rem;
-            font-size: 1.1rem;
             line-height: 1.5;
             background: transparent;
             border: none;
@@ -708,9 +717,7 @@ READY<span class="boot-cursor"></span></div>
                     </a>
                 </nav>
 
-                <footer class="page-footer">
-                    Powered by <a href="https://github.com/o8x/camus">Camus</a> built with {{camus.markdown_engine}}
-                </footer>
+                <footer class="page-footer">{{build.powered-by}}</footer>
             </div>
 
             <div class="keyboard-hint" id="keyboard-hint">

@@ -1,6 +1,6 @@
-[submodule "third-party/cmdline"]
-	path = third-party/cmdline
-	url = https://github.com/tanakh/cmdline
 [submodule "third-party/cmark-gfm"]
 	path = third-party/cmark-gfm
 	url = https://github.com/github/cmark-gfm.git
+[submodule "third-party/yaml-cpp"]
+	path = third-party/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
