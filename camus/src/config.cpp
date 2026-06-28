@@ -7,6 +7,7 @@
 #include "yaml-cpp/yaml.h"
 
 #include <fstream>
+#include <filesystem>
 
 namespace camus
 {
@@ -70,10 +71,10 @@ namespace camus
 		compiler_version = std::format("msvc v{}", _MSC_VER);
 #endif
 
-		const time_t unix = std::time(nullptr);
+		const time_t now = std::time(nullptr);
 		char buf[20];
-		std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&unix));
-		flattened_map.emplace("build.timestamp", std::to_string(unix * 1000));
+		std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+		flattened_map.emplace("build.timestamp", std::to_string(now * 1000));
 		flattened_map.emplace("build.time", buf);
 		flattened_map.emplace("build.build-type", BUILD_TYPE);
 		flattened_map.emplace("build.cmake-version", CMAKE_VERSION);

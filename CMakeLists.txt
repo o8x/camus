@@ -1,12 +1,14 @@
-cmake_minimum_required(VERSION 3.28.6)
+cmake_minimum_required(VERSION 3.28.3)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_C_COMPILER /usr/bin/gcc)
+set(CMAKE_CXX_COMPILER /usr/bin/g++)
 
-project(Camus VERSION 2.1.0 LANGUAGES CXX)
+project(Camus VERSION 2.1.0 LANGUAGES CXX DESCRIPTION "Static blog generation tool developed by C++")
 
-find_package(Git REQUIRED)
+find_package(Git QUIET)
 if (GIT_FOUND)
     # 获取完整 40 位 hash
     execute_process(
@@ -58,7 +60,19 @@ add_compile_definitions(
         CXX_STANDARD="${CMAKE_CXX_STANDARD}"
 )
 
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_options(-O3 -ffast-math -falign-functions=64 -flto=auto)
+    add_link_options(-ffunction-sections)
+
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        add_compile_options(-fuse-ld=mold -fno-semantic-interposition -mavx512f -mavx512cd -mavx512bw -mavx512dq)
+        add_link_options(-Wl,--hash-style=gnu,--as-needed,--gc-sections,--print-gc-sections)
+    endif()
+endif ()
+
 add_subdirectory(camus)
 add_subdirectory(common)
+
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 add_subdirectory(third-party/yaml-cpp EXCLUDE_FROM_ALL)
 add_subdirectory(third-party/cmark-gfm EXCLUDE_FROM_ALL)

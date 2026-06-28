@@ -1,5 +1,7 @@
 #include "markdown.h"
 
+#include <cstring>
+
 #include "cmark-gfm.h"
 #include "common/error/error.h"
 

@@ -17,7 +17,7 @@ int main(const int argc, char **argv)
 	try {
 		// 切换工作目录，设置相对路径
 		path = std::filesystem::absolute(path);
-		chdir(path.c_str());
+		std::ignore = chdir(path.c_str());
 		// 加载配置
 		conf_loader::get().parse_yaml(path, "camus.yaml");
 
