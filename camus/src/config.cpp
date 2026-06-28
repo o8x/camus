@@ -89,8 +89,9 @@ namespace camus
 		flattened_map.emplace(
 			"build.powered-by",
 			std::format(
-				"<small><em>Powered by <a href=\"{}\">Camus</a> v{} built with {}</em></small>",
+				"<small><em>Powered by Camus <a href=\"{}/releases/tag/v{}\">v{}</a>built with {}</em></small>",
 				GIT_REPO,
+				PROJECT_VERSION,
 				PROJECT_VERSION,
 				compiler_version
 			)
