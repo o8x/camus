@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_COMPILER /usr/bin/gcc)
 set(CMAKE_CXX_COMPILER /usr/bin/g++)
 
-project(Camus VERSION 2.1.0 LANGUAGES CXX DESCRIPTION "Static blog generation tool developed by C++")
+project(Camus VERSION 2.2.0 LANGUAGES CXX DESCRIPTION "Static blog generation tool developed by C++")
 
 find_package(Git QUIET)
 if (GIT_FOUND)
