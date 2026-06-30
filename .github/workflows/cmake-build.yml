@@ -26,6 +26,12 @@ jobs:
         git submodule update --init --recursive
         make package
 
+    - name: Install Test
+      run: |
+        dpkg -i build/release/packages/*.deb
+        /usr/local/bin/camus -v
+        /usr/local/bin/camus -d example
+
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
@@ -49,6 +55,12 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git submodule update --init --recursive
           make package
+
+      - name: Install Test
+        run: |
+          sudo installer -pkg build/release/packages/*.pkg -target / 
+          /usr/local/bin/camus -v
+          /usr/local/bin/camus -d example
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
