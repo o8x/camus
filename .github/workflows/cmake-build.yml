@@ -24,7 +24,7 @@ jobs:
       run: |
         git config --global --add safe.directory "$GITHUB_WORKSPACE"
         git submodule update --init --recursive
-        make build
+        make package
 
     - name: Upload
       uses: actions/upload-artifact@v4
@@ -48,7 +48,7 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git submodule update --init --recursive
-          make build
+          make package
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

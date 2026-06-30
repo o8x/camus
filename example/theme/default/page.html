@@ -11,6 +11,8 @@
 </head>
 <body>
 
+<table width="800" align="center" border="0" cellpadding="0" cellspacing="0"><tr><td>
+
 <center>
     <small>{{page.date}}</small>
     <h1>{{page.title}}</h1>
@@ -30,7 +32,7 @@
             <a id="prev-link" href="#">&laquo; Previous</a>
         </td>
         <td width="34%" align="center">
-            <a href="/">[ Index ]</a>
+            <a id="toc-link" href="/">[ Index ]</a>
         </td>
         <td width="33%" align="right">
             <a id="next-link" href="#">Next &raquo;</a>
@@ -40,11 +42,11 @@
 
 <center>{{build.powered-by}}</center>
 
+</td></tr></table>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script>
     (function() {
-        var currentUrl = window.location.pathname.split('/').pop() || '';
-
         var countWords = function() {
             var a = document.querySelector('article');
             if (!a) return 0;
@@ -59,20 +61,71 @@
             document.getElementById('word-count').textContent = c + ' words  ~' + m + ' min';
         }
 
+        var buildArticleUrl = function(parentPath, url) {
+            if (parentPath === '/' || parentPath === '') {
+                return '/' + url;
+            }
+            var p = parentPath;
+            if (!p.startsWith('/')) p = '/' + p;
+            if (p.endsWith('/')) p = p.slice(0, -1);
+            return p + '/' + url;
+        };
+
         var setupNavigation = function(tocData) {
             if (!tocData || tocData.length === 0) return;
-            var idx = -1;
+
+            var allArticles = [];
             for (var i = 0; i < tocData.length; i++) {
-                if (tocData[i].url === currentUrl) { idx = i; break; }
+                var dir = tocData[i];
+                if (!dir.articles) continue;
+                for (var j = 0; j < dir.articles.length; j++) {
+                    var art = dir.articles[j];
+                    allArticles.push({
+                        url: buildArticleUrl(dir.path, art.url),
+                        display_name: art.display_name
+                    });
+                }
+            }
+
+            if (allArticles.length === 0) return;
+
+            var currentPath = window.location.pathname;
+            var idx = -1;
+            for (var k = 0; k < allArticles.length; k++) {
+                if (allArticles[k].url === currentPath) { idx = k; break; }
             }
             if (idx === -1) return;
 
             var prev = document.getElementById('prev-link');
             var next = document.getElementById('next-link');
-            if (idx > 0) { prev.href = tocData[idx - 1].url; prev.textContent = '\u00ab ' + tocData[idx - 1].display_name; }
+            if (idx > 0) { prev.href = allArticles[idx - 1].url; prev.textContent = '\u00ab ' + allArticles[idx - 1].display_name; }
             else { prev.style.visibility = 'hidden'; }
-            if (idx < tocData.length - 1) { next.href = tocData[idx + 1].url; next.textContent = tocData[idx + 1].display_name + ' \u00bb'; }
+            if (idx < allArticles.length - 1) { next.href = allArticles[idx + 1].url; next.textContent = allArticles[idx + 1].display_name + ' \u00bb'; }
             else { next.style.visibility = 'hidden'; }
+
+            var tocLink = document.getElementById('toc-link');
+            if (tocLink) {
+                var parentDir = null;
+                for (var d = 0; d < tocData.length; d++) {
+                    var dd = tocData[d];
+                    if (!dd.articles) continue;
+                    for (var aa = 0; aa < dd.articles.length; aa++) {
+                        if (buildArticleUrl(dd.path, dd.articles[aa].url) === currentPath) {
+                            parentDir = dd;
+                            break;
+                        }
+                    }
+                    if (parentDir) break;
+                }
+                if (parentDir) {
+                    if (parentDir.path === '/') {
+                        tocLink.href = '/';
+                    } else {
+                        var p = parentDir.path.replace(/^\/+/, '');
+                        tocLink.href = '/?dir=' + encodeURIComponent(p);
+                    }
+                }
+            }
         };
 
         fetch('/toc.json')

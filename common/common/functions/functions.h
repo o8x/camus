@@ -4,6 +4,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include <cstdint>
 
 namespace functions
 {
@@ -13,6 +14,7 @@ namespace functions
 
 	std::vector<std::string> split(const std::string &str, char delimiter);
 
+	uint64_t rand_int(const uint64_t min, const uint64_t max);
 	std::string uuid_v4();
 
 	std::string trim_space(const std::string &str);

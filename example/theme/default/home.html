@@ -13,6 +13,8 @@
     <link id="favicon" rel="icon" href="/favicon.ico">
 </head>
 <body>
+<table width="800" align="center" border="0" cellpadding="0" cellspacing="0"><tr><td>
+
 <center>
     <h1>{{site.title}}</h1>
     <p><em>{{site.subtitle}}</em></p>
@@ -30,22 +32,115 @@
 
 <center>{{build.powered-by}}</center>
 
+</td></tr></table>
+
 <script>
     (function() {
         var formatDate = function(ts) {
-            var d = new Date(ts * 1000);
+            var n = Number(ts);
+            if (!n || isNaN(n)) return '';
+            var d = new Date(n * 1000);
+            if (isNaN(d.getTime())) return '';
             return d.getFullYear() + '-' +
                 String(d.getMonth() + 1).padStart(2, '0') + '-' +
                 String(d.getDate()).padStart(2, '0');
         };
 
-        var renderToc = function(posts) {
-            var html = posts.map(function(item, i) {
-                return '<li>' +
-                    '<a href="' + item.url + '">' + item.display_name + '</a>' +
-                    ' <small>(' + formatDate(item.create_time) + ')</small>' +
-                    '</li>';
+        var getDirParam = function() {
+            var m = window.location.search.match(/[?&]dir=([^&]*)/);
+            return m ? decodeURIComponent(m[1]) : '';
+        };
+
+        var buildArticleUrl = function(parentPath, url) {
+            if (parentPath === '/' || parentPath === '') {
+                return '/' + url;
+            }
+            var p = parentPath;
+            if (!p.startsWith('/')) p = '/' + p;
+            if (p.endsWith('/')) p = p.slice(0, -1);
+            return p + '/' + url;
+        };
+
+        var renderToc = function(dirs) {
+            var dirParam = getDirParam();
+            var rootDir = null;
+            var subDirs = [];
+            var currentDir = null;
+
+            for (var i = 0; i < dirs.length; i++) {
+                var d = dirs[i];
+                if (d.path === '/') {
+                    rootDir = d;
+                } else {
+                    subDirs.push(d);
+                }
+            }
+
+            if (dirParam) {
+                for (var j = 0; j < dirs.length; j++) {
+                    var dp = dirs[j].path;
+                    if (dp === '/' + dirParam || dp === dirParam || dp === '/' + dirParam + '/' || dp === dirParam + '/') {
+                        currentDir = dirs[j];
+                        break;
+                    }
+                }
+            }
+
+            if (!currentDir) {
+                currentDir = rootDir;
+            }
+
+            var items = [];
+
+            if (dirParam) {
+                items.push({
+                    type: 'back',
+                    label: '/',
+                    url: '/',
+                    time: ''
+                });
+            }
+
+            if (!dirParam && rootDir) {
+                for (var k = 0; k < subDirs.length; k++) {
+                    var sd = subDirs[k];
+                    var dirHref = '/?dir=' + encodeURIComponent(sd.path.replace(/^\/+/, ''));
+                    items.push({
+                        type: 'dir',
+                        label: sd.title,
+                        url: dirHref,
+                        time: formatDate(sd.create_time)
+                    });
+                }
+            }
+
+            if (currentDir && currentDir.articles) {
+                for (var a = 0; a < currentDir.articles.length; a++) {
+                    var art = currentDir.articles[a];
+                    items.push({
+                        type: 'file',
+                        label: art.display_name,
+                        url: buildArticleUrl(currentDir.path, art.url),
+                        time: formatDate(art.create_time)
+                    });
+                }
+            }
+
+            var fileIndex = 0;
+            var html = items.map(function(item) {
+                if (item.type === 'file') {
+                    fileIndex++;
+                    return '<li>' +
+                        '<a href="' + item.url + '">' + fileIndex + '. ' + item.label + '</a>' +
+                        ' <small>(' + item.time + ')</small>' +
+                        '</li>';
+                } else if (item.type === 'dir') {
+                    return '<li>+ [<b><a href="' + item.url + '">' + item.label + '/</a>] </b><small>(' + item.time + ')</small></li>';
+                } else {
+                    return '<li><a href="' + item.url + '">' + item.label + '</a></li>';
+                }
             }).join('');
+
             document.getElementById('toc-list').innerHTML = html;
         };
 

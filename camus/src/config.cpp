@@ -13,17 +13,17 @@ namespace camus
 {
 	config::config(const YAML::Node &root)
 	{
-		YAML::Node camus_data = root["camus"];
+		const YAML::Node camus_data = root["camus"];
 		if (!camus_data.IsMap()) {
 			error::panic("config file parse failed");
 		}
 
-		YAML::Node site_data = root["site"];
+		const YAML::Node site_data = root["site"];
 		if (!site_data.IsMap()) {
 			error::panic("parse site config failed");
 		}
 
-		for (auto it : camus_data) {
+		for (const auto &it : camus_data) {
 			const auto key = functions::trim_space(it.first.as<std::string>());
 			const auto value = functions::trim_space(it.second.as<std::string>());
 			if (key == "source_dir") {
@@ -39,12 +39,14 @@ namespace camus
 				camus.theme_page = std::format("theme/{}/page.html", value);
 			} else if (key == "filename_case") {
 				camus.filename_case = value;
+			} else if (key == "toc_format") {
+				camus.toc_format = value;
 			}
 
 			flattened_map.emplace(std::format("camus.{}", key), value);
 		}
 
-		for (auto it : site_data) {
+		for (const auto &it : site_data) {
 			const auto key = functions::trim_space(it.first.as<std::string>());
 			const auto value = functions::trim_space(it.second.as<std::string>());
 			if (key == "title") {
@@ -60,6 +62,15 @@ namespace camus
 			}
 
 			flattened_map.emplace(std::format("site.{}", key), value);
+		}
+
+		if (const YAML::Node &toc = root["toc"]; toc && toc.IsSequence()) {
+			site.toc.push_back({.dir_name = "./"});
+			for (const auto &item : toc) {
+				site.toc.push_back(
+					{.dir_name = item["dir_name"].as<std::string>(), .title = item["title"].as<std::string>()}
+				);
+			}
 		}
 
 		std::string compiler_version = "unknown";
@@ -89,8 +100,9 @@ namespace camus
 		flattened_map.emplace(
 			"build.powered-by",
 			std::format(
-				"<small><em>Powered by <a href=\"{}\">Camus</a> v{} built with {}</em></small>",
+				R"(<small><em>Powered by <a href="{}/releases/tag/v{}" target="_blank" title="Camus v{}">Camus</a> built with {}</em></small>)",
 				GIT_REPO,
+				PROJECT_VERSION,
 				PROJECT_VERSION,
 				compiler_version
 			)
@@ -113,16 +125,15 @@ namespace camus
 		return get().config_->site;
 	}
 
-	void conf_loader::parse_yaml(const std::string &work_dir, const std::string &name)
+	void conf_loader::parse_yaml(const std::string &filename)
 	{
-		const std::string filename = std::format("{}/{}", work_dir, name);
 		if (!std::filesystem::exists(filename)) {
 			error::panic("config file not fount name={}", filename);
 		}
 
 		file_ = filename;
 		config_ = new config(YAML::LoadFile(filename));
-		config_->camus.work_dir = work_dir;
+		config_->camus.work_dir = std::filesystem::current_path();
 		logging::info("with config name={}", filename);
 	}
 

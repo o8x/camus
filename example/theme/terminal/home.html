@@ -856,6 +856,93 @@
             flex-shrink: 0;
         }
 
+        .toc-dir .toc-link {
+            color: var(--accent);
+            text-shadow: 0 0 6px var(--accent);
+        }
+
+        .toc-dir .toc-link::after {
+            content: '/';
+            margin-left: 0.2rem;
+        }
+
+        .toc-dir::before {
+            color: var(--accent) !important;
+            text-shadow: 0 0 6px var(--accent) !important;
+        }
+
+        .toc-dir:hover {
+            border-bottom-color: var(--accent-dim) !important;
+        }
+
+        .toc-dir:hover::before {
+            color: var(--accent-glow) !important;
+            text-shadow: 0 0 10px var(--accent-glow) !important;
+        }
+
+        .toc-dir:hover .toc-link {
+            color: var(--accent-glow) !important;
+            text-shadow: 0 0 10px var(--accent-glow), 0 0 20px var(--accent-glow) !important;
+        }
+
+        .toc-back-root .toc-link {
+            color: var(--cyan);
+            text-shadow: 0 0 6px var(--cyan);
+        }
+
+        .toc-back-root::before {
+            color: var(--cyan) !important;
+            text-shadow: 0 0 6px var(--cyan) !important;
+        }
+
+        .toc-back-root:hover {
+            border-bottom-color: var(--cyan) !important;
+        }
+
+        .toc-back-root:hover::before {
+            color: var(--cyan) !important;
+            text-shadow: 0 0 10px var(--cyan) !important;
+        }
+
+        .toc-back-root:hover .toc-link {
+            color: var(--cyan) !important;
+            text-shadow: 0 0 10px var(--cyan), 0 0 20px var(--cyan) !important;
+        }
+
+        .toc-list.kb-active .toc-dir:hover {
+            background: transparent;
+            border-bottom-color: rgba(26, 51, 26, 0.5);
+            padding-left: 0.4rem;
+            box-shadow: none;
+        }
+
+        .toc-list.kb-active .toc-dir:hover::before {
+            color: var(--text-dim) !important;
+            text-shadow: none !important;
+        }
+
+        .toc-list.kb-active .toc-dir:hover .toc-link {
+            color: var(--text-secondary) !important;
+            text-shadow: 0 0 3px rgba(34, 170, 34, 0.4) !important;
+        }
+
+        body.keyboard-mode .toc-dir:hover {
+            background: transparent;
+            border-bottom-color: rgba(26, 51, 26, 0.5);
+            padding-left: 0.4rem;
+            box-shadow: none;
+        }
+
+        body.keyboard-mode .toc-dir:hover::before {
+            color: var(--text-dim) !important;
+            text-shadow: none !important;
+        }
+
+        body.keyboard-mode .toc-dir:hover .toc-link {
+            color: var(--text-secondary) !important;
+            text-shadow: 0 0 3px rgba(34, 170, 34, 0.4) !important;
+        }
+
         .cover-footer {
             color: var(--text-dim);
             padding-top: 1.2rem;
@@ -1085,11 +1172,29 @@
         }
 
         var formatDate = function (ts) {
-            var d = new Date(ts * 1000)
+            var n = Number(ts);
+            if (!n || isNaN(n)) return '';
+            var d = new Date(n * 1000);
+            if (isNaN(d.getTime())) return '';
             return d.getFullYear() + "-" +
                 String(d.getMonth() + 1).padStart(2, "0") + "-" +
                 String(d.getDate()).padStart(2, "0")
         }
+
+        var getDirParam = function() {
+            var m = window.location.search.match(/[?&]dir=([^&]*)/);
+            return m ? decodeURIComponent(m[1]) : '';
+        };
+
+        var buildArticleUrl = function(parentPath, url) {
+            if (parentPath === '/' || parentPath === '') {
+                return '/' + url;
+            }
+            var p = parentPath;
+            if (!p.startsWith('/')) p = '/' + p;
+            if (p.endsWith('/')) p = p.slice(0, -1);
+            return p + '/' + url;
+        };
 
         var tocData = []
         var selectedIndex = -1
@@ -1199,18 +1304,102 @@
             }
         })
 
-        var renderToc = function (posts) {
-            tocData = posts
+        var renderToc = function (dirs) {
+            var dirParam = getDirParam();
+            var rootDir = null;
+            var subDirs = [];
+            var currentDir = null;
+
+            for (var i = 0; i < dirs.length; i++) {
+                var d = dirs[i];
+                if (d.path === '/') {
+                    rootDir = d;
+                } else {
+                    subDirs.push(d);
+                }
+            }
+
+            if (dirParam) {
+                for (var j = 0; j < dirs.length; j++) {
+                    var dp = dirs[j].path;
+                    if (dp === '/' + dirParam || dp === dirParam || dp === '/' + dirParam + '/' || dp === dirParam + '/') {
+                        currentDir = dirs[j];
+                        break;
+                    }
+                }
+            }
+
+            if (!currentDir) {
+                currentDir = rootDir;
+            }
+
+            var items = [];
+            var itemIndex = 0;
+
+            if (dirParam) {
+                items.push({
+                    type: 'back',
+                    label: '/',
+                    url: '/',
+                    time: ''
+                });
+            }
+
+            if (!dirParam && rootDir) {
+                for (var k = 0; k < subDirs.length; k++) {
+                    var sd = subDirs[k];
+                    var dirHref = '/?dir=' + encodeURIComponent(sd.path.replace(/^\/+/, ''));
+                    items.push({
+                        type: 'dir',
+                        label: sd.title,
+                        url: dirHref,
+                        time: formatDate(sd.create_time)
+                    });
+                    itemIndex++;
+                }
+            }
+
+            if (currentDir && currentDir.articles) {
+                for (var a = 0; a < currentDir.articles.length; a++) {
+                    var art = currentDir.articles[a];
+                    var artUrl = buildArticleUrl(currentDir.path, art.url);
+                    items.push({
+                        type: 'file',
+                        label: art.display_name,
+                        url: artUrl,
+                        time: formatDate(art.create_time)
+                    });
+                    itemIndex++;
+                }
+            }
+
+            tocData = items
             var ANIMATE_COUNT = 20
-            var html = posts.map(function (item, i) {
+            var fileIndex = 0;
+            var html = items.map(function (item, i) {
                 var extra = ""
                 if (i < ANIMATE_COUNT) {
                     extra = " style=\"animation-delay:" + (i * 0.035).toFixed(2) + "s\""
                 }
-                return "<li class=\"toc-item\"" + extra + ">" +
-                    "<span class=\"toc-num\">" + String(i + 1).padStart(3, "0") + "</span>" +
-                    "<a class=\"toc-link\" href=\"" + item.url + "\">" + item.display_name + "</a>" +
-                    "<span class=\"toc-date\">" + formatDate(item.create_time) + "</span>" +
+                var extraClass = "";
+                if (item.type === 'dir') {
+                    extraClass = " toc-dir";
+                } else if (item.type === 'back') {
+                    extraClass = " toc-back-root";
+                }
+                var num = "";
+                if (item.type === 'file') {
+                    fileIndex++;
+                    num = String(fileIndex).padStart(3, "0");
+                } else if (item.type === 'dir') {
+                    num = "[+]";
+                } else {
+                    num = "[/]";
+                }
+                return "<li class=\"toc-item" + extraClass + "\"" + extra + ">" +
+                    "<span class=\"toc-num\">" + num + "</span>" +
+                    "<a class=\"toc-link\" href=\"" + item.url + "\">" + item.label + "</a>" +
+                    "<span class=\"toc-date\">" + item.time + "</span>" +
                     "</li>"
             }).join("")
 

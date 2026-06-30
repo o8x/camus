@@ -11,9 +11,6 @@
     <meta name="cxx-standard" content="{{build.cxx-standard}}">
     <title>{{site.title}} - {{site.subtitle}}</title>
     <link id="favicon" rel="icon" href="/favicon.ico">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
     <style id="novel-style">
         :root {
             --bg: #f3f4f6;
@@ -33,7 +30,7 @@
         }
 
         body {
-            font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+            font-family: 'Songti SC', 'SimSun', serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
@@ -134,6 +131,31 @@
             flex-shrink: 0;
         }
 
+        .toc-dir .toc-link {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .toc-dir .toc-link::after {
+            content: '/';
+            margin-left: 0.2rem;
+        }
+
+        .toc-dir .toc-num {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .toc-back-root .toc-link {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .toc-back-root .toc-num {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
         .cover-footer {
             text-align: center;
             color: var(--text-secondary);
@@ -215,18 +237,120 @@
     <script>
         (function() {
             var formatDate = function(ts) {
-                var d = new Date(ts * 1000);
+                var n = Number(ts);
+                if (!n || isNaN(n)) return '';
+                var d = new Date(n * 1000);
+                if (isNaN(d.getTime())) return '';
                 return d.getFullYear() + '-' +
                     String(d.getMonth() + 1).padStart(2, '0') + '-' +
                     String(d.getDate()).padStart(2, '0');
             };
 
-            var renderToc = function(posts) {
-                var html = posts.map(function(item, i) {
-                    return '<li class="toc-item">' +
-                        '<span class="toc-num">' + String(i + 1).padStart(3, '0') + '</span>' +
-                        '<a class="toc-link" href="' + item.url + '">' + item.display_name + '</a>' +
-                        '<span class="toc-date">' + formatDate(item.create_time) + '</span>' +
+            var getDirParam = function() {
+                var m = window.location.search.match(/[?&]dir=([^&]*)/);
+                return m ? decodeURIComponent(m[1]) : '';
+            };
+
+            var buildArticleUrl = function(parentPath, url) {
+                if (parentPath === '/' || parentPath === '') {
+                    return '/' + url;
+                }
+                var p = parentPath;
+                if (!p.startsWith('/')) p = '/' + p;
+                if (p.endsWith('/')) p = p.slice(0, -1);
+                return p + '/' + url;
+            };
+
+            var renderToc = function(dirs) {
+                var dirParam = getDirParam();
+                var rootDir = null;
+                var subDirs = [];
+                var currentDir = null;
+
+                for (var i = 0; i < dirs.length; i++) {
+                    var d = dirs[i];
+                    if (d.path === '/') {
+                        rootDir = d;
+                    } else {
+                        subDirs.push(d);
+                    }
+                }
+
+                if (dirParam) {
+                    for (var j = 0; j < dirs.length; j++) {
+                        var dp = dirs[j].path;
+                        if (dp === '/' + dirParam || dp === dirParam || dp === '/' + dirParam + '/' || dp === dirParam + '/') {
+                            currentDir = dirs[j];
+                            break;
+                        }
+                    }
+                }
+
+                if (!currentDir) {
+                    currentDir = rootDir;
+                }
+
+                var items = [];
+                var itemIndex = 0;
+
+                if (dirParam) {
+                    items.push({
+                        type: 'back',
+                        label: '/',
+                        url: '/',
+                        time: ''
+                    });
+                }
+
+                if (!dirParam && rootDir) {
+                    for (var k = 0; k < subDirs.length; k++) {
+                        var sd = subDirs[k];
+                        var dirHref = '/?dir=' + encodeURIComponent(sd.path.replace(/^\/+/, ''));
+                        items.push({
+                            type: 'dir',
+                            label: sd.title,
+                            url: dirHref,
+                            time: formatDate(sd.create_time)
+                        });
+                        itemIndex++;
+                    }
+                }
+
+                if (currentDir && currentDir.articles) {
+                    for (var a = 0; a < currentDir.articles.length; a++) {
+                        var art = currentDir.articles[a];
+                        var artUrl = buildArticleUrl(currentDir.path, art.url);
+                        items.push({
+                            type: 'file',
+                            label: art.display_name,
+                            url: artUrl,
+                            time: formatDate(art.create_time)
+                        });
+                        itemIndex++;
+                    }
+                }
+
+                var fileIndex = 0;
+                var html = items.map(function(item, i) {
+                    var extraClass = '';
+                    if (item.type === 'dir') {
+                        extraClass = ' toc-dir';
+                    } else if (item.type === 'back') {
+                        extraClass = ' toc-back-root';
+                    }
+                    var num = '';
+                    if (item.type === 'file') {
+                        fileIndex++;
+                        num = '<span class="toc-num">' + String(fileIndex).padStart(3, '0') + '</span>';
+                    } else if (item.type === 'dir') {
+                        num = '<span class="toc-num">[+]</span>';
+                    } else {
+                        num = '<span class="toc-num">[/]</span>';
+                    }
+                    return '<li class="toc-item' + extraClass + '">' +
+                        num +
+                        '<a class="toc-link" href="' + item.url + '">' + item.label + '</a>' +
+                        '<span class="toc-date">' + item.time + '</span>' +
                         '</li>';
                 }).join('');
 
