@@ -11,9 +11,13 @@ camus:
     theme: pixel
     # 转换md的输出文件名：keep 不转换，uuid 自动转换为 /uuid.html
     filename_case: keep
-    # 目录来源：auto 自动生成到 toc.yaml，但修改该文件无效
-    # 其余值则自动尝试读取为 yaml
-    toc: auto
+    # toc 输出格式：javascript 输出为 toc.js，json 输出为 toc.json，all 全部
+    toc_format: javascript
+
+toc:
+    -   dir_name: dir0
+        # 目录名，即 ${source_dir}/${dir_name} 在生成时，显示为什么名字
+        title: 第一个文件夹
 
 site:
     title: Just Another Camus blog

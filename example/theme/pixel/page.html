@@ -436,7 +436,7 @@
             <span class="nav-title"></span>
         </a>
         <span class="nav-center">
-                <a href="/">目 录</a>
+                <a id="toc-link" href="/">目 录</a>
             </span>
         <a class="nav-link disabled" id="next-link" href="#">
             <span class="nav-label">NEXT</span>
@@ -450,15 +450,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script>
     (function () {
-        var currentUrl = window.location.pathname.split("/").pop() || ""
-
-        var formatDate = function (ts) {
-            var d = new Date(ts * 1000)
-            return d.getFullYear() + "-" +
-                String(d.getMonth() + 1).padStart(2, "0") + "-" +
-                String(d.getDate()).padStart(2, "0")
-        }
-
         var countWords = function () {
             var content = document.querySelector(".chapter-content")
             if (!content) return 0
@@ -492,27 +483,79 @@
 
         var setupNavigation = function (tocData) {
             if (!tocData || tocData.length === 0) return
-            var currentIndex = -1
+
+            var buildArticleUrl = function (parentPath, url) {
+                if (parentPath === '/' || parentPath === '') {
+                    return '/' + url;
+                }
+                var p = parentPath;
+                if (!p.startsWith('/')) p = '/' + p;
+                if (p.endsWith('/')) p = p.slice(0, -1);
+                return p + '/' + url;
+            };
+
+            var allArticles = [];
             for (var i = 0; i < tocData.length; i++) {
-                if (tocData[i].url === currentUrl) {
-                    currentIndex = i
-                    break
+                var dir = tocData[i];
+                if (!dir.articles) continue;
+                for (var j = 0; j < dir.articles.length; j++) {
+                    var art = dir.articles[j];
+                    allArticles.push({
+                        url: buildArticleUrl(dir.path, art.url),
+                        display_name: art.display_name
+                    });
                 }
             }
-            if (currentIndex === -1) return
 
-            var prevLink = document.getElementById("prev-link")
-            var nextLink = document.getElementById("next-link")
+            if (allArticles.length === 0) return;
+
+            var currentPath = window.location.pathname;
+            var currentIndex = -1;
+            for (var k = 0; k < allArticles.length; k++) {
+                if (allArticles[k].url === currentPath) {
+                    currentIndex = k;
+                    break;
+                }
+            }
+            if (currentIndex === -1) return;
+
+            var prevLink = document.getElementById("prev-link");
+            var nextLink = document.getElementById("next-link");
 
             if (currentIndex > 0) {
-                prevLink.className = "nav-link"
-                prevLink.href = tocData[currentIndex - 1].url
-                prevLink.querySelector(".nav-title").textContent = tocData[currentIndex - 1].display_name
+                prevLink.className = "nav-link";
+                prevLink.href = allArticles[currentIndex - 1].url;
+                prevLink.querySelector(".nav-title").textContent = allArticles[currentIndex - 1].display_name;
             }
-            if (currentIndex < tocData.length - 1) {
-                nextLink.className = "nav-link"
-                nextLink.href = tocData[currentIndex + 1].url
-                nextLink.querySelector(".nav-title").textContent = tocData[currentIndex + 1].display_name
+            if (currentIndex < allArticles.length - 1) {
+                nextLink.className = "nav-link";
+                nextLink.href = allArticles[currentIndex + 1].url;
+                nextLink.querySelector(".nav-title").textContent = allArticles[currentIndex + 1].display_name;
+            }
+
+            var tocLink = document.getElementById("toc-link");
+            if (tocLink) {
+                var parentDir = null;
+                var currentPath = window.location.pathname;
+                for (var d = 0; d < tocData.length; d++) {
+                    var dd = tocData[d];
+                    if (!dd.articles) continue;
+                    for (var aa = 0; aa < dd.articles.length; aa++) {
+                        if (buildArticleUrl(dd.path, dd.articles[aa].url) === currentPath) {
+                            parentDir = dd;
+                            break;
+                        }
+                    }
+                    if (parentDir) break;
+                }
+                if (parentDir) {
+                    if (parentDir.path === '/') {
+                        tocLink.href = '/';
+                    } else {
+                        var p = parentDir.path.replace(/^\/+/, '');
+                        tocLink.href = '/?dir=' + encodeURIComponent(p);
+                    }
+                }
             }
         }
 

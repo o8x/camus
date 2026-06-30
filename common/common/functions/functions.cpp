@@ -9,6 +9,9 @@
 
 namespace functions
 {
+	static std::random_device rand_dev;
+	static std::mt19937 rand_generator(rand_dev());
+
 	std::string get_now_time(const std::string &format)
 	{
 		const std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
@@ -51,43 +54,38 @@ namespace functions
 		return tokens;
 	}
 
+	uint64_t rand_int(const uint64_t min, const uint64_t max)
+	{
+		std::uniform_int_distribution dis(min, max);
+
+		return dis(rand_generator);
+	}
+
 	std::string uuid_v4()
 	{
-		std::random_device rd;
-		std::mt19937 gen(rd());
-		std::uniform_int_distribution<int> dis(0, 15);
-		std::uniform_int_distribution<int> dis2(8, 11);
+		std::uniform_int_distribution hex_digit(0, 15); // 16个值: 0-15
+		std::uniform_int_distribution variant(8, 11);	// 4个值: 8,9,10,11
 
-		std::stringstream ss;
-		int i;
+		std::string uuid;
+		uuid.reserve(36);
 
-		ss << std::hex;
-		for (i = 0; i < 8; i++) {
-			ss << dis(gen);
+		for (int i = 0; i < 36; ++i) {
+			if (i == 8 || i == 13 || i == 18 || i == 23) {
+				uuid += '-'; // 分隔符
+			} else {
+				int digit;
+				if (i == 14) {			  // 版本号位置 (第15个字符, 索引14)
+					digit = 4;			  // UUID v4 固定为4
+				} else if (i == 19) {	  // 变体位置 (第20个字符, 索引19)
+					digit = variant(rand_generator); // 8, 9, 10(a), 11(b)
+				} else {
+					digit = hex_digit(rand_generator); // 0-15
+				}
+				uuid += "0123456789abcdef"[digit];
+			}
 		}
 
-		ss << "-";
-		for (i = 0; i < 4; i++) {
-			ss << dis(gen);
-		}
-
-		ss << "-4";
-		for (i = 0; i < 3; i++) {
-			ss << dis(gen);
-		}
-
-		ss << "-";
-		ss << dis2(gen);
-		for (i = 0; i < 3; i++) {
-			ss << dis(gen);
-		}
-
-		ss << "-";
-		for (i = 0; i < 12; i++) {
-			ss << dis(gen);
-		};
-
-		return ss.str();
+		return uuid;
 	}
 
 	std::string trim_space(const std::string &str)

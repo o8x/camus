@@ -8,6 +8,8 @@ set(CMAKE_CXX_COMPILER /usr/bin/g++)
 
 project(Camus VERSION 2.2.0 LANGUAGES CXX DESCRIPTION "Static blog generation tool developed by C++")
 
+enable_testing()
+
 find_package(Git QUIET)
 if (GIT_FOUND)
     # 获取完整 40 位 hash

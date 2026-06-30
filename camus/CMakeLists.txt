@@ -11,6 +11,16 @@ add_executable(Camus main.cpp)
 target_link_libraries(Camus PRIVATE camus)
 set_target_properties(Camus PROPERTIES OUTPUT_NAME "camus" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
+set(DEFAULT_SITE "site")
+
+file(WRITE ${CMAKE_BINARY_DIR}/default-site.txt "${DEFAULT_SITE}")
+add_test(NAME build-test-site
+        COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR} "${CMAKE_BINARY_DIR}/bin/camus" "${DEFAULT_SITE}"
+)
+
+# 切换工作目录 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+set_tests_properties(build-test-site PROPERTIES TIMEOUT 10)
+
 file(COPY_FILE "${CMAKE_SOURCE_DIR}/LICENSE" "${CMAKE_BINARY_DIR}/LICENSE.txt")
 file(COPY_FILE "${CMAKE_SOURCE_DIR}/README.md" "${CMAKE_BINARY_DIR}/README.txt")
 set(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}")
