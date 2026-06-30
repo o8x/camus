@@ -15,7 +15,7 @@ set(DEFAULT_SITE "site")
 
 file(WRITE ${CMAKE_BINARY_DIR}/default-site.txt "${DEFAULT_SITE}")
 add_test(NAME build-test-site
-        COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR} "${CMAKE_BINARY_DIR}/bin/camus" "${DEFAULT_SITE}"
+        COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR} "${CMAKE_BINARY_DIR}/bin/camus" -d ${DEFAULT_SITE}
 )
 
 # 切换工作目录 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
