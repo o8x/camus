@@ -8,6 +8,8 @@ file(GLOB SOURCES
         common/functions/*.cpp
         common/filesystem/*.h
         common/filesystem/*.cpp
+        common/str/*.h
+        common/str/*.cpp
 )
 
 add_library(common STATIC ${SOURCES})

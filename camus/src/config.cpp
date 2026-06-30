@@ -4,6 +4,7 @@
 #include "common/functions/functions.h"
 
 // 只包含这一个即可，分别包含会模板出错
+#include "common/str/str.h"
 #include "yaml-cpp/yaml.h"
 
 #include <fstream>
@@ -24,8 +25,8 @@ namespace camus
 		}
 
 		for (const auto &it : camus_data) {
-			const auto key = functions::trim_space(it.first.as<std::string>());
-			const auto value = functions::trim_space(it.second.as<std::string>());
+			const auto key = strings::trim_space(it.first.as<std::string>());
+			const auto value = strings::trim_space(it.second.as<std::string>());
 			if (key == "source_dir") {
 				camus.source_dir = value;
 			} else if (key == "output_dir") {
@@ -47,8 +48,8 @@ namespace camus
 		}
 
 		for (const auto &it : site_data) {
-			const auto key = functions::trim_space(it.first.as<std::string>());
-			const auto value = functions::trim_space(it.second.as<std::string>());
+			const auto key = strings::trim_space(it.first.as<std::string>());
+			const auto value = strings::trim_space(it.second.as<std::string>());
 			if (key == "title") {
 				site.title = value;
 			} else if (key == "subtitle") {
@@ -141,7 +142,7 @@ namespace camus
 	{
 		std::string res = data;
 		for (const auto &[key, value] : get().config_->map()) {
-			res = functions::replace(res, "{{" + key + "}}", value);
+			res = strings::replace(res, "{{" + key + "}}", value);
 		}
 
 		return res;

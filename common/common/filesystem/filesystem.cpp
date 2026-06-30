@@ -2,6 +2,7 @@
 
 #include "common/functions/functions.h"
 #include "common/logging/logging.h"
+#include "common/str/str.h"
 
 #include <fstream>
 #include <sstream>
@@ -33,7 +34,7 @@ namespace filesystem
 		file.close();
 
 		std::string res = buffer.str();
-		return trim ? functions::trim_space(res) : res;
+		return trim ? strings::trim_space(res) : res;
 	}
 
 	std::string clean_path(const std::string &path, const std::string &prefix)
