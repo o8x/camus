@@ -1,6 +1,5 @@
-#include "writer.h"
-
 #include "common/cmdline/cmdline.h"
+#include "writer.h"
 
 int main(const int argc, char **argv)
 {

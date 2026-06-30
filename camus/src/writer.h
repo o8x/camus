@@ -1,7 +1,7 @@
 #pragma once
 
-#include "config.h"
 #include "common/error/error.h"
+#include "config.h"
 
 namespace camus
 {

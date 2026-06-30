@@ -1,14 +1,12 @@
 #include "config.h"
 
+#include <filesystem>
+#include <fstream>
+
 #include "common/error/error.h"
 #include "common/functions/functions.h"
-
-// 只包含这一个即可，分别包含会模板出错
 #include "common/str/str.h"
 #include "yaml-cpp/yaml.h"
-
-#include <fstream>
-#include <filesystem>
 
 namespace camus
 {
