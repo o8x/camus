@@ -1,6 +1,7 @@
 SITE_ROOT ?= site
 REPO_URL ?= git@github.com:o8x/o8x.github.io.git
 UNAME_S := $(shell uname -s)
+BUILD_DIR := build/release
 
 all: build
 
@@ -8,31 +9,31 @@ all: build
 .PHONY: package
 package:
 ifeq ($(UNAME_S), Linux)
-	@cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR="DEB" -G Ninja -B build/release -S .
-	@cmake --build build/release --target all package
+	@cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR="DEB" -G Ninja -B $(BUILD_DIR) -S .
+	@cmake --build $(BUILD_DIR) --target all package
 else ifeq ($(UNAME_S), Darwin)
-	@cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR="productbuild" -G Ninja -B build/release -S .
-	@cmake --build build/release --target all package
-	@cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR="DragNDrop" -G Ninja -B build/release -S .
-	@cmake --build build/release --target all package
+	@cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR="productbuild" -G Ninja -B $(BUILD_DIR) -S .
+	@cmake --build $(BUILD_DIR) --target all package
+	@cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR="DragNDrop" -G Ninja -B $(BUILD_DIR) -S .
+	@cmake --build $(BUILD_DIR) --target all package
 else
 	$(error Unsupported platform: $(UNAME_S))
 endif
 
 .PHONY: build
 build:
-	@cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -B build/release -S .
-	@cmake --build build/release --target all
+	@cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -B $(BUILD_DIR) -S .
+	@cmake --build $(BUILD_DIR) --target all
 
 .PHONY: serve
 serve: build
-	@ctest --extra-verbose -R build-test-site --test-dir build/release
+	@ctest --extra-verbose -R build-test-site --test-dir $(BUILD_DIR)
 	@echo "listen on http://localhost:8000"
 	@python3 -m http.server --bind localhost 8000 --directory $(SITE_ROOT)/html
 
 .PHONY: push
 push: build
-	@ctest --extra-verbose -R build-test-site --test-dir build/release
+	@ctest --extra-verbose -R build-test-site --test-dir $(BUILD_DIR)
 	@git -C $(SITE_ROOT)/html init
 	@git -C $(SITE_ROOT)/html remote add origin $(REPO_URL)
 	@git -C $(SITE_ROOT)/html add .

@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include "str/str.h"
+#include "common/str/str.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -348,8 +348,8 @@ namespace cmdline {
 			}
 
 			for (const std::string value = get<std::string>(name);
-				 const std::string &it : common::str::split(value, delimiter)) {
-				list.push_back(common::str::convert_type<T>(it));
+				 const std::string &it : strings::split(value, delimiter)) {
+				list.push_back(strings::convert_type<T>(it));
 			}
 
 			return list;
@@ -357,12 +357,12 @@ namespace cmdline {
 
 		template <class T> std::pair<std::string, T> get_pair(const std::string &name) const {
 			const std::string v = get<std::string>(name);
-			const std::vector<std::string> list = common::str::split(v, '=');
+			const std::vector<std::string> list = strings::split(v, '=');
 			if (list.size() != 2) {
 				throw std::invalid_argument("list length must be 2");
 			}
 
-			return std::make_pair(list[0], common::str::convert_type<T>(list[1]));
+			return std::make_pair(list[0], strings::convert_type<T>(list[1]));
 		}
 
 		template <class T> std::unordered_map<std::string, T> get_pairs(const std::string &name) const {
@@ -373,12 +373,12 @@ namespace cmdline {
 
 			std::vector<std::string> list = gets<std::string>(name, ',');
 			for (std::string &it : list) {
-				const std::vector<std::string> data = common::str::split(it, '=');
+				const std::vector<std::string> data = strings::split(it, '=');
 				if (data.size() != 2) {
 					throw std::invalid_argument("list length must be 2");
 				}
 
-				result.insert(std::make_pair(data[0], common::str::convert_type<T>(data[1])));
+				result.insert(std::make_pair(data[0], strings::convert_type<T>(data[1])));
 			}
 
 			return result;

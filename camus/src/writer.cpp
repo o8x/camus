@@ -3,7 +3,6 @@
 #include <fstream>
 #include <filesystem>
 #include <string>
-#include <unistd.h>
 #include <vector>
 
 #include "config.h"
@@ -12,6 +11,7 @@
 #include "common/functions/functions.h"
 #include "common/logging/logging.h"
 #include "common/markdown/markdown.h"
+#include "common/str/str.h"
 
 #include <cassert>
 #include <ranges>
@@ -38,7 +38,7 @@ struct article {
 
 	std::string join_content() const
 	{
-		return functions::string_join(content, "\n");
+		return strings::string_join(content, "\n");
 	}
 
 	bool is_visible() const
@@ -119,7 +119,7 @@ namespace camus
 		}
 
 		article article{
-			.uuid = functions::uuid_v4(),
+			.uuid = strings::uuid_v4(),
 			.create_time = time(nullptr),
 			.visibility = article::open,
 			.source_full_filename = entry.path().string(),
@@ -148,8 +148,8 @@ namespace camus
 			if (params_count < 2 || line == "---") {
 				auto set_string_parma = [&](const std::string &name, std::string &out) {
 					if (out.empty() && line.find(name) != std::string::npos) {
-						const std::vector<std::string> res = functions::split(line, name);
-						out = functions::trim_space(res[1]);
+						const std::vector<std::string> res = strings::split(line, name);
+						out = strings::trim_space(res[1]);
 					}
 				};
 
@@ -169,7 +169,7 @@ namespace camus
 				}
 
 				if (!datetime.empty()) {
-					article.create_time = functions::datetime_to_unix(functions::trim_space(datetime));
+					article.create_time = functions::datetime_to_unix(strings::trim_space(datetime));
 				}
 
 				continue;
@@ -179,12 +179,12 @@ namespace camus
 				article.hidden_lines++;
 			}
 
-			if (functions::trim_space(line) == "--hidden-section-start") {
+			if (strings::trim_space(line) == "--hidden-section-start") {
 				hidden_flag = true;
 				continue;
 			}
 
-			if (functions::trim_space(line) == "--hidden-section-end") {
+			if (strings::trim_space(line) == "--hidden-section-end") {
 				hidden_flag = false;
 				continue;
 			}
@@ -198,11 +198,11 @@ namespace camus
 		article.url = name + ".html";
 
 		if (conf_loader::camus().filename_case == "keep") {
-			name = functions::replace(article.source_filename, ".md", "");
-			article.url = functions::url_encode(name) + ".html";
+			name = strings::replace(article.source_filename, ".md", "");
+			article.url = strings::url_encode(name) + ".html";
 		}
 
-		article.display_name = functions::replace(article.display_name, "\"", "'");
+		article.display_name = strings::replace(article.display_name, "\"", "'");
 		article.output_filename = std::format("{}.html", name);
 		return article;
 	}
@@ -235,22 +235,22 @@ namespace camus
 
 			logging::info("make article name={} {}", article.output_filename, hidden_flag);
 
-			std::string markdown = functions::string_join(article.content, "\n");
+			std::string markdown = strings::string_join(article.content, "\n");
 			auto [length, to_html] = markdown::markdown_to_html(markdown.data());
 
 			// 去掉无用的时间部分
-			std::string date_str = functions::replace(functions::format_time_t(article.create_time), " 00:00:00", "");
+			std::string date_str = strings::replace(functions::format_time_t(article.create_time), " 00:00:00", "");
 			// 固定长度，避免读到脏内存
 			std::string html_content =
-				functions::replace(std::string(to_html, length), "<hr />", ""); // 去掉自动生成的 hr 标记
+				strings::replace(std::string(to_html, length), "<hr />", ""); // 去掉自动生成的 hr 标记
 			free(to_html);
 
 			std::string content = tpl;
-			content = functions::replace(content, "{{page.title}}", article.display_name);
-			content = functions::replace(content, "{{page.date}}", date_str);
-			content = functions::replace(content, "{{page.description}}", "");
-			content = functions::replace(content, "{{page.content}}", html_content);
-			content = functions::replace(content, "{{page.info}}", article.to_json());
+			content = strings::replace(content, "{{page.title}}", article.display_name);
+			content = strings::replace(content, "{{page.date}}", date_str);
+			content = strings::replace(content, "{{page.description}}", "");
+			content = strings::replace(content, "{{page.content}}", html_content);
+			content = strings::replace(content, "{{page.info}}", article.to_json());
 			content = conf_loader::render_var(content);
 
 			std::filesystem::create_directory(article.toc.output_dir());
@@ -337,7 +337,7 @@ namespace camus
 
 		for (const auto &it : pages) {
 			std::string url = std::format("{}/{}", conf_loader::site().url, it.url);
-			url = functions::replace(url, "//", "/");
+			url = strings::replace(url, "//", "/");
 
 			std::string loc = std::format(
 				"<url><loc>{}</loc><lastmod>{}</lastmod></url>",
@@ -355,7 +355,7 @@ namespace camus
 			std::format(
 				R"(<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{}</urlset>)",
-				functions::string_join(items, "\n\t")
+				strings::string_join(items, "\n\t")
 			)
 		);
 	}
