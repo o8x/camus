@@ -50,8 +50,6 @@ namespace logging
 	{
 		std::stringstream ss;
 
-		const std::string home(getenv("HOME"));
-		const std::string text = strings::replace(content, home, "~");
 		ss << functions::get_now_time();
 
 		if (level == FATAL) {
@@ -66,6 +64,9 @@ namespace logging
 			ss << " [INFO] ";
 		}
 
+		std::string text = content;
+		text = strings::replace(content, std::string(getenv("HOME")), "~");
+		text = strings::trim_space(text);
 		ss << text << color::RESET << std::endl;
 
 		{

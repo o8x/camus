@@ -13,12 +13,12 @@ namespace filesystem
 	{
 		std::ofstream outfile;
 		if (outfile.open(std::string{path}, std::ofstream::out | std::ofstream::trunc); !outfile) {
-			return 1;
+			return -1;
 		}
 
 		outfile << content.data();
 		outfile.close();
-		return 0;
+		return content.length();
 	}
 
 	std::string read_file(const std::string &name, bool trim)
@@ -41,6 +41,19 @@ namespace filesystem
 	{
 		const std::filesystem::path p(std::format("{}/{}", prefix, path));
 		return p.lexically_normal();
+	}
+
+	std::filesystem::path
+	clean_path_prefix(const std::filesystem::path &path, const std::string &prefix, const bool absolute)
+	{
+		std::filesystem::path clean_path;
+		if (absolute) {
+			clean_path = std::filesystem::absolute(path).lexically_relative(std::filesystem::absolute(prefix));
+		} else {
+			clean_path = path.lexically_relative(prefix);
+		}
+
+		return clean_path;
 	}
 
 	std::filesystem::path with_current_dir(

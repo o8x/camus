@@ -9,7 +9,7 @@
     <meta name="build-type" content="{{build.build-type}}">
     <meta name="cmake-version" content="{{build.cmake-version}}">
     <meta name="cxx-standard" content="{{build.cxx-standard}}">
-    <title>{{site.title}} - {{site.subtitle}}</title>
+    <title id="page-title">{{site.title}} - {{site.subtitle}}</title>
     <link id="favicon" rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1105,11 +1105,11 @@
             </div>
 
             <header class="cover-header">
-                <h1 class="cover-title">{{site.title}}</h1>
+                <h1 class="cover-title" id="cover-title">{{site.title}}</h1>
                 <p class="cover-subtitle">{{site.subtitle}}</p>
             </header>
 
-            <p class="cover-description">{{site.description}}</p>
+            <p class="cover-description" id="cover-description">{{site.description}}</p>
 
             <div class="toc-header">cat ./toc</div>
 
@@ -1181,19 +1181,86 @@
                 String(d.getDate()).padStart(2, "0")
         }
 
+        var normalizePath = function(p) {
+            if (!p || p === '/') return '/';
+            if (!p.startsWith('/')) p = '/' + p;
+            if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+            return p;
+        };
+
+        var getParent = function(p) {
+            var np = normalizePath(p);
+            if (np === '/') return null;
+            var parts = np.split('/');
+            parts.pop();
+            if (parts.length === 0 || (parts.length === 1 && parts[0] === '')) return '/';
+            return parts.join('/');
+        };
+
+        var getChildDirs = function(dirs, parentPath) {
+            var pp = normalizePath(parentPath);
+            var prefix = pp === '/' ? '/' : pp + '/';
+            var children = [];
+            for (var c = 0; c < dirs.length; c++) {
+                var dp = normalizePath(dirs[c].path);
+                if (dp === pp) continue;
+                if (dp === '/') continue;
+                if (!dp.startsWith(prefix)) continue;
+                var remainder = dp.substring(prefix.length);
+                if (remainder.indexOf('/') === -1) {
+                    children.push(dirs[c]);
+                }
+            }
+            return children;
+        };
+
+        var hasDir = function(dirs, p) {
+            var np = normalizePath(p);
+            for (var h = 0; h < dirs.length; h++) {
+                if (normalizePath(dirs[h].path) === np) return true;
+            }
+            return false;
+        };
+
+        var collectVisibleDirs = function(dirs, parentPath) {
+            var pp = normalizePath(parentPath);
+            var prefix = pp === '/' ? '/' : pp + '/';
+            var result = [];
+            var seen = {};
+            for (var i = 0; i < dirs.length; i++) {
+                var dp = normalizePath(dirs[i].path);
+                if (dp === pp || dp === '/') continue;
+                if (!dp.startsWith(prefix)) continue;
+                if (seen[dp]) continue;
+                var directParent = getParent(dp);
+                if (directParent === pp) {
+                    result.push(dirs[i]);
+                    seen[dp] = true;
+                } else if (!hasDir(dirs, directParent)) {
+                    result.push(dirs[i]);
+                    seen[dp] = true;
+                }
+            }
+            return result;
+        };
+
+        var getEffectiveParent = function(dirs, p) {
+            var parent = getParent(p);
+            if (parent === null) return null;
+            if (parent === '/') return '/';
+            if (hasDir(dirs, parent)) return parent;
+            return getEffectiveParent(dirs, parent);
+        };
+
         var getDirParam = function() {
             var m = window.location.search.match(/[?&]dir=([^&]*)/);
             return m ? decodeURIComponent(m[1]) : '';
         };
 
         var buildArticleUrl = function(parentPath, url) {
-            if (parentPath === '/' || parentPath === '') {
-                return '/' + url;
-            }
-            var p = parentPath;
-            if (!p.startsWith('/')) p = '/' + p;
-            if (p.endsWith('/')) p = p.slice(0, -1);
-            return p + '/' + url;
+            var pp = normalizePath(parentPath);
+            if (pp === '/') return '/' + url;
+            return pp + '/' + url;
         };
 
         var tocData = []
@@ -1306,57 +1373,67 @@
 
         var renderToc = function (dirs) {
             var dirParam = getDirParam();
+            var currentPath = normalizePath(dirParam || '/');
             var rootDir = null;
-            var subDirs = [];
-            var currentDir = null;
 
             for (var i = 0; i < dirs.length; i++) {
                 var d = dirs[i];
-                if (d.path === '/') {
+                if (normalizePath(d.path) === '/') {
                     rootDir = d;
-                } else {
-                    subDirs.push(d);
+                    break;
                 }
             }
 
-            if (dirParam) {
-                for (var j = 0; j < dirs.length; j++) {
-                    var dp = dirs[j].path;
-                    if (dp === '/' + dirParam || dp === dirParam || dp === '/' + dirParam + '/' || dp === dirParam + '/') {
-                        currentDir = dirs[j];
-                        break;
-                    }
+            var currentDir = null;
+            for (var j = 0; j < dirs.length; j++) {
+                if (normalizePath(dirs[j].path) === currentPath) {
+                    currentDir = dirs[j];
+                    break;
                 }
             }
 
             if (!currentDir) {
                 currentDir = rootDir;
+                currentPath = '/';
             }
 
             var items = [];
-            var itemIndex = 0;
 
             if (dirParam) {
+                var parent = getEffectiveParent(dirs, currentPath);
+                var backLabel;
+                var backUrl;
+                if (parent) {
+                    if (parent === '/') {
+                        backLabel = '/';
+                        backUrl = '/';
+                    } else {
+                        backLabel = '../';
+                        backUrl = '/?dir=' + encodeURIComponent(parent.replace(/^\//, ''));
+                    }
+                } else {
+                    backLabel = '/';
+                    backUrl = '/';
+                }
                 items.push({
                     type: 'back',
-                    label: '/',
-                    url: '/',
+                    label: backLabel,
+                    url: backUrl,
                     time: ''
                 });
             }
 
-            if (!dirParam && rootDir) {
-                for (var k = 0; k < subDirs.length; k++) {
-                    var sd = subDirs[k];
-                    var dirHref = '/?dir=' + encodeURIComponent(sd.path.replace(/^\/+/, ''));
-                    items.push({
-                        type: 'dir',
-                        label: sd.title,
-                        url: dirHref,
-                        time: formatDate(sd.create_time)
-                    });
-                    itemIndex++;
-                }
+            var childDirs = collectVisibleDirs(dirs, currentPath);
+            for (var k = 0; k < childDirs.length; k++) {
+                var cd = childDirs[k];
+                var cdp = normalizePath(cd.path);
+                var encodedPath = cdp.replace(/^\//, '');
+                items.push({
+                    type: 'dir',
+                    label: cd.title,
+                    url: '/?dir=' + encodeURIComponent(encodedPath),
+                    time: formatDate(cd.create_time)
+                });
             }
 
             if (currentDir && currentDir.articles) {
@@ -1369,8 +1446,34 @@
                         url: artUrl,
                         time: formatDate(art.create_time)
                     });
-                    itemIndex++;
                 }
+            }
+
+            var descEl = document.getElementById('cover-description');
+            if (descEl && currentDir && currentDir.description) {
+                descEl.textContent = currentDir.description;
+                descEl.style.display = '';
+            } else if (descEl) {
+                if (!currentDir || normalizePath(currentDir.path) === '/') {
+                    descEl.textContent = '{{site.description}}';
+                    descEl.style.display = '';
+                } else {
+                    descEl.style.display = 'none';
+                }
+            }
+
+            var titleEl = document.getElementById('page-title');
+            if (titleEl && currentDir && currentDir.title) {
+                titleEl.textContent = currentDir.title + ' - {{site.title}}';
+            } else if (titleEl) {
+                titleEl.textContent = '{{site.title}} - {{site.subtitle}}';
+            }
+
+            var covTitleEl = document.getElementById('cover-title');
+            if (covTitleEl && currentDir && currentDir.title) {
+                covTitleEl.textContent = currentDir.title;
+            } else if (covTitleEl) {
+                covTitleEl.textContent = '{{site.title}}';
             }
 
             tocData = items

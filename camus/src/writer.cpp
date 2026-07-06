@@ -1,20 +1,20 @@
 #include "writer.h"
 
-#include <fstream>
+#include <cassert>
 #include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <ranges>
 #include <string>
 #include <vector>
 
-#include "config.h"
 #include "common/error/error.h"
 #include "common/filesystem/filesystem.h"
 #include "common/functions/functions.h"
 #include "common/logging/logging.h"
 #include "common/markdown/markdown.h"
 #include "common/str/str.h"
-
-#include <cassert>
-#include <ranges>
+#include "config.h"
 
 struct article {
 	enum visibility { open, hidden, hidden_in_toc };
@@ -31,7 +31,12 @@ struct article {
 	std::vector<std::string> content;
 	camus::site_toc_item toc;
 
-	std::string out_filename() const
+	std::string link() const
+	{
+		return filesystem::clean_path(toc.url_path() + "/" + url);
+	}
+
+	std::string output_full_filename() const
 	{
 		return filesystem::clean_path(output_filename, toc.output_dir());
 	}
@@ -74,9 +79,7 @@ struct article {
 	}
 };
 
-struct toc_item {
-	std::string path;
-	std::string title;
+struct toc_item : camus::site_toc_item {
 	time_t create_time;
 	std::vector<article> articles;
 };
@@ -101,6 +104,7 @@ template <> struct YAML::convert<toc_item> {
 
 		node["title"] = a.title;
 		node["path"] = a.path;
+		node["description"] = a.description;
 		node["create_time"] = a.create_time;
 		node["articles"] = a.articles;
 
@@ -125,7 +129,7 @@ namespace camus
 			.source_full_filename = entry.path().string(),
 			.source_filename = entry.path().filename().string(),
 			.hidden_lines = 0,
-			.toc = conf_loader::site().find_toc(path.string().empty() ? "./" : path.string())
+			.toc = conf_loader::site().find_toc(path.string().empty() ? "./" : path)
 		};
 
 		/**
@@ -213,7 +217,7 @@ namespace camus
 	 * 页面标题 {{page.title}}
 	 * 页面内容 {{page.content}}
 	 */
-	void build_articles_page(const std::vector<article> &pages)
+	void write_articles(const std::vector<article> &pages)
 	{
 		std::string tpl;
 		filesystem::with_current_dir(conf_loader::camus().work_dir, [&](const std::filesystem::path &) {
@@ -233,7 +237,7 @@ namespace camus
 				hidden_flag = std::format("hidden={}line", article.hidden_lines);
 			}
 
-			logging::info("make article name={} {}", article.output_filename, hidden_flag);
+			logging::info("make article name={} link={} {}", article.output_filename, article.link(), hidden_flag);
 
 			std::string markdown = strings::string_join(article.content, "\n");
 			auto [length, to_html] = markdown::markdown_to_html(markdown.data());
@@ -253,8 +257,9 @@ namespace camus
 			content = strings::replace(content, "{{page.info}}", article.to_json());
 			content = conf_loader::render_var(content);
 
-			std::filesystem::create_directory(article.toc.output_dir());
-			filesystem::write_file(article.out_filename(), content);
+			std::filesystem::create_directories(article.toc.output_dir());
+			const int n = filesystem::write_file(article.output_full_filename(), content);
+			assert(n > 0);
 		}
 	}
 
@@ -288,11 +293,16 @@ namespace camus
 
 		std::vector<toc_item> toc_list;
 		for (const auto &val : tocs | std::views::values) {
-			toc_item item{.path = val.url_path(), .title = val.title, .create_time = time(nullptr)};
+			toc_item item;
+			item.dir_name = val.title;
+			item.path = val.path;
+			item.title = val.title;
+			item.description = val.description;
+			item.create_time = time(nullptr);
 
 			for (const article &p : pages) {
 				// 遍历该目录的内容
-				if (!p.is_toc_visible() || val.output_dir() != p.toc.output_dir()) {
+				if (!p.is_toc_visible() || val != p.toc) {
 					continue;
 				}
 
@@ -410,7 +420,8 @@ namespace camus
 				continue;
 			}
 
-			const std::filesystem::path clean_path = entry.path().lexically_relative(conf_loader::camus().source_dir);
+			const std::filesystem::path clean_path =
+				filesystem::clean_path_prefix(entry.path(), conf_loader::camus().source_dir);
 			std::optional<article> article = parse_article(clean_path.parent_path(), entry);
 			if (!article.has_value()) {
 				logging::info("parse params failed, skip: " + entry.path().string());
@@ -424,7 +435,7 @@ namespace camus
 		std::filesystem::create_directory(conf_loader::camus().output_dir);
 		filesystem::with_current_dir(conf_loader::camus().output_dir, [&](const std::filesystem::path &) {
 			build_home_page(pages);
-			build_articles_page(pages);
+			write_articles(pages);
 			build_sitemap(pages);
 		});
 

@@ -29,6 +29,7 @@ camus [./blog]
 │     │     └── page.css
 │     ├── favicon.ico
 │     └── robots.txt
+├── .env
 ├── camus.yaml
 ├── html
 ├── posts
@@ -36,7 +37,19 @@ camus [./blog]
 └── theme
 ```
 
-程序启动将会自动加载 ${work_dir}/camus.yaml
+程序启动将会自动加载 ${work_dir}/camus.yaml 和 ${work_dir}/.env，.env 是 ini 格式
+
+.env
+
+渲染时将自动替换 "{{env.key_name}}" 为实际值
+
+```ini
+GITHUB_URL = https://github.com/o8x/camus
+```
+
+camus.yaml
+
+渲染时将自动替换 "{{group.key}}" 为实际值
 
 ```yaml
 camus:
@@ -53,12 +66,7 @@ camus:
     # 转换md的输出文件名：keep 不转换，uuid 自动转换为 /uuid.html
     filename_case: keep
     # toc 输出格式：javascript 输出为 toc.js，json 输出为 toc.json，all 全部
-    toc_format: javascript
-
-toc:
-    -   dir_name: dir0
-        # 目录名，即 ${source_dir}/${dir_name} 在生成时，显示为什么名字
-        title: 第一个文件夹
+    toc_format: json
 
 site:
     title: Just Another Camus blog
@@ -66,6 +74,17 @@ site:
     description: Rome was not built in one day.
     url: https://github.com/o8x/camus
     repo: https://github.com/o8x/camus
+    toc:
+        # 最终生成的目录是 /{path}/
+        # 解析文件夹
+        -   dir_name: dir0
+            # 该目录的访问路径
+            path: /dir0/first-dir
+            # 页面 subtitle
+            title: 第一个文件夹
+            # 该目录的简介
+            description: |
+                罗马不是一天建成的
 ```
 
 ## 文章参数

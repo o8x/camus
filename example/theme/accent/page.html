@@ -354,6 +354,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
         (function() {
+        var normalizePath = function(p) {
+            if (!p || p === '/') return '/';
+            if (!p.startsWith('/')) p = '/' + p;
+            if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+            return p;
+        };
+
         var countWords = function() {
             var content = document.querySelector('.chapter-content');
             if (!content) return 0;
@@ -386,13 +393,9 @@
         };
 
         var buildArticleUrl = function(parentPath, url) {
-            if (parentPath === '/' || parentPath === '') {
-                return '/' + url;
-            }
-            var p = parentPath;
-            if (!p.startsWith('/')) p = '/' + p;
-            if (p.endsWith('/')) p = p.slice(0, -1);
-            return p + '/' + url;
+            var pp = normalizePath(parentPath);
+            if (pp === '/') return '/' + url;
+            return pp + '/' + url;
         };
 
         var setupNavigation = function(tocData) {
@@ -454,8 +457,10 @@
                     if (parentDir) break;
                 }
                 if (parentDir) {
-                    if (parentDir.path !== '/') {
-                        var p = parentDir.path.replace(/^\/+/, '');
+                    if (normalizePath(parentDir.path) === '/') {
+                        tocLink.href = '/';
+                    } else {
+                        var p = normalizePath(parentDir.path).replace(/^\//, '');
                         tocLink.href = '/?dir=' + encodeURIComponent(p);
                     }
                 }

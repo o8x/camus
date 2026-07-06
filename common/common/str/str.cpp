@@ -1,5 +1,6 @@
 #include "str.h"
 
+#include <algorithm>
 #include <iomanip>
 #include <random>
 #include <sstream>
@@ -131,5 +132,12 @@ namespace strings
 		}
 
 		return escaped.str();
+	}
+
+	std::string to_lower(const std::string_view &s)
+	{
+		std::string s1(s.begin(), s.end());
+		std::ranges::transform(s1, s1.begin(), [](const uint8_t c) { return std::tolower(c); });
+		return s1;
 	}
 } // namespace strings
