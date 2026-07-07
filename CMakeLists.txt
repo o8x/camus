@@ -50,20 +50,6 @@ else ()
     set(GIT_IS_CLEAN "false")
 endif ()
 
-string(TIMESTAMP BUILD_TIME "%Y-%m-%d %H:%M:%S")
-add_compile_definitions(
-        BUILD_TIMESTAMP="${BUILD_TIME}"
-        PROJECT_VERSION_MAJOR="${CMAKE_PROJECT_VERSION_MAJOR}"
-        PROJECT_VERSION="${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}.${CMAKE_PROJECT_VERSION_PATCH}"
-        GIT_BRANCH="${GIT_BRANCH}"
-        GIT_REPO="https://github.com/o8x/camus"
-        GIT_COMMIT_LONG="${GIT_COMMIT_LONG}"
-        GIT_IS_CLEAN="${GIT_IS_CLEAN}"
-        BUILD_TYPE="${CMAKE_BUILD_TYPE}"
-        CMAKE_VERSION="${CMAKE_VERSION}"
-        CXX_STANDARD="${CMAKE_CXX_STANDARD}"
-)
-
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-O3 -ffast-math -falign-functions=64 -flto=auto)
     add_link_options(-ffunction-sections)

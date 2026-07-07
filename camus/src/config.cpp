@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 
+#include <build/build.h>
+
 #include "common/error/error.h"
 #include "common/filesystem/filesystem.h"
 #include "common/functions/functions.h"
@@ -159,14 +161,13 @@ namespace camus
 		flattened_map.emplace("build.time", buf);
 		flattened_map.emplace("build.build-type", BUILD_TYPE);
 		flattened_map.emplace("build.cmake-version", CMAKE_VERSION);
-		flattened_map.emplace("build.cxx-standard", CXX_STANDARD);
+		flattened_map.emplace("build.cxx-standard", std::to_string(CXX_STANDARD));
 		flattened_map.emplace("build.version", PROJECT_VERSION);
-		flattened_map.emplace("build.version_major", PROJECT_VERSION_MAJOR);
+		flattened_map.emplace("build.version_major", std::to_string(PROJECT_VERSION_MAJOR));
 		flattened_map.emplace("build.compiler", compiler_version);
 		flattened_map.emplace("git.repo", GIT_REPO);
 		flattened_map.emplace("git.branch", GIT_BRANCH);
-		flattened_map.emplace("git.commit-hash", GIT_COMMIT_LONG);
-		flattened_map.emplace("git.repo-clean", GIT_IS_CLEAN);
+		flattened_map.emplace("git.commit-hash", GIT_COMMIT_HASH);
 		flattened_map.emplace(
 			"build.powered-by",
 			std::format(

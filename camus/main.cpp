@@ -1,3 +1,4 @@
+#include "build/build.h"
 #include "common/cmdline/cmdline.h"
 #include "writer.h"
 
@@ -19,7 +20,7 @@ int main(const int argc, char **argv)
 		std::cout
 			<< std::format("v{} {} with CMake {} and C++ {}", PROJECT_VERSION, BUILD_TYPE, CMAKE_VERSION, CXX_STANDARD)
 			<< std::endl
-			<< std::format("Build Time: {} hash={}", BUILD_TIMESTAMP, GIT_COMMIT_LONG) << std::endl;
+			<< std::format("Build Time: {} hash={}", BUILD_TIMESTAMP, GIT_COMMIT_HASH) << std::endl;
 		return 0;
 	}
 
