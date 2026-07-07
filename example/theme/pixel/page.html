@@ -9,10 +9,6 @@
     <link id="favicon" rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!--
-        VT323 也是像素字体，相比中文偏小，Press Start 2P 则偏大
-        <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" id="hljs-theme"
           href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -450,6 +446,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script>
     (function () {
+        var normalizePath = function(p) {
+            if (!p || p === '/') return '/';
+            if (!p.startsWith('/')) p = '/' + p;
+            if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+            return p;
+        };
+
         var countWords = function () {
             var content = document.querySelector(".chapter-content")
             if (!content) return 0
@@ -481,18 +484,16 @@
             bar.style.width = progress + "%"
         }
 
+        var buildArticleUrl = function (parentPath, url) {
+            var pp = normalizePath(parentPath);
+            if (pp === '/') {
+                return '/' + url;
+            }
+            return pp + '/' + url;
+        };
+
         var setupNavigation = function (tocData) {
             if (!tocData || tocData.length === 0) return
-
-            var buildArticleUrl = function (parentPath, url) {
-                if (parentPath === '/' || parentPath === '') {
-                    return '/' + url;
-                }
-                var p = parentPath;
-                if (!p.startsWith('/')) p = '/' + p;
-                if (p.endsWith('/')) p = p.slice(0, -1);
-                return p + '/' + url;
-            };
 
             var allArticles = [];
             for (var i = 0; i < tocData.length; i++) {
@@ -549,10 +550,10 @@
                     if (parentDir) break;
                 }
                 if (parentDir) {
-                    if (parentDir.path === '/') {
+                    if (normalizePath(parentDir.path) === '/') {
                         tocLink.href = '/';
                     } else {
-                        var p = parentDir.path.replace(/^\/+/, '');
+                        var p = normalizePath(parentDir.path).replace(/^\//, '');
                         tocLink.href = '/?dir=' + encodeURIComponent(p);
                     }
                 }

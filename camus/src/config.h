@@ -1,25 +1,32 @@
 #pragma once
 
-#include "common/filesystem/filesystem.h"
-#include "yaml-cpp/yaml.h"
-
 #include <string>
 #include <unordered_map>
+
+#include "common/filesystem/filesystem.h"
+#include "yaml-cpp/yaml.h"
 
 namespace camus
 {
 	struct site_toc_item {
+		std::string path;
 		std::string dir_name;
 		std::string title;
+		std::string description;
 
 		std::string output_dir() const
 		{
-			return filesystem::clean_path(dir_name, ".");
+			return filesystem::clean_path(path, ".");
 		}
 
 		std::string url_path() const
 		{
-			return filesystem::clean_path(dir_name, "/");
+			return filesystem::clean_path(path, "/");
+		}
+
+		bool operator==(const site_toc_item &s) const
+		{
+			return s.output_dir() == output_dir() && url_path() == s.url_path();
 		}
 	};
 
@@ -31,7 +38,7 @@ namespace camus
 		std::string repo = "https://github.com/o8x/camus";
 		std::vector<site_toc_item> toc;
 
-		[[nodiscard]] site_toc_item find_toc(const std::string &dir) const
+		[[nodiscard]] site_toc_item find_toc(const std::filesystem::path &dir) const
 		{
 			for (const auto &it : toc) {
 				if (it.dir_name == dir) {
@@ -57,7 +64,7 @@ namespace camus
 
 	class config
 	{
-		std::unordered_map<std::string, std::string> flattened_map;
+		std::map<std::string, std::string> flattened_map;
 
 	  public:
 		camus_conf camus;
@@ -65,7 +72,7 @@ namespace camus
 
 		explicit config(const YAML::Node &root);
 
-		[[nodiscard]] std::unordered_map<std::string, std::string> map() const
+		[[nodiscard]] std::map<std::string, std::string> map() const
 		{
 			return flattened_map;
 		}

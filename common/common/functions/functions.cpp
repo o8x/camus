@@ -1,10 +1,11 @@
 #include "functions.h"
 
+#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <random>
-#include <chrono>
 #include <sstream>
+
 #include <unistd.h>
 
 namespace functions

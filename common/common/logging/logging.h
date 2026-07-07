@@ -5,9 +5,19 @@
 
 namespace logging
 {
-	enum LEVEL { INFO, ERROR, FATAL };
+	enum LEVEL { DEBUG, INFO, WARN, ERROR, FATAL };
 
 	void print_log(LEVEL level, const std::string &content);
+
+	template <typename... Args> void warn(const std::string &format_str, Args &&...args)
+	{
+		print_log(WARN, std::vformat(format_str, std::make_format_args(args...)));
+	}
+
+	template <typename... Args> void debug(const std::string &format_str, Args &&...args)
+	{
+		print_log(DEBUG, std::vformat(format_str, std::make_format_args(args...)));
+	}
 
 	template <typename... Args> void info(const std::string &format_str, Args &&...args)
 	{

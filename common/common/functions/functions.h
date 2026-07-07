@@ -1,15 +1,14 @@
 #pragma once
 
+#include <cstdint>
 #include <iomanip>
 #include <string>
-#include <cstdint>
 
 namespace functions
 {
 	std::string get_now_time(const std::string &format = "%Y-%m-%d %H:%M:%S");
 
 	uint64_t rand_int(const uint64_t min, const uint64_t max);
-
 
 	time_t datetime_to_unix(const std::string &datetime);
 

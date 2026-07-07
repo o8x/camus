@@ -1,7 +1,7 @@
 #pragma once
 
-#include "config.h"
 #include "common/error/error.h"
+#include "config.h"
 
 namespace camus
 {
@@ -10,11 +10,13 @@ namespace camus
 		std::filesystem::path work_dir_;
 
 	  public:
-		explicit writer(std::filesystem::path work_dir) : work_dir_(std::move(work_dir))
+		explicit writer(const std::filesystem::path &work_dir) : work_dir_(std::filesystem::absolute(work_dir))
 		{
 			if (!std::filesystem::exists(work_dir_)) {
 				error::panic("work directory not exists name={}", work_dir_.string());
 			}
+
+			logging::info("current work directory: {}", work_dir_.string());
 		}
 
 		[[nodiscard]] int generate() const;

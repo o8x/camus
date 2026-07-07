@@ -1,10 +1,10 @@
 #pragma once
 
-#include "common/error/error.h"
-
-#include <vector>
 #include <cstdint>
 #include <string>
+#include <vector>
+
+#include "common/error/error.h"
 
 namespace strings
 {
@@ -21,6 +21,8 @@ namespace strings
 	std::string string_join(const std::vector<std::string> &vec, const std::string &delimiter);
 	// 转义 URL 中的 unicode 字符
 	std::string url_encode(const std::string &value);
+	// 将字符串转换为大写
+	std::string to_lower(const std::string_view &s);
 
 	// 将字符串转换为各种类型
 	template <class T> T convert_type(const std::string &data)

@@ -1,14 +1,16 @@
 #include "config.h"
 
-#include "common/error/error.h"
-#include "common/functions/functions.h"
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 
-// 只包含这一个即可，分别包含会模板出错
+#include <build/build.h>
+
+#include "common/error/error.h"
+#include "common/filesystem/filesystem.h"
+#include "common/functions/functions.h"
 #include "common/str/str.h"
 #include "yaml-cpp/yaml.h"
-
-#include <fstream>
-#include <filesystem>
 
 namespace camus
 {
@@ -48,6 +50,10 @@ namespace camus
 		}
 
 		for (const auto &it : site_data) {
+			if (it.second.IsSequence()) {
+				continue;
+			}
+
 			const auto key = strings::trim_space(it.first.as<std::string>());
 			const auto value = strings::trim_space(it.second.as<std::string>());
 			if (key == "title") {
@@ -65,12 +71,77 @@ namespace camus
 			flattened_map.emplace(std::format("site.{}", key), value);
 		}
 
-		if (const YAML::Node &toc = root["toc"]; toc && toc.IsSequence()) {
-			site.toc.push_back({.dir_name = "./"});
+		// 解析 TOC
+		if (const YAML::Node &toc = site_data["toc"]; toc && toc.IsSequence()) {
 			for (const auto &item : toc) {
-				site.toc.push_back(
-					{.dir_name = item["dir_name"].as<std::string>(), .title = item["title"].as<std::string>()}
-				);
+				site_toc_item i{
+					.path = item["path"].as<std::string>(),
+					.dir_name = item["dir_name"].as<std::string>(),
+					.title = item["title"].as<std::string>(),
+				};
+
+				if (item["title"]) {
+					i.title = item["title"].as<std::string>();
+				}
+
+				if (item["description"]) {
+					i.description = item["description"].as<std::string>();
+				}
+
+				site.toc.push_back(i);
+			}
+		}
+
+		// 根目录继承站点属性
+		site.toc.push_back(
+			site_toc_item{
+				.path = "/",
+				.dir_name = camus.source_dir,
+				.title = site.title,
+				.description = site.description
+			}
+		);
+
+		for (auto &entry : std::filesystem::recursive_directory_iterator(camus.source_dir)) {
+			if (!std::filesystem::is_directory(entry)) {
+				continue;
+			}
+
+			if (std::ranges::any_of(site.toc, [&](const site_toc_item &s) {
+					return s.dir_name == entry.path().string();
+				})) {
+				continue;
+			}
+
+			const std::filesystem::path subdir_name = filesystem::clean_path_prefix(entry.path(), camus.source_dir);
+			const std::string path = filesystem::clean_path(subdir_name);
+			// 未定义路径继承站点属性，但多级子目录不会继承父目录属性
+			site.toc.push_back(
+				site_toc_item{
+					.path = path,
+					.dir_name = subdir_name.string(),
+					.title = std::format("Untitled \"{}\"", path),
+					.description = "",
+				}
+			);
+		}
+
+		for (int i = 0; i < site.toc.size(); ++i) {
+			flattened_map.emplace(std::format("site.toc[{}].title", i), site.toc[i].title);
+			flattened_map.emplace(std::format("site.toc[{}].dir_name", i), site.toc[i].dir_name);
+			flattened_map.emplace(std::format("site.toc[{}].description", i), site.toc[i].description);
+		}
+
+		// 解析 ENV 文件
+		if (std::filesystem::exists(".env")) {
+			for (const auto &it : strings::split(filesystem::read_file(".env"), "\n")) {
+				std::vector<std::string> kv = strings::split(it, "=");
+				const std::string k = strings::trim_space(kv[0]);
+				if (kv.size() != 2 || k.empty()) {
+					continue;
+				}
+
+				flattened_map.emplace(std::format("env.{}", strings::to_lower(k)), strings::trim_space(kv[1]));
 			}
 		}
 
@@ -90,14 +161,13 @@ namespace camus
 		flattened_map.emplace("build.time", buf);
 		flattened_map.emplace("build.build-type", BUILD_TYPE);
 		flattened_map.emplace("build.cmake-version", CMAKE_VERSION);
-		flattened_map.emplace("build.cxx-standard", CXX_STANDARD);
+		flattened_map.emplace("build.cxx-standard", std::to_string(CXX_STANDARD));
 		flattened_map.emplace("build.version", PROJECT_VERSION);
-		flattened_map.emplace("build.version_major", PROJECT_VERSION_MAJOR);
+		flattened_map.emplace("build.version_major", std::to_string(PROJECT_VERSION_MAJOR));
 		flattened_map.emplace("build.compiler", compiler_version);
 		flattened_map.emplace("git.repo", GIT_REPO);
 		flattened_map.emplace("git.branch", GIT_BRANCH);
-		flattened_map.emplace("git.commit-hash", GIT_COMMIT_LONG);
-		flattened_map.emplace("git.repo-clean", GIT_IS_CLEAN);
+		flattened_map.emplace("git.commit-hash", GIT_COMMIT_HASH);
 		flattened_map.emplace(
 			"build.powered-by",
 			std::format(
