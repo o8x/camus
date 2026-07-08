@@ -11,6 +11,13 @@ add_executable(Camus main.cpp)
 target_link_libraries(Camus PRIVATE camus)
 set_target_properties(Camus PROPERTIES OUTPUT_NAME "camus" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
+add_custom_command(TARGET Camus POST_BUILD
+        COMMAND ${CMAKE_SOURCE_DIR}/hack/post_build.sh "${CMAKE_SOURCE_DIR}"
+        COMMENT "Appending example to executable..."
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        VERBATIM
+)
+
 set(DEFAULT_SITE "site")
 
 file(WRITE ${CMAKE_BINARY_DIR}/default-site.txt "${DEFAULT_SITE}")
@@ -35,7 +42,7 @@ set(CPACK_PACKAGING_INSTALL_PREFIX "/")
 
 cmake_host_system_information(RESULT HOST_OS_NAME QUERY OS_NAME)
 cmake_host_system_information(RESULT HOST_OS_RELEASE QUERY OS_RELEASE)
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${HOST_OS_NAME}${HOST_OS_RELEASE}-${CMAKE_SYSTEM_PROCESSOR}")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-v${CPACK_PACKAGE_VERSION}_${HOST_OS_NAME}${HOST_OS_RELEASE}-${CMAKE_SYSTEM_PROCESSOR}")
 string(TOLOWER ${CPACK_PACKAGE_FILE_NAME} CPACK_PACKAGE_FILE_NAME)
 
 if (APPLE)
@@ -64,6 +71,7 @@ if (APPLE)
     endif ()
 elseif (UNIX)
     install(TARGETS Camus DESTINATION ./usr/local/bin)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/example DESTINATION ./var/lib/camus PATTERN "html/*" EXCLUDE)
 
     set(CPACK_GENERATOR "DEB")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "https://github.com/o8x")

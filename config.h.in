@@ -14,3 +14,6 @@
 #define GIT_BRANCH "@GIT_BRANCH@"
 #define GIT_REPO "https://github.com/o8x/camus"
 #define GIT_COMMIT_HASH "@GIT_COMMIT_LONG@"
+
+#define CAMUS_DATA_DIR "/var/lib/camus"
+#define CAMUS_TEMPLATE_DIR "/var/lib/camus/example"
