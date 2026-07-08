@@ -237,7 +237,7 @@ namespace camus
 				hidden_flag = std::format("hidden={}line", article.hidden_lines);
 			}
 
-			logging::info("make article name={} link={} {}", article.output_filename, article.link(), hidden_flag);
+			logging::debug("build article name={} link={} {}", article.output_filename, article.link(), hidden_flag);
 
 			std::string markdown = strings::string_join(article.content, "\n");
 			auto [length, to_html] = markdown::markdown_to_html(markdown.data());
@@ -326,7 +326,7 @@ namespace camus
 		std::ranges::sort(toc_list, [](const toc_item &a, const toc_item &b) { return a.create_time > b.create_time; });
 
 		const std::string toc_format = conf_loader::camus().toc_format;
-		logging::info("make table of contents format={}", toc_format);
+		logging::debug("make table of contents format={}", toc_format);
 
 		if (toc_format == "all" || toc_format == "json") {
 			filesystem::write_file("toc.json", toc_to_json(toc_list));
@@ -358,7 +358,7 @@ namespace camus
 			items.push_back(loc);
 		}
 
-		logging::info(std::format("make sitemap url={}/sitemap.xml", conf_loader::site().url));
+		logging::debug(std::format("make sitemap url={}/sitemap.xml", conf_loader::site().url));
 
 		filesystem::write_file(
 			"sitemap.xml",
@@ -379,7 +379,7 @@ namespace camus
 
 		// 整体拷贝资源文件夹
 		if (std::filesystem::is_empty(assets_dir)) {
-			logging::info(std::format("skip empty assets directory: {}", assets_dir));
+			logging::debug(std::format("skip empty assets directory: {}", assets_dir));
 		} else {
 			// 默认会将资源文件都提升到输出文件夹中
 			std::filesystem::copy(
@@ -395,7 +395,7 @@ namespace camus
 				}
 			}
 
-			logging::info(
+			logging::debug(
 				std::format(
 					"assets: promote copy {}/* to {}/* files={}",
 					assets_dir,
@@ -406,11 +406,8 @@ namespace camus
 		}
 	}
 
-	int writer::generate() const
+	int writer::build() const
 	{
-		std::filesystem::current_path(work_dir_);
-
-		conf_loader::get().parse_yaml("camus.yaml");
 		const std::string read_dir = conf_loader::camus().source_dir;
 
 		std::vector<article> pages;
@@ -420,11 +417,16 @@ namespace camus
 				continue;
 			}
 
+			// 不处理模板目录中的任何文件
+			if (entry.path().string().find(CAMUS_DIR) != std::string::npos) {
+				continue;
+			}
+
 			const std::filesystem::path clean_path =
 				filesystem::clean_path_prefix(entry.path(), conf_loader::camus().source_dir);
 			std::optional<article> article = parse_article(clean_path.parent_path(), entry);
 			if (!article.has_value()) {
-				logging::info("parse params failed, skip: " + entry.path().string());
+				logging::debug("parse params failed, skip: " + entry.path().string());
 				continue;
 			}
 
@@ -437,6 +439,8 @@ namespace camus
 			build_home_page(pages);
 			write_articles(pages);
 			build_sitemap(pages);
+
+			logging::info("build complete articles={} output={}", pages.size(), conf_loader::camus().output_dir);
 		});
 
 		// 拷贝额外的导入内容

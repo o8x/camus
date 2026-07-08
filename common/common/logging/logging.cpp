@@ -17,6 +17,8 @@ static std::mutex mtx;
 
 namespace logging
 {
+	static logging_level log_level = INFO_LEVEL;
+
 	namespace color
 	{
 		static bool is_supports_color()
@@ -46,22 +48,36 @@ namespace logging
 		const std::string RESET = is_supports_color() ? "\033[0m" : "";
 	} // namespace color
 
-	void print_log(const LEVEL level, const std::string &content)
+	logging_level set_level(const logging_level level)
 	{
+		const logging_level current = log_level;
+		log_level = level;
+
+		debug("change logging level source={} dest={}", static_cast<uint8_t>(current), static_cast<uint8_t>(log_level));
+		return log_level;
+	}
+
+	void print_log(const logging_level level, const std::string &content)
+	{
+		// 验证日志级别
+		if (level < log_level) {
+			return;
+		}
+
 		std::stringstream ss;
 
 		ss << functions::get_now_time();
 
-		if (level == FATAL) {
-			ss << color::MAGENTA << " [FATAL] ";
-		} else if (level == ERROR) {
-			ss << color::RED << " [ERROR] ";
-		} else if (level == WARN) {
+		if (level == FATAL_LEVEL) {
+			ss << color::MAGENTA << " [FATA] ";
+		} else if (level == ERROR_LEVEL) {
+			ss << color::RED << " [ERRO] ";
+		} else if (level == WARN_LEVEL) {
 			ss << color::YELLOW << " [WARN] ";
-		} else if (level == INFO) {
+		} else if (level == INFO_LEVEL) {
 			ss << color::GREEN << " [INFO] ";
-		} else if (level == DEBUG) {
-			ss << " [INFO] ";
+		} else if (level == DEBUG_LEVEL) {
+			ss << " [DEBU] ";
 		}
 
 		std::string text = content;

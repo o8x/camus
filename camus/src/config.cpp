@@ -38,8 +38,23 @@ namespace camus
 			} else if (key == "sitemap") {
 				camus.sitemap = value == "true";
 			} else if (key == "theme") {
+				// 默认使用本地主题
 				camus.theme_home = std::format("theme/{}/home.html", value);
 				camus.theme_page = std::format("theme/{}/page.html", value);
+
+				// 检查是否存在 .camus/theme/default/home.html
+				if (std::filesystem::exists(std::filesystem::path(CAMUS_DIR) / "theme" / value / "home.html")) {
+					camus.theme_home = std::format("{}/theme/{}/home.html", CAMUS_DIR, value);
+					camus.theme_page = std::format("{}/theme/{}/page.html", CAMUS_DIR, value);
+				}
+
+				if (!std::filesystem::exists(camus.theme_home)) {
+					logging::fatal(
+						"theme {} not found file={}",
+						value,
+						std::filesystem::absolute(camus.theme_home).c_str()
+					);
+				}
 			} else if (key == "filename_case") {
 				camus.filename_case = value;
 			} else if (key == "toc_format") {
@@ -92,16 +107,6 @@ namespace camus
 			}
 		}
 
-		// 根目录继承站点属性
-		site.toc.push_back(
-			site_toc_item{
-				.path = "/",
-				.dir_name = camus.source_dir,
-				.title = site.title,
-				.description = site.description
-			}
-		);
-
 		for (auto &entry : std::filesystem::recursive_directory_iterator(camus.source_dir)) {
 			if (!std::filesystem::is_directory(entry)) {
 				continue;
@@ -122,6 +127,18 @@ namespace camus
 					.dir_name = subdir_name.string(),
 					.title = std::format("Untitled \"{}\"", path),
 					.description = "",
+				}
+			);
+		}
+
+		// 自动增加 / 路由
+		if (std::ranges::any_of(site.toc, [&](const site_toc_item &s) -> bool { return s.path == "/"; })) {
+			site.toc.push_back(
+				site_toc_item{
+					.path = "/",
+					.dir_name = camus.source_dir,
+					.title = site.title,
+					.description = site.description
 				}
 			);
 		}

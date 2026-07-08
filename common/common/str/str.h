@@ -23,6 +23,23 @@ namespace strings
 	std::string url_encode(const std::string &value);
 	// 将字符串转换为大写
 	std::string to_lower(const std::string_view &s);
+	// 为字符串生成 hash
+	constexpr uint64_t make_hash(const std::string &str) noexcept {
+		uint64_t hash = 0xcbf29ce484222325ULL; // FNV-1a 64-bit 初始值
+
+		for (size_t i = 0; i < str.length(); ++i) {
+			hash ^= static_cast<uint8_t>(str.at(i));
+			hash *= 0x100000001b3ULL; // FNV prime (also used in Linux kernel)
+		}
+
+		hash ^= hash >> 33;
+		hash *= 0xff51afd7ed558ccdULL;
+		hash ^= hash >> 33;
+		hash *= 0xc4ceb9fe1a85ec53ULL;
+		hash ^= hash >> 33;
+
+		return hash;
+	}
 
 	// 将字符串转换为各种类型
 	template <class T> T convert_type(const std::string &data)

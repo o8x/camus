@@ -1,5 +1,6 @@
 #include <cassert>
 #include <fstream>
+#include <thread>
 
 #include <arpa/inet.h>
 
@@ -8,23 +9,43 @@
 #include "common/extract/extract.h"
 #include "writer.h"
 
-static int extract_template(const std::string &exec_name, const std::string &dest_dir)
+static int
+install_template(const std::filesystem::path &exec_name, const bool force, const std::filesystem::path &root_dir)
 {
-	std::filesystem::create_directory(dest_dir);
+	const std::filesystem::path dest_dir = CAMUS_DIR;
+	std::filesystem::create_directories(root_dir / dest_dir);
+	std::filesystem::current_path(root_dir);
 
+	const std::filesystem::path version_file = dest_dir / ".version";
 	if (!filesystem::path_empty(dest_dir)) {
-		logging::fatal(
-			"destination path '{}' already exists and is not an empty directory.",
-			std::filesystem::absolute(dest_dir).string()
-		);
+		const std::string version = filesystem::read_file(version_file, true);
+		if (!force) {
+			if (version != PROJECT_VERSION) {
+				logging::fatal(
+					"Camus installed and version different installed={} current={}",
+					version,
+					PROJECT_VERSION
+				);
+				return 1;
+			}
+
+			return 0;
+		}
+
+		// 安全保护，如果文件过多则需要手动删除
+		if (const int files = filesystem::scan_path_files(dest_dir, 10000); files > 50) {
+			logging::fatal(
+				"{} contains at least {} files. Please delete them manually.",
+				std::filesystem::absolute(root_dir).string(),
+				files
+			);
+		}
+
+		logging::debug("Local version is about to be deleted version={} name={}", version, dest_dir.string());
+		std::filesystem::remove_all(dest_dir);
 	}
 
-	logging::info("Creating a new Camus site in '{}'", dest_dir);
-	if (std::filesystem::exists(std::format("{}/camus.yaml", CAMUS_TEMPLATE_DIR))) {
-		std::filesystem::copy(CAMUS_TEMPLATE_DIR, dest_dir, std::filesystem::copy_options::recursive);
-		logging::info(R"(Installed a new Camus site into '{}')", std::filesystem::absolute(dest_dir).string());
-		return 0;
-	}
+	logging::debug("read template from {}", exec_name.string());
 
 	std::ifstream file(exec_name, std::ios::in | std::ios::binary);
 	assert(file.is_open());
@@ -46,7 +67,16 @@ static int extract_template(const std::string &exec_name, const std::string &des
 
 	const bool extract_archive = extract::extract_tgz(buffer, dest_dir);
 	if (extract_archive) {
-		logging::info(R"(Created Camus site at '{}')", std::filesystem::absolute(dest_dir).string());
+		logging::info("Camus v{} installed at '{}'", PROJECT_VERSION, root_dir.string());
+
+		filesystem::write_file(version_file, PROJECT_VERSION);
+		for (const auto &name : std::vector<std::string>{"assets", "posts", "camus.yaml", ".env", ".gitignore"}) {
+			if (!std::filesystem::exists(name)) {
+				std::filesystem::copy(dest_dir / name, name, std::filesystem::copy_options::recursive);
+			}
+		}
+	} else {
+		std::filesystem::remove(dest_dir);
 	}
 
 	return extract_archive ? 0 : 1;
@@ -58,12 +88,19 @@ int main(const int argc, char **argv)
 	arg.set_program_name("Great writer Camus");
 	arg.add("help", 'h', "print this help and exit");
 	arg.add("version", 'v', "print version and exit");
-	arg.add<std::string>("root", 'd', "root dir", false, "./");
-	arg.add<std::string>("install", 'i', "install example site", false);
+	arg.add("install", 'i', "install example site into work dir");
+	arg.add("force", 'f', "ignore errors during operation");
+	arg.add("debug", 'd', "enable debugging");
+	arg.add("watch", 0, "automate building when changes occur");
+	arg.add<std::string>("workdir", 'w', "work dir", false, ".");
 
 	if (const bool parse_result = arg.parse(argc, argv); !parse_result || arg.exist("help")) {
 		std::cout << arg.error_full() << std::endl << arg.usage();
 		return 1;
+	}
+
+	if (arg.exist("debug") || std::string(BUILD_TYPE) == "Debug") {
+		logging::set_level(logging::DEBUG_LEVEL);
 	}
 
 	if (arg.exist("version")) {
@@ -75,15 +112,23 @@ int main(const int argc, char **argv)
 	}
 
 	if (arg.exist("install")) {
-		return extract_template(argv[0], arg.get<std::string>("install"));
+		return install_template(
+			filesystem::get_self_path(argv[0]),
+			arg.exist("force"),
+			arg.get<std::string>("workdir")
+		);
 	}
 
 	try {
-		const auto c = std::make_unique<camus::writer>(arg.get<std::string>("root"));
-		return c->generate();
+		const auto c = std::make_unique<camus::writer>(arg.get<std::string>("workdir"));
+		if (const int code = c->build(); !arg.exist("watch")) {
+			return code;
+		}
+
+		c->watch();
 	} catch (const std::exception &e) {
 		logging::error("error: {}", e.what());
 	}
 
-	return 1;
+	return 0;
 }
