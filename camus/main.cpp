@@ -1,5 +1,6 @@
 #include <cassert>
 #include <fstream>
+#include <thread>
 
 #include <arpa/inet.h>
 
@@ -90,6 +91,7 @@ int main(const int argc, char **argv)
 	arg.add("install", 'i', "install example site into work dir");
 	arg.add("force", 'f', "ignore errors during operation");
 	arg.add("debug", 'd', "enable debugging");
+	arg.add("watch", 0, "automate building when changes occur");
 	arg.add<std::string>("workdir", 'w', "work dir", false, ".");
 
 	if (const bool parse_result = arg.parse(argc, argv); !parse_result || arg.exist("help")) {
@@ -119,10 +121,14 @@ int main(const int argc, char **argv)
 
 	try {
 		const auto c = std::make_unique<camus::writer>(arg.get<std::string>("workdir"));
-		return c->generate();
+		if (const int code = c->build(); !arg.exist("watch")) {
+			return code;
+		}
+
+		c->watch();
 	} catch (const std::exception &e) {
 		logging::error("error: {}", e.what());
 	}
 
-	return 1;
+	return 0;
 }

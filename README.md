@@ -10,13 +10,19 @@ Camus
 安装模板
 
 ```shell
-camus -i [-w site]
+camus -i [-f] [-w site]
 ```
 
 编译
 
 ```shell
 camus [-w site]
+```
+
+自动构建
+
+```shell
+camus --watch [-w site]
 ```
 
 ### 配置

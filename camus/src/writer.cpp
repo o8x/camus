@@ -406,11 +406,8 @@ namespace camus
 		}
 	}
 
-	int writer::generate() const
+	int writer::build() const
 	{
-		std::filesystem::current_path(work_dir_);
-
-		conf_loader::get().parse_yaml("camus.yaml");
 		const std::string read_dir = conf_loader::camus().source_dir;
 
 		std::vector<article> pages;
