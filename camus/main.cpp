@@ -112,11 +112,18 @@ int main(const int argc, char **argv)
 	}
 
 	if (arg.exist("install")) {
-		return install_template(
-			filesystem::get_self_path(argv[0]),
-			arg.exist("force"),
-			arg.get<std::string>("workdir")
-		);
+		int installed;
+		filesystem::with_current_dir([&]() {
+			installed = install_template(
+				filesystem::get_self_path(argv[0]),
+				arg.exist("force"),
+				arg.get<std::string>("workdir")
+			);
+		});
+
+		if (installed != 0) {
+			return installed;
+		}
 	}
 
 	try {
