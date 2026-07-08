@@ -71,7 +71,6 @@ if (APPLE)
     endif ()
 elseif (UNIX)
     install(TARGETS Camus DESTINATION ./usr/local/bin)
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/example DESTINATION ./var/lib/camus PATTERN "html/*" EXCLUDE)
 
     set(CPACK_GENERATOR "DEB")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "https://github.com/o8x")

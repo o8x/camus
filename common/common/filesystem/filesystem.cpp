@@ -7,9 +7,15 @@
 #include "common/logging/logging.h"
 #include "common/str/str.h"
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#else
+#include <linux/limits.h>
+#endif
+
 namespace filesystem
 {
-	int write_file(const std::string_view &path, const std::string_view &content)
+	int write_file(const std::filesystem::path &path, const std::string_view &content)
 	{
 		std::ofstream outfile;
 		if (outfile.open(std::string{path}, std::ofstream::out | std::ofstream::trunc); !outfile) {
@@ -69,6 +75,51 @@ namespace filesystem
 		}
 	}
 
+	int scan_path_files(const std::filesystem::path &path, const uint32_t max_scan)
+	{
+		uint32_t files = 0;
+		for (const std::filesystem::directory_entry &it : std::filesystem::recursive_directory_iterator(path)) {
+			if (files++; files > max_scan) {
+				break;
+			}
+		}
+
+		return files;
+	}
+
+	std::filesystem::path get_self_path(const std::string &arg0)
+	{
+#ifdef __linux__
+		// Linux: 直接从 /proc 伪文件系统读取
+		std::vector<char> buffer(PATH_MAX);
+		if (const ssize_t len = readlink("/proc/self/exe", buffer.data(), buffer.size() - 1); len != -1) {
+			buffer[len] = '\0';
+			return buffer.data();
+		}
+#endif
+
+#ifdef __APPLE__
+		uint32_t size = 0;
+		_NSGetExecutablePath(nullptr, &size);
+
+		std::vector<char> buffer(size);
+		if (_NSGetExecutablePath(buffer.data(), &size) == 0) {
+			if (char *resolved = realpath(buffer.data(), nullptr)) {
+				std::string result = resolved;
+				free(resolved);
+				return result;
+			}
+		}
+#endif
+
+		const std::filesystem::path def = std::filesystem::absolute(arg0);
+		if (!std::filesystem::exists(def)) {
+			error::panic("could not find executable path");
+		}
+
+		return def;
+	}
+
 	std::filesystem::path with_current_dir(
 		const std::filesystem::path &path, const std::function<void(const std::filesystem::path &path)> &fn
 	)
@@ -83,10 +134,10 @@ namespace filesystem
 		std::filesystem::current_path(path);
 
 		const uint32_t session_id = functions::rand_int(1000, 9999);
-		logging::info("enter path session={} name={}", session_id, std::filesystem::current_path().string());
+		logging::debug("enter path session={} name={}", session_id, std::filesystem::current_path().string());
 		fn(curr);
 		std::filesystem::current_path(curr);
-		logging::info("back path session={} name={}", session_id, curr.string());
+		logging::debug("back path session={} name={}", session_id, curr.string());
 
 		return curr;
 	}

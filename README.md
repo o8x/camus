@@ -10,13 +10,13 @@ Camus
 安装模板
 
 ```shell
-camus -i site
+camus -i [-w site]
 ```
 
 编译
 
 ```shell
-camus [-d site]
+camus [-w site]
 ```
 
 ### 配置
