@@ -10,9 +10,21 @@ file(GLOB SOURCES
         common/filesystem/*.cpp
         common/str/*.h
         common/str/*.cpp
+        common/extract/*.h
+        common/extract/*.cpp
 )
 
 add_library(common STATIC ${SOURCES})
+
+find_package(PkgConfig REQUIRED)
+
+if (APPLE)
+    set(ENV{PKG_CONFIG_PATH} "/opt/homebrew/opt/libarchive/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+endif ()
+
+pkg_check_modules(ARCHIVE REQUIRED libarchive)
+target_link_libraries(common PUBLIC ${ARCHIVE_LIBRARIES})
+target_include_directories(common PUBLIC ${ARCHIVE_INCLUDE_DIRS})
 
 target_include_directories(common PUBLIC
         .

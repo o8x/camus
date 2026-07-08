@@ -21,8 +21,8 @@ site:
     url: https://github.com/o8x/camus
     repo: https://github.com/o8x/camus
     toc:
-            # 最终生成的目录是 /{path}/
-            # 解析文件夹
+        # 最终生成的目录是 /{path}/
+        # 解析文件夹
         -   dir_name: dir0
             # 该目录的访问路径
             path: /dir0/first-dir

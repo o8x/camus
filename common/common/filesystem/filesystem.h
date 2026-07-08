@@ -14,6 +14,8 @@ namespace filesystem
 	// 清理相对路径
 	std::filesystem::path
 	clean_path_prefix(const std::filesystem::path &path, const std::string &prefix, const bool absolute = false);
+	// 检查目录是否为空
+	bool path_empty(const std::filesystem::path &path);
 
 	// 切换工作目录运行函数，再切换回来
 	std::filesystem::path with_current_dir(

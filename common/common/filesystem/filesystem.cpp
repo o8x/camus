@@ -56,6 +56,19 @@ namespace filesystem
 		return clean_path;
 	}
 
+	bool path_empty(const std::filesystem::path &path)
+	{
+		if (!std::filesystem::exists(path)) {
+			return false;
+		}
+
+		try {
+			return std::filesystem::directory_iterator(path) == std::filesystem::directory_iterator{};
+		} catch (...) {
+			return false;
+		}
+	}
+
 	std::filesystem::path with_current_dir(
 		const std::filesystem::path &path, const std::function<void(const std::filesystem::path &path)> &fn
 	)

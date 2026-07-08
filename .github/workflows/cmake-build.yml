@@ -12,6 +12,9 @@ permissions:
 jobs:
   build-ubuntu:
     runs-on: ubuntu-24.04
+    env:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
     container:
       image: docker.io/ubuntu:24.04
 
@@ -19,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         apt update -y
-        apt install -y git ninja-build make cmake gcc g++ mold dpkg-dev 
+        apt install -y git ninja-build make cmake pkg-config xxd gcc g++ mold dpkg-dev libarchive-dev
 
     - uses: actions/checkout@v4
 
@@ -30,10 +33,12 @@ jobs:
         make package
 
     - name: Install Test
+      working-directory: build/release/packages
       run: |
-        dpkg -i build/release/packages/*.deb
-        /usr/local/bin/camus -v
-        /usr/local/bin/camus -d example
+        dpkg -i *.deb
+        camus -v
+        camus --install /tmp/site
+        camus --root /tmp/site
 
     - name: Upload
       uses: actions/upload-artifact@v4
@@ -43,12 +48,12 @@ jobs:
         if-no-files-found: error
 
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - name: Install dependencies
         run: |
           brew update
-          brew install git make cmake ninja gcc@13
+          brew install git make cmake pkg-config ninja gcc@13 libarchive
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -60,10 +65,12 @@ jobs:
           make package
 
       - name: Install Test
+        working-directory: build/release/packages
         run: |
-          sudo installer -pkg build/release/packages/*.pkg -target / 
+          sudo installer -pkg *.pkg -target /
           /usr/local/bin/camus -v
-          /usr/local/bin/camus -d example
+          /usr/local/bin/camus -i /tmp/site
+          /usr/local/bin/camus -d /tmp/site
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -82,7 +89,8 @@ jobs:
             path: packages
             merge-multiple: true
 
-      - name: list
+      - name: List artifact
+        working-directory: packages
         run: ls -l
 
       -   name: Release
@@ -92,4 +100,6 @@ jobs:
             files: |
               packages/*.dmg
               packages/*.pkg
+              packages/*.rpm
               packages/*.deb
+              packages/*.exe
