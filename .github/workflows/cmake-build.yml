@@ -1,105 +1,105 @@
 name: CMake on multiple platforms
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    push:
+        branches: [ "main" ]
+    pull_request:
+        branches: [ "main" ]
 
 permissions:
-  contents: write
+    contents: write
 
 jobs:
-  build-ubuntu:
-    runs-on: ubuntu-24.04
-    env:
-      LANG: C.UTF-8
-      LC_ALL: C.UTF-8
-    container:
-      image: docker.io/ubuntu:24.04
+    build-ubuntu:
+        runs-on: ubuntu-24.04
+        env:
+            LANG: C.UTF-8
+            LC_ALL: C.UTF-8
+        container:
+            image: docker.io/ubuntu:24.04
 
-    steps:
-    - name: Install dependencies
-      run: |
-        apt update -y
-        apt install -y git ninja-build make cmake pkg-config xxd gcc g++ mold dpkg-dev libarchive-dev
+        steps:
+            -   name: Install dependencies
+                run: |
+                    apt update -y
+                    apt install -y git ninja-build make cmake pkg-config xxd gcc g++ mold dpkg-dev libarchive-dev
 
-    - uses: actions/checkout@v4
+            -   uses: actions/checkout@v4
 
-    - name: Build
-      run: |
-        git config --global --add safe.directory "$GITHUB_WORKSPACE"
-        git submodule update --init --recursive
-        make package
+            -   name: Build
+                run: |
+                    git config --global --add safe.directory "$GITHUB_WORKSPACE"
+                    git submodule update --init --recursive
+                    make package
 
-    - name: Install Test
-      working-directory: build/release/packages
-      run: |
-        dpkg -i *.deb
-        camus -v
-        camus --install /tmp/site
-        camus --root /tmp/site
+            -   name: Install Test
+                working-directory: build/release/packages
+                run: |
+                    dpkg -i *.deb
+                    camus -v
+                    camus --install /tmp/site
+                    camus --root /tmp/site
 
-    - name: Upload
-      uses: actions/upload-artifact@v4
-      with:
-        name: Ubuntu-Artifacts
-        path: build/release/packages
-        if-no-files-found: error
+            -   name: Upload
+                uses: actions/upload-artifact@v4
+                with:
+                    name: Ubuntu-Artifacts
+                    path: build/release/packages
+                    if-no-files-found: error
 
-  build-macos:
-    runs-on: macos-14
-    steps:
-      - name: Install dependencies
-        run: |
-          brew update
-          brew install git make cmake pkg-config ninja gcc@13 libarchive
+    build-macos:
+        runs-on: macos-14
+        steps:
+            -   name: Install dependencies
+                run: |
+                    brew update
+                    brew install git make cmake pkg-config ninja gcc@13 libarchive
 
-      - name: Checkout
-        uses: actions/checkout@v4
+            -   name: Checkout
+                uses: actions/checkout@v4
 
-      - name: Build
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git submodule update --init --recursive
-          make package
+            -   name: Build
+                run: |
+                    git config --global --add safe.directory "$GITHUB_WORKSPACE"
+                    git submodule update --init --recursive
+                    make package
 
-      - name: Install Test
-        working-directory: build/release/packages
-        run: |
-          sudo installer -pkg *.pkg -target /
-          /usr/local/bin/camus -v
-          /usr/local/bin/camus -i /tmp/site
-          /usr/local/bin/camus -d /tmp/site
+            -   name: Install Test
+                working-directory: build/release/packages
+                run: |
+                    sudo installer -pkg *.pkg -target /
+                    /usr/local/bin/camus -v
+                    /usr/local/bin/camus -i /tmp/site
+                    /usr/local/bin/camus -d /tmp/site
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: MacOS-Artifacts
-          path: build/release/packages
-          if-no-files-found: error
+            -   name: Upload artifact
+                uses: actions/upload-artifact@v4
+                with:
+                    name: MacOS-Artifacts
+                    path: build/release/packages
+                    if-no-files-found: error
 
-  release:
-    runs-on: ubuntu-24.04
-    needs: [ build-macos, build-ubuntu ]
-    steps:
-      -   name: Download artifact
-          uses: actions/download-artifact@v4
-          with:
-            path: packages
-            merge-multiple: true
+    release:
+        runs-on: ubuntu-24.04
+        needs: [ build-macos, build-ubuntu ]
+        steps:
+            -   name: Download artifact
+                uses: actions/download-artifact@v4
+                with:
+                    path: packages
+                    merge-multiple: true
 
-      - name: List artifact
-        working-directory: packages
-        run: ls -l
+            -   name: List artifact
+                working-directory: packages
+                run: ls -l
 
-      -   name: Release
-          uses: softprops/action-gh-release@v3
-          if: github.ref_type == 'tag'
-          with:
-            files: |
-              packages/*.dmg
-              packages/*.pkg
-              packages/*.rpm
-              packages/*.deb
-              packages/*.exe
+            -   name: Release
+                uses: softprops/action-gh-release@v3
+                if: github.ref_type == 'tag'
+                with:
+                    files: |
+                        packages/*.dmg
+                        packages/*.pkg
+                        packages/*.rpm
+                        packages/*.deb
+                        packages/*.exe
