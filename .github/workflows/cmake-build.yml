@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: write
+
 jobs:
   build-ubuntu:
     runs-on: ubuntu-24.04
@@ -68,3 +71,25 @@ jobs:
           name: MacOS-Artifacts
           path: build/release/packages
           if-no-files-found: error
+
+  release:
+    runs-on: ubuntu-24.04
+    needs: [ build-macos, build-ubuntu ]
+    steps:
+      -   name: Download artifact
+          uses: actions/download-artifact@v4
+          with:
+            path: packages
+            merge-multiple: true
+
+      - name: list
+        run: ls -l
+
+      -   name: Release
+          uses: softprops/action-gh-release@v3
+          if: github.ref_type == 'tag'
+          with:
+            files: |
+              packages/*.dmg
+              packages/*.pkg
+              packages/*.deb
