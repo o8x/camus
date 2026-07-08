@@ -1,6 +1,6 @@
 Camus
 =====
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/o8x/camus/cmake-build.yml)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/o8x/camus/auto-release-tag.yml)
 ![GitHub License](https://img.shields.io/github/license/o8x/camus)
 
 使用 C++ 开发的静态博客生成工具，markdown 解析工具采用 cmark，支持一定程度的自定义主题。
