@@ -1,20 +1,22 @@
 Camus
 =====
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/o8x/camus/cmake-build.yml)
+![GitHub License](https://img.shields.io/github/license/o8x/camus)
 
 使用 C++ 开发的静态博客生成工具，markdown 解析工具采用 cmark，支持一定程度的自定义主题。
 
 ## 用法
 
-直接读取当前目录
+安装模板
 
 ```shell
-camus
+camus -i site
 ```
 
-设置工作目录
+编译
 
 ```shell
-camus [./blog]
+camus [-d site]
 ```
 
 ### 配置
