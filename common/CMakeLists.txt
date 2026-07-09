@@ -12,6 +12,9 @@ file(GLOB SOURCES
         common/str/*.cpp
         common/extract/*.h
         common/extract/*.cpp
+        common/net/*.h
+        common/net/*.cpp
+        ../third-party/cpp-httplib/httplib.h
 )
 
 add_library(common STATIC ${SOURCES})
@@ -31,6 +34,7 @@ target_include_directories(common PUBLIC
         ${PROJECT_BINARY_DIR}/include
         ${CMAKE_SOURCE_DIR}/third-party/cmark-gfm/src
         ${CMAKE_BINARY_DIR}/third-party/cmark-gfm/src
+        ../third-party/cpp-httplib
 )
 
 target_link_libraries(common PUBLIC
