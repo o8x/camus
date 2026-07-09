@@ -29,4 +29,5 @@ namespace filesystem
 	std::filesystem::path with_current_dir(
 		const std::filesystem::path &path, const std::function<void(const std::filesystem::path &path)> &fn
 	);
+	std::filesystem::path with_current_dir(const std::function<void()> &fn);
 } // namespace filesystem

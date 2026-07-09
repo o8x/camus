@@ -4,3 +4,6 @@
 [submodule "third-party/yaml-cpp"]
 	path = third-party/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "third-party/cpp-httplib"]
+	path = third-party/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib.git

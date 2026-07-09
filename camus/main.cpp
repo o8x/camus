@@ -21,12 +21,11 @@ install_template(const std::filesystem::path &exec_name, const bool force, const
 		const std::string version = filesystem::read_file(version_file, true);
 		if (!force) {
 			if (version != PROJECT_VERSION) {
-				logging::fatal(
-					"Camus installed and version different installed={} current={}",
+				logging::warn(
+					"The installed Camus v{} is inconsistent with the current v{}",
 					version,
 					PROJECT_VERSION
 				);
-				return 1;
 			}
 
 			return 0;
@@ -91,7 +90,7 @@ int main(const int argc, char **argv)
 	arg.add("install", 'i', "install example site into work dir");
 	arg.add("force", 'f', "ignore errors during operation");
 	arg.add("debug", 'd', "enable debugging");
-	arg.add("watch", 0, "automate building when changes occur");
+	arg.add("watch", 'W', "automate building when changes occur");
 	arg.add<std::string>("workdir", 'w', "work dir", false, ".");
 
 	if (const bool parse_result = arg.parse(argc, argv); !parse_result || arg.exist("help")) {
@@ -112,11 +111,18 @@ int main(const int argc, char **argv)
 	}
 
 	if (arg.exist("install")) {
-		return install_template(
-			filesystem::get_self_path(argv[0]),
-			arg.exist("force"),
-			arg.get<std::string>("workdir")
-		);
+		int installed;
+		filesystem::with_current_dir([&]() {
+			installed = install_template(
+				filesystem::get_self_path(argv[0]),
+				arg.exist("force"),
+				arg.get<std::string>("workdir")
+			);
+		});
+
+		if (installed != 0) {
+			return installed;
+		}
 	}
 
 	try {

@@ -141,4 +141,13 @@ namespace filesystem
 
 		return curr;
 	}
+
+	std::filesystem::path with_current_dir(const std::function<void()> &fn)
+	{
+		const std::filesystem::path curr = std::filesystem::current_path();
+		fn();
+		std::filesystem::current_path(curr);
+
+		return curr;
+	}
 } // namespace filesystem
