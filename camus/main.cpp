@@ -21,12 +21,11 @@ install_template(const std::filesystem::path &exec_name, const bool force, const
 		const std::string version = filesystem::read_file(version_file, true);
 		if (!force) {
 			if (version != PROJECT_VERSION) {
-				logging::fatal(
-					"Camus installed and version different installed={} current={}",
+				logging::warn(
+					"The installed Camus v{} is inconsistent with the current v{}",
 					version,
 					PROJECT_VERSION
 				);
-				return 1;
 			}
 
 			return 0;
