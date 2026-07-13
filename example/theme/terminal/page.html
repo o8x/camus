@@ -871,34 +871,70 @@ READY<span class="boot-cursor"></span></div>
                 }
             });
 
-            var setupNavigation = function (tocData) {
-                if (!tocData || tocData.length === 0) return;
+            var getParent = function(p) {
+                var np = normalizePath(p);
+                if (np === '/') return null;
+                var parts = np.split('/');
+                parts.pop();
+                if (parts.length === 0 || (parts.length === 1 && parts[0] === '')) return '/';
+                return parts.join('/');
+            };
 
-                var buildArticleUrl = function (parentPath, url) {
-                    var pp = normalizePath(parentPath);
-                    if (pp === '/') return '/' + url;
-                    return pp + '/' + url;
-                };
-
-                var allArticles = [];
-                for (var i = 0; i < tocData.length; i++) {
-                    var dir = tocData[i];
-                    if (!dir.articles) continue;
-                    for (var j = 0; j < dir.articles.length; j++) {
-                        var art = dir.articles[j];
-                        allArticles.push({
-                            url: buildArticleUrl(dir.path, art.url),
-                            display_name: art.display_name
+            var flattenArticles = function(flat) {
+                var result = [];
+                for (var i = 0; i < flat.length; i++) {
+                    if (!flat[i].is_dir) {
+                        result.push({
+                            url: normalizePath(flat[i].link_path || flat[i].path),
+                            display_name: flat[i].title,
+                            path: normalizePath(flat[i].path)
                         });
                     }
                 }
+                return result;
+            };
 
+            var findParentPath = function(flat, articleUrl) {
+                var au = normalizePath(articleUrl);
+                var articlePath = null;
+                for (var i = 0; i < flat.length; i++) {
+                    if (!flat[i].is_dir) {
+                        var entryUrl = normalizePath(flat[i].link_path || flat[i].path);
+                        var entryPath = normalizePath(flat[i].path);
+                        if (entryUrl === au || entryPath === au) {
+                            articlePath = entryPath;
+                            break;
+                        }
+                    }
+                }
+                if (!articlePath) return '/';
+                var bestMatch = null;
+                var bestLen = 0;
+                for (var i = 0; i < flat.length; i++) {
+                    if (flat[i].is_dir) {
+                        var dp = normalizePath(flat[i].path);
+                        var prefix = dp === '/' ? '/' : dp + '/';
+                        if (articlePath.startsWith(prefix)) {
+                            if (dp.length > bestLen) {
+                                bestLen = dp.length;
+                                bestMatch = dp;
+                            }
+                        }
+                    }
+                }
+                return bestMatch || '/';
+            };
+
+            var setupNavigation = function (tocData) {
+                if (!tocData) return;
+
+                var allArticles = flattenArticles(tocData);
                 if (allArticles.length === 0) return;
 
                 var currentPath = window.location.pathname;
                 var currentIndex = -1;
                 for (var k = 0; k < allArticles.length; k++) {
-                    if (allArticles[k].url === currentPath) {
+                    if (allArticles[k].url === currentPath || allArticles[k].path === currentPath) {
                         currentIndex = k;
                         break;
                     }
@@ -925,25 +961,12 @@ READY<span class="boot-cursor"></span></div>
 
                 var tocLink = document.getElementById("toc-link");
                 if (tocLink) {
-                    var parentDir = null;
-                    for (var d = 0; d < tocData.length; d++) {
-                        var dd = tocData[d];
-                        if (!dd.articles) continue;
-                        for (var aa = 0; aa < dd.articles.length; aa++) {
-                            if (buildArticleUrl(dd.path, dd.articles[aa].url) === currentPath) {
-                                parentDir = dd;
-                                break;
-                            }
-                        }
-                        if (parentDir) break;
-                    }
-                    if (parentDir) {
-                        if (normalizePath(parentDir.path) === '/') {
-                            tocLink.href = '/';
-                        } else {
-                            var p = normalizePath(parentDir.path).replace(/^\//, '');
-                            tocLink.href = '/?dir=' + encodeURIComponent(p);
-                        }
+                    var parentPath = findParentPath(tocData, currentPath);
+                    if (parentPath === '/') {
+                        tocLink.href = '/';
+                    } else {
+                        var p = parentPath.replace(/^\//, '');
+                        tocLink.href = '/?dir=' + encodeURIComponent(p);
                     }
                 }
             };

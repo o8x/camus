@@ -1199,71 +1199,11 @@
             return parts.join('/');
         };
 
-        var getChildDirs = function(dirs, parentPath) {
-            var pp = normalizePath(parentPath);
-            var prefix = pp === '/' ? '/' : pp + '/';
-            var children = [];
-            for (var c = 0; c < dirs.length; c++) {
-                var dp = normalizePath(dirs[c].path);
-                if (dp === pp) continue;
-                if (dp === '/') continue;
-                if (!dp.startsWith(prefix)) continue;
-                var remainder = dp.substring(prefix.length);
-                if (remainder.indexOf('/') === -1) {
-                    children.push(dirs[c]);
-                }
-            }
-            return children;
-        };
-
-        var hasDir = function(dirs, p) {
-            var np = normalizePath(p);
-            for (var h = 0; h < dirs.length; h++) {
-                if (normalizePath(dirs[h].path) === np) return true;
-            }
-            return false;
-        };
-
-        var collectVisibleDirs = function(dirs, parentPath) {
-            var pp = normalizePath(parentPath);
-            var prefix = pp === '/' ? '/' : pp + '/';
-            var result = [];
-            var seen = {};
-            for (var i = 0; i < dirs.length; i++) {
-                var dp = normalizePath(dirs[i].path);
-                if (dp === pp || dp === '/') continue;
-                if (!dp.startsWith(prefix)) continue;
-                if (seen[dp]) continue;
-                var directParent = getParent(dp);
-                if (directParent === pp) {
-                    result.push(dirs[i]);
-                    seen[dp] = true;
-                } else if (!hasDir(dirs, directParent)) {
-                    result.push(dirs[i]);
-                    seen[dp] = true;
-                }
-            }
-            return result;
-        };
-
-        var getEffectiveParent = function(dirs, p) {
-            var parent = getParent(p);
-            if (parent === null) return null;
-            if (parent === '/') return '/';
-            if (hasDir(dirs, parent)) return parent;
-            return getEffectiveParent(dirs, parent);
-        };
-
         var getDirParam = function() {
             var m = window.location.search.match(/[?&]dir=([^&]*)/);
             return m ? decodeURIComponent(m[1]) : '';
         };
 
-        var buildArticleUrl = function(parentPath, url) {
-            var pp = normalizePath(parentPath);
-            if (pp === '/') return '/' + url;
-            return pp + '/' + url;
-        };
 
         var tocData = []
         var selectedIndex = -1
@@ -1373,36 +1313,23 @@
             }
         })
 
-        var renderToc = function (dirs) {
+        var renderToc = function (flatData) {
             var dirParam = getDirParam();
             var currentPath = normalizePath(dirParam || '/');
-            var rootDir = null;
 
-            for (var i = 0; i < dirs.length; i++) {
-                var d = dirs[i];
-                if (normalizePath(d.path) === '/') {
-                    rootDir = d;
+            var currentEntry = null;
+            for (var i = 0; i < flatData.length; i++) {
+                if (flatData[i].is_dir && normalizePath(flatData[i].path) === currentPath) {
+                    currentEntry = flatData[i];
                     break;
                 }
             }
-
-            var currentDir = null;
-            for (var j = 0; j < dirs.length; j++) {
-                if (normalizePath(dirs[j].path) === currentPath) {
-                    currentDir = dirs[j];
-                    break;
-                }
-            }
-
-            if (!currentDir) {
-                currentDir = rootDir;
-                currentPath = '/';
-            }
+            if (!currentEntry) currentPath = '/';
 
             var items = [];
 
-            if (dirParam) {
-                var parent = getEffectiveParent(dirs, currentPath);
+            if (dirParam && currentPath !== '/') {
+                var parent = getParent(currentPath);
                 var backLabel;
                 var backUrl;
                 if (parent) {
@@ -1417,47 +1344,55 @@
                     backLabel = '/';
                     backUrl = '/';
                 }
-                items.push({
-                    type: 'back',
-                    label: backLabel,
-                    url: backUrl,
-                    time: ''
-                });
+                items.push({ type: 'back', label: backLabel, url: backUrl, time: '' });
             }
 
-            var childDirs = collectVisibleDirs(dirs, currentPath);
-            for (var k = 0; k < childDirs.length; k++) {
-                var cd = childDirs[k];
-                var cdp = normalizePath(cd.path);
-                var encodedPath = cdp.replace(/^\//, '');
-                items.push({
-                    type: 'dir',
-                    label: cd.title,
-                    url: '/?dir=' + encodeURIComponent(encodedPath),
-                    time: formatDate(cd.create_time)
-                });
-            }
+            var subDirs = [];
+            var files = [];
+            var pfx = currentPath === '/' ? '/' : currentPath + '/';
 
-            if (currentDir && currentDir.articles) {
-                for (var a = 0; a < currentDir.articles.length; a++) {
-                    var art = currentDir.articles[a];
-                    var artUrl = buildArticleUrl(currentDir.path, art.url);
-                    items.push({
-                        type: 'file',
-                        label: art.display_name,
-                        url: artUrl,
-                        time: formatDate(art.create_time)
-                    });
+            for (var j = 0; j < flatData.length; j++) {
+                var entry = flatData[j];
+                var ep = normalizePath(entry.path);
+                if (ep === currentPath) continue;
+                if (!ep.startsWith(pfx)) continue;
+                var remainder = ep.slice(pfx.length);
+                if (remainder.indexOf('/') !== -1) continue;
+                if (entry.is_dir) {
+                    subDirs.push(entry);
+                } else {
+                    var link = entry.link_path || ep;
+                    files.push({ label: entry.title, url: normalizePath(link), time: formatDate(entry.write_time) });
                 }
             }
 
+            for (var k = 0; k < subDirs.length; k++) {
+                var cdp = normalizePath(subDirs[k].path);
+                var encodedPath = cdp.replace(/^\//, '');
+                items.push({
+                    type: 'dir',
+                    label: subDirs[k].title,
+                    url: '/?dir=' + encodeURIComponent(encodedPath),
+                    time: formatDate(subDirs[k].write_time)
+                });
+            }
+
+            for (var f = 0; f < files.length; f++) {
+                items.push({
+                    type: 'file',
+                    label: files[f].label,
+                    url: files[f].url,
+                    time: files[f].time
+                });
+            }
+
             var descEl = document.getElementById('cover-description');
-            if (descEl && currentDir && currentDir.description) {
-                descEl.textContent = currentDir.description;
+            if (descEl && currentEntry && currentEntry.desc) {
+                descEl.textContent = currentEntry.desc;
                 descEl.style.display = '';
             } else if (descEl) {
-                if (!currentDir || normalizePath(currentDir.path) === '/') {
-                    descEl.textContent = `{{site.description}}`
+                if (!currentEntry || normalizePath(currentEntry.path) === '/') {
+                    descEl.textContent = '{{site.description}}';
                     descEl.style.display = '';
                 } else {
                     descEl.style.display = 'none';
@@ -1465,20 +1400,27 @@
             }
 
             var titleEl = document.getElementById('page-title');
-            if (titleEl && currentDir && currentDir.title) {
-                titleEl.textContent = currentDir.title + " - {{site.title}}";
+            if (titleEl && currentEntry && currentEntry.title && currentPath !== '/') {
+                titleEl.textContent = currentEntry.title + " - {{site.title}}";
             } else if (titleEl) {
                 titleEl.textContent = "{{site.title}} - {{site.subtitle}}";
             }
 
             var covTitleEl = document.getElementById('cover-title');
-            if (covTitleEl && currentDir && currentDir.title) {
-                covTitleEl.textContent = currentDir.title;
+            if (covTitleEl && currentEntry && currentEntry.title && currentPath !== '/') {
+                covTitleEl.textContent = currentEntry.title;
             } else if (covTitleEl) {
                 covTitleEl.textContent = "{{site.title}}";
             }
 
-            tocData = items
+            var covSubEl = document.querySelector('.cover-subtitle');
+            if (covSubEl && currentEntry && currentEntry.subtitle && currentPath !== '/') {
+                covSubEl.textContent = currentEntry.subtitle;
+            } else if (covSubEl) {
+                covSubEl.textContent = "{{site.subtitle}}";
+            }
+
+            tocData = items;
             var ANIMATE_COUNT = 20
             var fileIndex = 0;
             var html = items.map(function (item, i) {
