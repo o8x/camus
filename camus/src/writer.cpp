@@ -280,6 +280,11 @@ namespace camus
 		std::vector<catalog::catalog_node> toc;
 		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) { toc.push_back(node); });
 
+		// 按时间倒序排序
+		std::ranges::sort(toc, [](const catalog::catalog_node &a, const catalog::catalog_node &b) -> bool {
+			return a.property.write_time > b.property.write_time;
+		});
+
 		const nlohmann::json json = toc;
 		const std::string toc_json = json.dump(4);
 		if (const std::string format = conf_.camus().toc_format; format == "all" || format == "json") {
