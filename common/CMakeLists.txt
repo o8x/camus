@@ -40,6 +40,7 @@ target_include_directories(common PUBLIC
 target_link_libraries(common PUBLIC
         libcmark-gfm_static
         yaml-cpp::yaml-cpp
+        nlohmann_json
 )
 
 string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S")

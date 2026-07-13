@@ -48,6 +48,19 @@ namespace strings
 		return result;
 	}
 
+	std::string rand_string(const uint16_t len)
+	{
+		const std::string str = "wasdijklnm";
+		std::uniform_int_distribution digit(0, 9);
+
+		std::string res;
+		for (int i = 0; i < len; ++i) {
+			res.append(std::to_string(digit(rand_generator)));
+		}
+
+		return res;
+	}
+
 	std::string uuid_v4()
 	{
 		std::uniform_int_distribution hex_digit(0, 15); // 16个值: 0-15
@@ -99,6 +112,22 @@ namespace strings
 		return data;
 	}
 
+	std::string replace(const std::string &str, const std::map<std::string, std::string> &ctx)
+	{
+		std::string result = str;
+
+		for (const auto &[from, to] : ctx) {
+			if (!from.starts_with("{{")) {
+				result = replace(result, from, to);
+				continue;
+			}
+
+			result = replace(result, std::format("{}", from), to);
+		}
+
+		return result;
+	}
+
 	std::string string_join(const std::vector<std::string> &vec, const std::string &delimiter)
 	{
 		std::string result;
@@ -140,4 +169,30 @@ namespace strings
 		std::ranges::transform(s1, s1.begin(), [](const uint8_t c) { return std::tolower(c); });
 		return s1;
 	}
+
+	std::string coloring(const std::string &text, const std::string &color)
+	{
+		return std::format("\033[{}{}\033[0m", color, text);
+	}
+
+	// clang-format off
+	std::string coloring_black(const std::string &t) {return coloring(t, "30m");}
+	std::string coloring_bright_black(const std::string &t) {return coloring(t, "90m");}
+	std::string coloring_red(const std::string &t) {return coloring(t, "31m");}
+	std::string coloring_bright_red(const std::string &t) {return coloring(t, "91m");}
+	std::string coloring_green(const std::string &t) {return coloring(t, "32m");}
+	std::string coloring_bright_green(const std::string &t) {return coloring(t, "92m");}
+	std::string coloring_yellow(const std::string &t) {return coloring(t, "33m");}
+	std::string coloring_bright_yellow(const std::string &t) {return coloring(t, "93m");}
+	std::string coloring_blue(const std::string &t) {return coloring(t, "34m");}
+	std::string coloring_bright_blue(const std::string &t) {return coloring(t, "94m");}
+	std::string coloring_purple(const std::string &t) {return coloring(t, "35m");}
+	std::string coloring_bright_purple(const std::string &t) {return coloring(t, "95m");}
+	std::string coloring_cyan(const std::string &t) {return coloring(t, "36m");}
+	std::string coloring_bright_cyan(const std::string &t) {return coloring(t, "96m");}
+	std::string coloring_white(const std::string &t) {return coloring(t, "37m");}
+	std::string coloring_bright_white(const std::string &t) {return coloring(t, "97m");}
+	std::string coloring_simple(const std::string &t) {return coloring(t, "39m");}
+
+	// clang-format on
 } // namespace strings

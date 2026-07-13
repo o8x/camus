@@ -3,6 +3,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <unistd.h>
+
 #include "common/functions/functions.h"
 #include "common/logging/logging.h"
 #include "common/str/str.h"
@@ -31,7 +33,7 @@ namespace filesystem
 	{
 		std::ifstream file(name);
 		if (!file.is_open()) {
-			return "Could not open file: " + name;
+			return "Could not open file: " + path_abs(name);
 		}
 
 		std::stringstream buffer;
@@ -120,34 +122,49 @@ namespace filesystem
 		return def;
 	}
 
-	std::filesystem::path with_current_dir(
-		const std::filesystem::path &path, const std::function<void(const std::filesystem::path &path)> &fn
-	)
+	std::string path_abs(const std::filesystem::path &path)
 	{
-		const std::filesystem::path curr = std::filesystem::current_path();
-		if (curr == std::filesystem::absolute(path)) {
-			fn(curr);
-			return curr;
-		}
-
-		std::filesystem::create_directory(path);
-		std::filesystem::current_path(path);
-
-		const uint32_t session_id = functions::rand_int(1000, 9999);
-		logging::debug("enter path session={} name={}", session_id, std::filesystem::current_path().string());
-		fn(curr);
-		std::filesystem::current_path(curr);
-		logging::debug("back path session={} name={}", session_id, curr.string());
-
-		return curr;
+		return std::filesystem::absolute(path).string();
 	}
 
-	std::filesystem::path with_current_dir(const std::function<void()> &fn)
+	void empty_path(const std::filesystem::path &path, const bool safe_check)
 	{
-		const std::filesystem::path curr = std::filesystem::current_path();
-		fn();
-		std::filesystem::current_path(curr);
+		if (!std::filesystem::exists(path)) {
+			std::filesystem::create_directories(path);
+			return;
+		}
 
-		return curr;
+		if (safe_check) {
+			if (const int path_files = scan_path_files(path, 10000); path_files > 200) {
+				logging::fatal(
+					"Too many files and need to be deleted manually name={} files={}",
+					path_abs(path),
+					path_files
+				);
+			}
+		}
+
+		std::filesystem::remove_all(path);
+		std::filesystem::create_directories(path);
+	}
+
+	bool path_equal(const std::filesystem::path &p1, const std::filesystem::path &p2, const bool clean_check)
+	{
+		std::error_code ec;
+		if (std::filesystem::equivalent(p1, p2, ec)) {
+			return true; // 存在且相同
+		}
+
+		if (!ec) {
+			return false; // 存在但不同
+		}
+
+		const bool check = std::filesystem::weakly_canonical(p1) == std::filesystem::weakly_canonical(p2);
+		// 物理是否相同，和逻辑上是否相同
+		if (!check && clean_check) {
+			return clean_path(p1) == clean_path(p2);
+		}
+
+		return check;
 	}
 } // namespace filesystem

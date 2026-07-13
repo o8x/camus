@@ -8,6 +8,8 @@
 
 #include <unistd.h>
 
+#include "common/str/str.h"
+
 namespace functions
 {
 	static std::random_device rand_dev;
@@ -34,8 +36,12 @@ namespace functions
 	time_t datetime_to_unix(const std::string &datetime)
 	{
 		std::tm tm = {};
-		std::istringstream ss(datetime);
-		ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+		std::istringstream ss(strings::trim_space(datetime));
+		if (const auto [date, time] = strings::split_pair(datetime, " "); time.empty()) {
+			ss >> std::get_time(&tm, "%Y-%m-%d");
+		} else {
+			ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+		}
 
 		return timegm(&tm);
 	}

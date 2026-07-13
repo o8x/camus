@@ -1,5 +1,5 @@
 ---
-short-path: item1
+short-path: auto
 display-name: 第一个示例
 date: 2025-03-16
 visibility: open

@@ -39,8 +39,8 @@ jobs:
                 run: |
                     dpkg -i *.deb
                     camus -v
+                    camus -iIw /tmp/site
                     camus -idw /tmp/site
-                    camus -dw /tmp/site
 
             -   name: Upload
                 uses: actions/upload-artifact@v4
@@ -55,7 +55,7 @@ jobs:
             -   name: Install dependencies
                 run: |
                     brew update
-                    brew install git make cmake pkg-config ninja gcc@13 libarchive
+                    brew install git make cmake pkg-config ninja llvm@21 libarchive
 
             -   name: Checkout
                 uses: actions/checkout@v4
@@ -71,8 +71,8 @@ jobs:
                 run: |
                     sudo installer -pkg *.pkg -target /
                     camus -v
+                    camus -iIw /tmp/site
                     camus -idw /tmp/site
-                    camus -dw /tmp/site
 
             -   name: Upload artifact
                 uses: actions/upload-artifact@v4
