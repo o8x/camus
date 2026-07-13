@@ -89,6 +89,7 @@ namespace camus
 
 			// 忽略隐藏的文件
 			if (params["visibility"] == "hidden") {
+				node.property.visibility = catalog::hidden;
 				return;
 			}
 
@@ -191,11 +192,19 @@ namespace camus
 		// 写入其他文件
 		const std::filesystem::path out_dir = std::filesystem::relative(conf_.camus().output_dir, cmd_.workdir);
 		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
-			if (node.path.extension() != ".md") {
+			if (node.path.extension() != ".md" || node.property.visibility == catalog::hidden) {
 				return;
 			}
 
-			assert(!node.link_url().empty());
+			if (node.link_url().empty()) {
+				logging::fatal(
+					"make article failed file={} name={} dest={}{}",
+					node.path.string(),
+					node.property.display_name,
+					out_dir.string(),
+					node.link_url().string()
+				);
+			}
 
 			const std::filesystem::path output_filename = out_dir / filesystem::clean_path(node.link_url(), "./");
 

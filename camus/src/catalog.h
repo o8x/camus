@@ -9,7 +9,7 @@
 
 namespace camus::catalog
 {
-	enum catalog_visibility : uint8_t { open = 1, hidden_in_toc = 2 };
+	enum catalog_visibility : uint8_t { open = 1, hidden = 2, hidden_in_toc = 3 };
 
 	struct catalog_property {
 		// 创建时间
