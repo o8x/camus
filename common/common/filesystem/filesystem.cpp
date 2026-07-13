@@ -48,7 +48,13 @@ namespace filesystem
 	std::string clean_path(const std::string &path, const std::string &prefix)
 	{
 		const std::filesystem::path p(std::format("{}/{}", prefix, path));
-		return p.lexically_normal();
+		const std::filesystem::path res = p.lexically_normal();
+		// Linux 下会返回 //，MacOS 不存在该问题
+		if (res == "//") {
+			return "/";
+		}
+
+		return res;
 	}
 
 	std::filesystem::path
