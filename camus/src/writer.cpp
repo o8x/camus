@@ -89,6 +89,7 @@ namespace camus
 
 			// 忽略隐藏的文件
 			if (params["visibility"] == "hidden") {
+				node.property.visibility = catalog::hidden;
 				return;
 			}
 
@@ -112,6 +113,14 @@ namespace camus
 
 			assert(!node.contents.empty());
 
+			if (params.contains("tags")) {
+				try {
+					nlohmann::json::parse(params["tags"]).get_to(node.property.tags);
+				} catch (const std::exception &e) {
+					logging::fatal("parse article tags failed name={} error={}", node.path.string(), e.what());
+				}
+			}
+
 			node.property.write_time = functions::datetime_to_unix(params["date"]);
 			if (node.property.write_time <= 0) {
 				node.property.write_time = 0;
@@ -134,6 +143,16 @@ namespace camus
 			if (node.property.display_name.empty()) {
 				node.property.display_name = node.path.stem();
 			}
+
+			node.property.display_name = strings::replace(
+				node.property.display_name,
+				std::map<std::string, std::string>{
+					{"/", ""},
+					{"\\", ""},
+					{"'", "‘"},
+					{"\"", "“"},
+				}
+			);
 
 			// 所有的快捷路径都指向一个目录
 			if (const std::string alias = params["short-path"]; !alias.empty()) {
@@ -164,6 +183,7 @@ namespace camus
 						 )},
 						{"{{page.title}}", strings::replace(node.property.display_name, "\"", "'")},
 						{"{{page.date}}", params["date"]},
+						{"{{page.tags}}", params["tags"]},
 						{"{{page.description}}", ""},
 						{" 00:00:00", ""},
 						{"<hr />", ""},
@@ -182,11 +202,19 @@ namespace camus
 		// 写入其他文件
 		const std::filesystem::path out_dir = std::filesystem::relative(conf_.camus().output_dir, cmd_.workdir);
 		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
-			if (node.path.extension() != ".md") {
+			if (node.path.extension() != ".md" || node.property.visibility == catalog::hidden) {
 				return;
 			}
 
-			assert(!node.link_url().empty());
+			if (node.link_url().empty()) {
+				logging::fatal(
+					"make article failed file={} name={} dest={}{}",
+					node.path.string(),
+					node.property.display_name,
+					out_dir.string(),
+					node.link_url().string()
+				);
+			}
 
 			const std::filesystem::path output_filename = out_dir / filesystem::clean_path(node.link_url(), "./");
 

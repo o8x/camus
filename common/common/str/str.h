@@ -97,7 +97,7 @@ namespace strings
 	std::pair<std::string, T>
 	split_pair(const std::string_view s, const std::string_view delimiter, const bool trim = false)
 	{
-		std::vector<std::string> data = split(s, delimiter);
+		std::vector<std::string> data = split(s, delimiter, 2);
 		if (data.size() != 2) {
 			return {};
 		}

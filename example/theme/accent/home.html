@@ -64,6 +64,7 @@
         }
 
         .cover-description {
+            white-space: pre-wrap;
             text-align: center;
             color: var(--text-secondary);
             font-size: 0.95rem;
@@ -412,7 +413,7 @@
                     descEl.style.display = '';
                 } else if (descEl) {
                     if (!currentDir || normalizePath(currentDir.path) === '/') {
-                        descEl.textContent = '{{site.description}}';
+                        descEl.textContent = `{{site.description}}`
                         descEl.style.display = '';
                     } else {
                         descEl.style.display = 'none';
@@ -421,16 +422,16 @@
 
                 var titleEl = document.getElementById('page-title');
                 if (titleEl && currentDir && currentDir.title) {
-                    titleEl.textContent = currentDir.title + ' - {{site.title}}';
+                    titleEl.textContent = currentDir.title + " - {{site.title}}";
                 } else if (titleEl) {
-                    titleEl.textContent = '{{site.title}} - {{site.subtitle}}';
+                    titleEl.textContent = "{{site.title}} - {{site.subtitle}}";
                 }
 
                 var covTitleEl = document.getElementById('cover-title');
                 if (covTitleEl && currentDir && currentDir.title) {
                     covTitleEl.textContent = currentDir.title;
                 } else if (covTitleEl) {
-                    covTitleEl.textContent = '{{site.title}}';
+                    covTitleEl.textContent = "{{site.title}}";
                 }
 
                 var fileIndex = 0;
