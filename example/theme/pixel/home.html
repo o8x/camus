@@ -585,6 +585,10 @@
                 return p;
             };
 
+            var encodePath = function(s) {
+                return /[\u4e00-\u9fff]/.test(s) ? encodeURIComponent(s) : s;
+            };
+
             var getDirParam = function() {
                 var m = window.location.search.match(/[?&]dir=([^&]*)/);
                 return m ? decodeURIComponent(m[1]) : '';
@@ -625,7 +629,7 @@
                             backUrl = '/';
                         } else {
                             backLabel = '../';
-                            backUrl = '/?dir=' + encodeURIComponent(parent.replace(/^\//, ''));
+                            backUrl = '/?dir=' + encodePath(parent.replace(/^\//, ''));
                         }
                     } else {
                         backLabel = '/';
@@ -638,13 +642,22 @@
                 var files = [];
                 var pfx = currentPath === '/' ? '/' : currentPath + '/';
 
+                var hasDirSet = {};
+                for (var d = 0; d < flatData.length; d++) {
+                    if (flatData[d].is_dir) hasDirSet[normalizePath(flatData[d].path)] = true;
+                }
+
                 for (var j = 0; j < flatData.length; j++) {
                     var entry = flatData[j];
                     var ep = normalizePath(entry.path);
                     if (ep === currentPath) continue;
                     if (!ep.startsWith(pfx)) continue;
                     var remainder = ep.slice(pfx.length);
-                    if (remainder.indexOf('/') !== -1) continue;
+                    if (remainder.indexOf('/') !== -1) {
+                        var firstPart = remainder.split('/')[0];
+                        var midPath = currentPath === '/' ? '/' + firstPart : currentPath + '/' + firstPart;
+                        if (hasDirSet[midPath]) continue;
+                    }
                     if (entry.is_dir) {
                         subDirs.push(entry);
                     } else {
@@ -659,7 +672,7 @@
                     items.push({
                         type: 'dir',
                         label: subDirs[k].title,
-                        url: '/?dir=' + encodeURIComponent(encodedPath),
+                        url: '/?dir=' + encodePath(encodedPath),
                         time: formatDate(subDirs[k].write_time)
                     });
                 }

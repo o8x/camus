@@ -5,15 +5,6 @@ var normalizePath = function(p) {
     return p;
 };
 
-var getParent = function(p) {
-    var np = normalizePath(p);
-    if (np === '/') return null;
-    var parts = np.split('/');
-    parts.pop();
-    if (parts.length === 0 || (parts.length === 1 && parts[0] === '')) return '/';
-    return parts.join('/');
-};
-
 var formatDate = function(ts) {
     var n = Number(ts);
     if (!n || isNaN(n)) return '';
@@ -22,6 +13,15 @@ var formatDate = function(ts) {
     return d.getFullYear() + '-' +
         String(d.getMonth() + 1).padStart(2, '0') + '-' +
         String(d.getDate()).padStart(2, '0');
+};
+
+var getParent = function(p) {
+    var np = normalizePath(p);
+    if (np === '/') return null;
+    var parts = np.split('/');
+    parts.pop();
+    if (parts.length === 0 || (parts.length === 1 && parts[0] === '')) return '/';
+    return parts.join('/');
 };
 
 var tocData = [
@@ -41,6 +41,7 @@ var tocData = [
 
 var renderToc = function(flatData, dirParam) {
     var currentPath = normalizePath(dirParam || '/');
+
     var currentEntry = null;
     for (var i = 0; i < flatData.length; i++) {
         if (flatData[i].is_dir && normalizePath(flatData[i].path) === currentPath) {
@@ -49,19 +50,16 @@ var renderToc = function(flatData, dirParam) {
         }
     }
     if (!currentEntry) currentPath = '/';
-    if (!currentEntry) {
-        for (var i = 0; i < flatData.length; i++) {
-            if (flatData[i].is_dir && normalizePath(flatData[i].path) === '/') {
-                currentEntry = flatData[i];
-                break;
-            }
-        }
-    }
 
     var items = [];
     var subDirs = [];
     var files = [];
     var pfx = currentPath === '/' ? '/' : currentPath + '/';
+
+    var hasDirSet = {};
+    for (var d = 0; d < flatData.length; d++) {
+        if (flatData[d].is_dir) hasDirSet[normalizePath(flatData[d].path)] = true;
+    }
 
     for (var j = 0; j < flatData.length; j++) {
         var entry = flatData[j];
@@ -69,7 +67,11 @@ var renderToc = function(flatData, dirParam) {
         if (ep === currentPath) continue;
         if (!ep.startsWith(pfx)) continue;
         var remainder = ep.slice(pfx.length);
-        if (remainder.indexOf('/') !== -1) continue;
+        if (remainder.indexOf('/') !== -1) {
+            var firstPart = remainder.split('/')[0];
+            var midPath = currentPath === '/' ? '/' + firstPart : currentPath + '/' + firstPart;
+            if (hasDirSet[midPath]) continue;
+        }
         if (entry.is_dir) {
             subDirs.push(entry);
         } else {
@@ -93,86 +95,15 @@ var renderToc = function(flatData, dirParam) {
         items.push({ type: 'file', label: files[f].label, url: files[f].url, time: files[f].time });
     }
 
-    return {
-        currentPath: currentPath,
-        entry: currentEntry,
-        dirParam: dirParam,
-        items: items
-    };
+    return { currentPath: currentPath, entry: currentEntry, items: items };
 };
 
 var testPaths = ['', '/dir1', '/dir1/dir2', '/dest/first-dir', '/nonexistent'];
 testPaths.forEach(function(path) {
     var result = renderToc(tocData, path);
     console.log('=== dir=' + JSON.stringify(path || '(none)') + ' (currentPath: ' + result.currentPath + ') ===');
-    if (result.entry) {
-        console.log('  Title: ' + result.entry.title);
-        console.log('  Desc: ' + (result.entry.desc || '(none)'));
-    }
     result.items.forEach(function(item) {
-        console.log('  [' + item.type + '] ' + item.label + ' -> ' + item.url + ' (' + item.time + ')');
+        console.log('  [' + item.type + '] ' + item.label + ' -> ' + item.url);
     });
     console.log('');
-});
-
-console.log('=== Flatten articles (page.html) ===');
-var flattenArticles = function(flat) {
-    var result = [];
-    for (var i = 0; i < flat.length; i++) {
-        if (!flat[i].is_dir) {
-            result.push({
-                url: normalizePath(flat[i].link_path || flat[i].path),
-                display_name: flat[i].title,
-                path: normalizePath(flat[i].path)
-            });
-        }
-    }
-    return result;
-};
-
-var articles = flattenArticles(tocData);
-articles.forEach(function(a, i) {
-    console.log('  ' + (i+1) + '. url=' + a.url + ' | path=' + a.path + ' | name=' + a.display_name);
-});
-
-console.log('');
-console.log('=== Find parent path ===');
-var findParentPath = function(flat, articleUrl) {
-    var au = normalizePath(articleUrl);
-    var articlePath = null;
-    for (var i = 0; i < flat.length; i++) {
-        if (!flat[i].is_dir) {
-            var entryUrl = normalizePath(flat[i].link_path || flat[i].path);
-            var entryPath = normalizePath(flat[i].path);
-            if (entryUrl === au || entryPath === au) {
-                articlePath = entryPath;
-                break;
-            }
-        }
-    }
-    if (!articlePath) return '/';
-    var bestMatch = null;
-    var bestLen = 0;
-    for (var i = 0; i < flat.length; i++) {
-        if (flat[i].is_dir) {
-            var dp = normalizePath(flat[i].path);
-            var prefix = dp === '/' ? '/' : dp + '/';
-            if (articlePath.startsWith(prefix)) {
-                if (dp.length > bestLen) {
-                    bestLen = dp.length;
-                    bestMatch = dp;
-                }
-            }
-        }
-    }
-    return bestMatch || '/';
-};
-
-console.log('  By url:');
-articles.forEach(function(a) {
-    console.log('    ' + a.url + ' -> parent: ' + findParentPath(tocData, a.url));
-});
-console.log('  By path:');
-articles.forEach(function(a) {
-    console.log('    ' + a.path + ' -> parent: ' + findParentPath(tocData, a.path));
 });
