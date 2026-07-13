@@ -73,6 +73,7 @@ short-path: my-post
 display-name: My First Post
 date: 2025-03-21
 visibility: open
+tags: [ "example", "text" ]
 ---
 ```
 
@@ -82,6 +83,7 @@ visibility: open
 | `display-name` | Post title shown in the page and catalog                                     |
 | `date`         | Publication date                                                             |
 | `visibility`   | `open` (default), `hidden` (not rendered), `hidden-in-toc` (hidden from TOC) |
+| `tags`         | Post tags, must be a valid JSON array (e.g. `[ "example", "text" ]`)         |
 
 ### Hidden Content
 

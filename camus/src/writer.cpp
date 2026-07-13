@@ -112,6 +112,14 @@ namespace camus
 
 			assert(!node.contents.empty());
 
+			if (params.contains("tags")) {
+				try {
+					nlohmann::json::parse(params["tags"]).get_to(node.property.tags);
+				} catch (const std::exception &e) {
+					logging::fatal("parse article tags failed name={} error={}", node.path.string(), e.what());
+				}
+			}
+
 			node.property.write_time = functions::datetime_to_unix(params["date"]);
 			if (node.property.write_time <= 0) {
 				node.property.write_time = 0;
@@ -164,6 +172,7 @@ namespace camus
 						 )},
 						{"{{page.title}}", strings::replace(node.property.display_name, "\"", "'")},
 						{"{{page.date}}", params["date"]},
+						{"{{page.tags}}", params["tags"]},
 						{"{{page.description}}", ""},
 						{" 00:00:00", ""},
 						{"<hr />", ""},

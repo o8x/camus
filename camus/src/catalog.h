@@ -26,6 +26,8 @@ namespace camus::catalog
 		std::string subtitle;
 		// 描述
 		std::string description;
+		// 标签
+		std::vector<std::string> tags;
 
 		[[nodiscard]] bool invalid() const
 		{
@@ -63,6 +65,8 @@ namespace camus::catalog
 				json["is_dir"] = data.is_directory();
 				json["desc"] = data.property.description;
 				json["subtitle"] = data.property.subtitle;
+			} else {
+				json["tags"] = data.property.tags;
 			}
 		}
 
