@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_COMPILER /usr/bin/gcc)
 set(CMAKE_CXX_COMPILER /usr/bin/g++)
 
-project(Camus VERSION 8.2.0 LANGUAGES CXX DESCRIPTION "Static blog generation tool developed by C++")
+project(Camus VERSION 8.2.1 LANGUAGES CXX DESCRIPTION "Static blog generation tool developed by C++")
 
 enable_testing()
 
