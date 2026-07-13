@@ -144,6 +144,16 @@ namespace camus
 				node.property.display_name = node.path.stem();
 			}
 
+			node.property.display_name = strings::replace(
+				node.property.display_name,
+				std::map<std::string, std::string>{
+					{"/", ""},
+					{"\\", ""},
+					{"'", "‘"},
+					{"\"", "“"},
+				}
+			);
+
 			// 所有的快捷路径都指向一个目录
 			if (const std::string alias = params["short-path"]; !alias.empty()) {
 				const uint64_t hash = strings::make_hash(node.path);

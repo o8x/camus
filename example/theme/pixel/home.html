@@ -119,6 +119,7 @@
         }
 
         .cover-description {
+            white-space: pre-wrap;
             text-indent: 2em;
             text-align: center;
             color: var(--text-secondary);
@@ -678,7 +679,7 @@
                     descEl.style.display = '';
                 } else if (descEl) {
                     if (!currentEntry || normalizePath(currentEntry.path) === '/') {
-                        descEl.textContent = '{{site.description}}';
+                        descEl.textContent = `{{site.description}}`
                         descEl.style.display = '';
                     } else {
                         descEl.style.display = 'none';
@@ -687,23 +688,23 @@
 
                 var titleEl = document.getElementById('page-title');
                 if (titleEl && currentEntry && currentEntry.title) {
-                    titleEl.textContent = currentEntry.title + ' - {{site.title}}';
+                    titleEl.textContent = currentEntry.title + " - {{site.title}}";
                 } else if (titleEl) {
-                    titleEl.textContent = '{{site.title}} - {{site.subtitle}}';
+                    titleEl.textContent = "{{site.title}} - {{site.subtitle}}";
                 }
 
                 var covTitleEl = document.getElementById('cover-title');
                 if (covTitleEl && currentEntry && currentEntry.title) {
                     covTitleEl.textContent = currentEntry.title;
                 } else if (covTitleEl) {
-                    covTitleEl.textContent = '{{site.title}}';
+                    covTitleEl.textContent = "{{site.title}}";
                 }
 
                 var covSubEl = document.querySelector('.cover-subtitle');
                 if (covSubEl && currentEntry && currentEntry.subtitle) {
                     covSubEl.textContent = currentEntry.subtitle;
                 } else if (covSubEl) {
-                    covSubEl.textContent = '{{site.subtitle}}';
+                    covSubEl.textContent = "{{site.subtitle}}";
                 }
 
                 var fileIndex = 0;
