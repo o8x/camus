@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28.3)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_COMPILER /usr/bin/gcc)
@@ -68,3 +68,4 @@ add_subdirectory(common)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 add_subdirectory(third-party/yaml-cpp EXCLUDE_FROM_ALL)
 add_subdirectory(third-party/cmark-gfm EXCLUDE_FROM_ALL)
+add_subdirectory(third-party/nlohmann_json EXCLUDE_FROM_ALL)

@@ -1,20 +1,29 @@
 #include "markdown.h"
 
 #include <cstring>
+#include <memory>
 
 #include "cmark-gfm.h"
 #include "common/error/error.h"
 
 namespace markdown
 {
-	std::pair<uint32_t, char *> markdown_to_html(const char *html, const std::string &engine)
+	std::string render_markdown(const char *html, const std::string &engine, const int opt)
 	{
-		if (engine == "cmark") {
-			char *to_html = cmark_markdown_to_html(html, strlen(html), CMARK_OPT_DEFAULT);
-			return std::make_pair(strlen(to_html), to_html);
+		if (engine == "cmark-gfm") {
+			const std::unique_ptr<char, decltype(&free)> html_ptr{
+				cmark_markdown_to_html(html, strlen(html), opt),
+				free
+			};
+
+			if (!html_ptr) {
+				return {};
+			}
+
+			return std::string{html_ptr.get()};
 		}
 
-		error::panic("invalid engine specified name={}", engine);
-		return {};
+		logging::fatal("unsupported engine type name={}", engine);
+		return "";
 	}
 } // namespace markdown

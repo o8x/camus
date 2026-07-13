@@ -1,6 +1,7 @@
 #include "logging.h"
 
 #include <iostream>
+#include <mutex>
 #include <sstream>
 
 #include <unistd.h>

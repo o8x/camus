@@ -7,6 +7,7 @@
 #include "build/build.h"
 #include "common/cmdline/cmdline.h"
 #include "common/extract/extract.h"
+#include "common/functions/functions.h"
 #include "writer.h"
 
 static int
@@ -18,12 +19,13 @@ install_template(const std::filesystem::path &exec_name, const bool force, const
 
 	const std::filesystem::path version_file = dest_dir / ".version";
 	if (!filesystem::path_empty(dest_dir)) {
-		const std::string version = filesystem::read_file(version_file, true);
+		const std::vector<std::string> version = strings::split(filesystem::read_file(version_file, true), "\n");
 		if (!force) {
-			if (version != PROJECT_VERSION) {
+			if (version[0] != PROJECT_VERSION) {
 				logging::warn(
-					"The installed Camus v{} is inconsistent with the current v{}",
-					version,
+					"The installed Camus v{} at {} is inconsistent with the current v{}",
+					version[0],
+					version[1],
 					PROJECT_VERSION
 				);
 			}
@@ -31,20 +33,17 @@ install_template(const std::filesystem::path &exec_name, const bool force, const
 			return 0;
 		}
 
-		// 安全保护，如果文件过多则需要手动删除
-		if (const int files = filesystem::scan_path_files(dest_dir, 10000); files > 50) {
-			logging::fatal(
-				"{} contains at least {} files. Please delete them manually.",
-				std::filesystem::absolute(root_dir).string(),
-				files
-			);
-		}
+		logging::debug(
+			"Local version is about to be deleted name={} version={} date={}",
+			dest_dir.string(),
+			version[0],
+			version[1]
+		);
 
-		logging::debug("Local version is about to be deleted version={} name={}", version, dest_dir.string());
-		std::filesystem::remove_all(dest_dir);
+		filesystem::empty_path(dest_dir, true);
 	}
 
-	logging::debug("read template from {}", exec_name.string());
+	logging::debug("separate template from {}", exec_name.string());
 
 	std::ifstream file(exec_name, std::ios::in | std::ios::binary);
 	assert(file.is_open());
@@ -68,7 +67,10 @@ install_template(const std::filesystem::path &exec_name, const bool force, const
 	if (extract_archive) {
 		logging::info("Camus v{} installed at '{}'", PROJECT_VERSION, root_dir.string());
 
-		filesystem::write_file(version_file, PROJECT_VERSION);
+		filesystem::write_file(
+			version_file,
+			std::format("{}\n{}", PROJECT_VERSION, functions::format_time_t(time(nullptr)))
+		);
 		for (const auto &name : std::vector<std::string>{"assets", "posts", "camus.yaml", ".env", ".gitignore"}) {
 			if (!std::filesystem::exists(name)) {
 				std::filesystem::copy(dest_dir / name, name, std::filesystem::copy_options::recursive);
@@ -91,6 +93,8 @@ int main(const int argc, char **argv)
 	arg.add("force", 'f', "ignore errors during operation");
 	arg.add("debug", 'd', "enable debugging");
 	arg.add("watch", 'W', "automate building when changes occur");
+	arg.add("dryrun", 'D', "dry run");
+	arg.add("inspect", 'I', "inspect current configure");
 	arg.add<std::string>("workdir", 'w', "work dir", false, ".");
 
 	if (const bool parse_result = arg.parse(argc, argv); !parse_result || arg.exist("help")) {
@@ -110,30 +114,39 @@ int main(const int argc, char **argv)
 		return 0;
 	}
 
-	if (arg.exist("install")) {
-		int installed;
-		filesystem::with_current_dir([&]() {
-			installed = install_template(
-				filesystem::get_self_path(argv[0]),
-				arg.exist("force"),
-				arg.get<std::string>("workdir")
-			);
-		});
-
-		if (installed != 0) {
-			return installed;
-		}
-	}
-
 	try {
-		const auto c = std::make_unique<camus::writer>(arg.get<std::string>("workdir"));
+		const camus::cmdline cmd{
+			.workdir = filesystem::path_abs(arg.get<std::string>("workdir")),
+			.dryrun = arg.exist("dryrun"),
+		};
+
+		if (arg.exist("install")) {
+			if (const int installed = install_template(
+					filesystem::get_self_path(argv[0]),
+					BUILD_TYPE == "Debug" || arg.exist("force"),
+					cmd.workdir
+				);
+				installed != 0) {
+				return installed;
+			}
+		}
+
+		const auto c = new camus::writer(cmd);
+		if (arg.exist("inspect")) {
+			c->inspect();
+			return 0;
+		}
+
+		std::filesystem::current_path(cmd.workdir);
+		logging::info("enter work directory: {}", cmd.workdir.string());
+
 		if (const int code = c->build(); !arg.exist("watch")) {
 			return code;
 		}
 
 		c->watch();
 	} catch (const std::exception &e) {
-		logging::error("error: {}", e.what());
+		logging::fatal("error: {}", e.what());
 	}
 
 	return 0;

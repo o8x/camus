@@ -3,7 +3,9 @@
 #include <cstdint>
 #include <string>
 
+#include "cmark-gfm.h"
+
 namespace markdown
 {
-	std::pair<uint32_t, char *> markdown_to_html(const char *html, const std::string &engine = "cmark");
+	std::string render_markdown(const char *html, const std::string& engine, const int opt = CMARK_OPT_DEFAULT);
 } // namespace markdown
