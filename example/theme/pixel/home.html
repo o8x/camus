@@ -687,21 +687,21 @@
                 }
 
                 var titleEl = document.getElementById('page-title');
-                if (titleEl && currentEntry && currentEntry.title) {
+                if (titleEl && currentEntry && currentEntry.title && currentPath !== '/') {
                     titleEl.textContent = currentEntry.title + " - {{site.title}}";
                 } else if (titleEl) {
                     titleEl.textContent = "{{site.title}} - {{site.subtitle}}";
                 }
 
                 var covTitleEl = document.getElementById('cover-title');
-                if (covTitleEl && currentEntry && currentEntry.title) {
+                if (covTitleEl && currentEntry && currentEntry.title && currentPath !== '/') {
                     covTitleEl.textContent = currentEntry.title;
                 } else if (covTitleEl) {
                     covTitleEl.textContent = "{{site.title}}";
                 }
 
                 var covSubEl = document.querySelector('.cover-subtitle');
-                if (covSubEl && currentEntry && currentEntry.subtitle) {
+                if (covSubEl && currentEntry && currentEntry.subtitle && currentPath !== '/') {
                     covSubEl.textContent = currentEntry.subtitle;
                 } else if (covSubEl) {
                     covSubEl.textContent = "{{site.subtitle}}";
