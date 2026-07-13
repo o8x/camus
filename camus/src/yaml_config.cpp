@@ -213,12 +213,31 @@ namespace camus::config
 
 		// 解析 TOC
 		for (const auto &item : catalog_data) {
-			route_conf c{
-				.path = filesystem::clean_path(item["path"].as<std::string>(), "/"),
-				.title = item["title"].as<std::string>(),
-				.subtitle = item["subtitle"].as<std::string>(),
-				.description = item["description"].as<std::string>(),
-			};
+			route_conf c{};
+
+			if (item["title"]) {
+				c.title = item["title"].as<std::string>();
+			}
+
+			if (item["subtitle"]) {
+				c.subtitle = item["subtitle"].as<std::string>();
+			}
+
+			if (item["description"]) {
+				c.description = item["description"].as<std::string>();
+			}
+
+			if (item["path"]) {
+				c.path = filesystem::clean_path(item["path"].as<std::string>(), "/");
+			} else {
+				logging::debug(
+					"ignore catalog title={} subtitle={} description={}",
+					c.title,
+					c.subtitle,
+					c.description
+				);
+				continue;
+			}
 
 			if (const YAML::Node transfers = item["transfers"]; transfers && c.path != "/" && transfers.IsSequence()) {
 				for (const auto &tr : transfers) {
