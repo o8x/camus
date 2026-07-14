@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <iostream>
 #include <random>
+#include <regex>
 #include <sstream>
 
 namespace strings
@@ -128,6 +130,20 @@ namespace strings
 		return result;
 	}
 
+	static std::unordered_map<std::string, std::regex> regx_history{};
+
+	std::string replace_nocase(const std::string &str, const std::string &from, const std::string &to)
+	{
+		std::regex pattern;
+		if (regx_history.contains(from)) {
+			pattern = regx_history.at(from);
+		} else {
+			pattern = std::regex(from, std::regex_constants::icase);
+		}
+
+		return std::regex_replace(str, pattern, to, std::regex_constants::format_default);
+	}
+
 	std::string string_join(const std::vector<std::string> &vec, const std::string &delimiter)
 	{
 		std::string result;
@@ -196,7 +212,8 @@ namespace strings
 
 	// clang-format on
 
-	size_t get_display_width(const std::string& str) {
+	size_t get_display_width(const std::string &str)
+	{
 		size_t width = 0;
 		for (size_t i = 0; i < str.size(); ++i) {
 			// 判断是否为 UTF-8 多字节字符
@@ -221,7 +238,8 @@ namespace strings
 		return width;
 	}
 
-	std::string padding_left(const std::string& str, const size_t resize_width) {
+	std::string padding_left(const std::string &str, const size_t resize_width)
+	{
 		const size_t w = get_display_width(str);
 		if (w >= resize_width) {
 			// 如果字符串宽度已经达到或超过目标宽度，直接返回

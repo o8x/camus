@@ -145,12 +145,12 @@ namespace camus
 			}
 
 			node.property.display_name = strings::replace(
-				node.property.display_name,
+				conf_.render_var(node.property.display_name),
 				std::map<std::string, std::string>{
-					{"/", ""},
-					{"\\", ""},
-					{"'", "‘"},
-					{"\"", "“"},
+					{"/", " "},
+					{"\\", " "},
+					{"'", " "},
+					{"\"", " "},
 				}
 			);
 
@@ -169,7 +169,10 @@ namespace camus
 			// node.property.external_path
 
 			// 合并替换，保留一个元素
-			const std::string text = strings::string_join(node.contents, "\n");
+			std::string text = strings::string_join(node.contents, "\n");
+			// 替换 markdown 中变量
+			text = conf_.render_var(text);
+
 			node.contents.clear();
 			node.contents.push_back(
 				strings::replace(
@@ -181,7 +184,7 @@ namespace camus
 							 conf_.camus().render.engine,
 							 conf_.camus().render.options
 						 )},
-						{"{{page.title}}", strings::replace(node.property.display_name, "\"", "'")},
+						{"{{page.title}}", node.property.display_name},
 						{"{{page.date}}", params["date"]},
 						{"{{page.tags}}", params["tags"]},
 						{"{{page.description}}", ""},

@@ -23,6 +23,9 @@ namespace strings
 	// 替换字符串
 	std::string replace(const std::string &str, const std::string &from, const std::string &to);
 	std::string replace(const std::string &str, const std::map<std::string, std::string> &ctx);
+	// 不区分大小写替换
+	std::string replace_nocase(const std::string &str, const std::string &from, const std::string &to);
+
 	// 连接字符串
 	std::string string_join(const std::vector<std::string> &vec, const std::string &delimiter);
 	// 转义 URL 中的 unicode 字符
