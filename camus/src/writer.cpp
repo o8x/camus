@@ -186,6 +186,8 @@ namespace camus
 						{"{{page.tags}}", params["tags"]},
 						{"{{page.description}}", ""},
 						{" 00:00:00", ""},
+						{"<hr>", ""},
+						{"<hr/>", ""},
 						{"<hr />", ""},
 					}
 				)
