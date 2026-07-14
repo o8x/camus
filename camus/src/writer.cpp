@@ -428,38 +428,49 @@ namespace camus
 	{
 		cmd_.dryrun = true;
 
+		std::cout << std::endl << strings::coloring_yellow("Dry Build: ") << std::endl;
 		build();
 		logging::set_level(logging::INFO_LEVEL);
 
 		uint16_t max_length = 0;
+		std::cout << std::endl << strings::coloring_yellow("File System: ") << std::endl;
+		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
+			if (const size_t w = strings::get_display_width(item.path); w > max_length) {
+				max_length = w;
+			}
+		});
+
+		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
+			const int spaces = (depth == 0 ? 0 : depth - 1) * 4;
+
+			std::string path = strings::padding_left(item.path, max_length);
+			std::string name = item.link_url();
+			if (item.link_url().parent_path() != "/") {
+				path = strings::coloring_bright_green(path);
+				name = strings::coloring_green(item.link_url());
+			}
+
+			std::cout << std::format(
+							 "{}{}{} -> {}",
+							 item.is_directory() ? strings::coloring_bright_green("[D] ") : "    ",
+							 std::string(spaces, ' '),
+							 path,
+							 strings::coloring_simple(name)
+						 )
+					  << std::endl
+					  << std::flush;
+		});
+
+		max_length = 0;
 		for (const auto &[k, v] : conf_.map()) {
 			if (k.length() > max_length) {
 				max_length = k.length();
 			}
 		}
 
-		max_length *= 1.2;
-
-		std::cout << "File System: " << std::endl;
-		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
-			const int spaces = (depth == 0 ? 0 : depth - 1) * 4;
-			std::string path = item.path.string();
-			path.resize(max_length - spaces, ' ');
-
-			std::cout << std::format(
-							 "{} {}{} -> {}",
-							 item.children.empty() ? "   " : "[D]",
-							 std::string(spaces, ' '),
-							 path,
-							 strings::coloring_green(item.link_url())
-						 )
-					  << std::endl
-					  << std::flush;
-		});
-
-		std::cout << "Configure: " << std::endl;
+		std::cout << std::endl << strings::coloring_yellow("Configure: ") << std::endl;
 		for (const auto &[k, v] : conf_.map()) {
-			std::cout << "    " << std::left << std::setw(max_length) << k << ": " << strings::coloring_green(v)
+			std::cout << "    " << std::left << std::setw(max_length) << k << " : " << strings::coloring_green(v)
 					  << std::endl
 					  << std::flush;
 		}

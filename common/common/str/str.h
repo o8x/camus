@@ -48,6 +48,10 @@ namespace strings
 	std::string coloring_white(const std::string &t);
 	std::string coloring_bright_white(const std::string &t);
 	std::string coloring_simple(const std::string &t);
+	// 获取字符串长度
+	size_t get_display_width(const std::string &str);
+	// 左对齐填充到指定长度
+	std::string padding_left(const std::string &str, const size_t resize_width);
 
 	template <typename T> std::string dump_json(const T &t, const uint8_t indent = 4)
 	{
