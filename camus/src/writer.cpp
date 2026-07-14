@@ -353,8 +353,19 @@ namespace camus
 			return;
 		}
 
-		// 默认会将资源文件都提升到输出文件夹中
-		std::filesystem::copy(assets_dir, conf_.camus().output_dir, std::filesystem::copy_options::recursive);
+		// 自带的也要提升过去，并且禁止覆盖
+		std::filesystem::copy(
+			filesystem::clean_path(std::format("{}/assets", CAMUS_DIR), "./"),
+			conf_.camus().output_dir,
+			std::filesystem::copy_options::recursive
+		);
+
+		// 默认会将资源文件都提升到输出文件夹中，同时覆盖自带的
+		std::filesystem::copy(
+			assets_dir,
+			conf_.camus().output_dir,
+			std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
+		);
 
 		size_t count = 0;
 		for (const auto &entry : std::filesystem::recursive_directory_iterator(assets_dir)) {
