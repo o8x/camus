@@ -566,199 +566,23 @@
         <footer class="cover-footer">{{build.powered-by}}</footer>
     </div>
 
+    <script src="/js/camus-home-common.js"></script>
     <script>
         (function() {
-            var formatDate = function(ts) {
-                var n = Number(ts);
-                if (!n || isNaN(n)) return '';
-                var d = new Date(n * 1000);
-                if (isNaN(d.getTime())) return '';
-                return d.getFullYear() + '-' +
-                    String(d.getMonth() + 1).padStart(2, '0') + '-' +
-                    String(d.getDate()).padStart(2, '0');
-            };
-
-            var normalizePath = function(p) {
-                if (!p || p === '/') return '/';
-                if (!p.startsWith('/')) p = '/' + p;
-                if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
-                return p;
-            };
-
-            var encodePath = function(s) {
-                return /[\u4e00-\u9fff]/.test(s) ? encodeURIComponent(s) : s;
-            };
-
-            var getDirParam = function() {
-                var m = window.location.search.match(/[?&]dir=([^&]*)/);
-                return m ? decodeURIComponent(m[1]) : '';
-            };
-
-            var getParent = function(p) {
-                var np = normalizePath(p);
-                if (np === '/') return null;
-                var parts = np.split('/');
-                parts.pop();
-                if (parts.length === 0 || (parts.length === 1 && parts[0] === '')) return '/';
-                return parts.join('/');
-            };
-
-            var renderToc = function(flatData) {
-                var dirParam = getDirParam();
-                var currentPath = normalizePath(dirParam || '/');
-
-                var currentEntry = null;
-                for (var i = 0; i < flatData.length; i++) {
-                    if (flatData[i].is_dir && normalizePath(flatData[i].path) === currentPath) {
-                        currentEntry = flatData[i];
-                        break;
-                    }
+            HomeCommon.init({
+                encodeFn: HomeCommon.encodePath,
+                animateCount: 30,
+                onRender: function() {
+                    document.body.classList.add('toc-animating');
+                    document.getElementById('toc-loading').style.display = 'none';
+                    var list = document.getElementById('toc-list');
+                    list.style.display = '';
+                    list.classList.add('done');
+                    setTimeout(function() {
+                        document.body.classList.remove('toc-animating');
+                    }, 500);
                 }
-                if (!currentEntry) currentPath = '/';
-
-                var ANIMATE_COUNT = 30;
-                var items = [];
-
-                if (dirParam && currentPath !== '/') {
-                    var parent = getParent(currentPath);
-                    var backLabel;
-                    var backUrl;
-                    if (parent) {
-                        if (parent === '/') {
-                            backLabel = '/';
-                            backUrl = '/';
-                        } else {
-                            backLabel = '../';
-                            backUrl = '/?dir=' + encodePath(parent.replace(/^\//, ''));
-                        }
-                    } else {
-                        backLabel = '/';
-                        backUrl = '/';
-                    }
-                    items.push({ type: 'back', label: backLabel, url: backUrl, time: '' });
-                }
-
-                var subDirs = [];
-                var files = [];
-                var pfx = currentPath === '/' ? '/' : currentPath + '/';
-
-                var hasDirSet = {};
-                for (var d = 0; d < flatData.length; d++) {
-                    if (flatData[d].is_dir) hasDirSet[normalizePath(flatData[d].path)] = true;
-                }
-
-                for (var j = 0; j < flatData.length; j++) {
-                    var entry = flatData[j];
-                    var ep = normalizePath(entry.path);
-                    if (ep === currentPath) continue;
-                    if (!ep.startsWith(pfx)) continue;
-                    var remainder = ep.slice(pfx.length);
-                    if (remainder.indexOf('/') !== -1) {
-                        var firstPart = remainder.split('/')[0];
-                        var midPath = currentPath === '/' ? '/' + firstPart : currentPath + '/' + firstPart;
-                        if (hasDirSet[midPath]) continue;
-                    }
-                    if (entry.is_dir) {
-                        subDirs.push(entry);
-                    } else {
-                        var link = entry.link_path || ep;
-                        files.push({ label: entry.title, url: normalizePath(link), time: formatDate(entry.write_time) });
-                    }
-                }
-
-                for (var k = 0; k < subDirs.length; k++) {
-                    var cdp = normalizePath(subDirs[k].path);
-                    var encodedPath = cdp.replace(/^\//, '');
-                    items.push({
-                        type: 'dir',
-                        label: subDirs[k].title,
-                        url: '/?dir=' + encodePath(encodedPath),
-                        time: formatDate(subDirs[k].write_time)
-                    });
-                }
-
-                for (var f = 0; f < files.length; f++) {
-                    items.push({
-                        type: 'file',
-                        label: files[f].label,
-                        url: files[f].url,
-                        time: files[f].time
-                    });
-                }
-
-                var descEl = document.getElementById('cover-description');
-                if (descEl && currentEntry && currentEntry.desc) {
-                    descEl.textContent = currentEntry.desc;
-                    descEl.style.display = '';
-                } else if (descEl) {
-                    if (!currentEntry || normalizePath(currentEntry.path) === '/') {
-                        descEl.textContent = `{{site.description}}`
-                        descEl.style.display = '';
-                    } else {
-                        descEl.style.display = 'none';
-                    }
-                }
-
-                var titleEl = document.getElementById('page-title');
-                if (titleEl && currentEntry && currentEntry.title && currentPath !== '/') {
-                    titleEl.textContent = currentEntry.title + " - {{site.title}}";
-                } else if (titleEl) {
-                    titleEl.textContent = "{{site.title}} - {{site.subtitle}}";
-                }
-
-                var covTitleEl = document.getElementById('cover-title');
-                if (covTitleEl && currentEntry && currentEntry.title && currentPath !== '/') {
-                    covTitleEl.textContent = currentEntry.title;
-                } else if (covTitleEl) {
-                    covTitleEl.textContent = "{{site.title}}";
-                }
-
-                var covSubEl = document.querySelector('.cover-subtitle');
-                if (covSubEl && currentEntry && currentEntry.subtitle && currentPath !== '/') {
-                    covSubEl.textContent = currentEntry.subtitle;
-                } else if (covSubEl) {
-                    covSubEl.textContent = "{{site.subtitle}}";
-                }
-
-                var fileIndex = 0;
-                var html = items.map(function(item, i) {
-                    var extra = '';
-                    if (i < ANIMATE_COUNT) {
-                        extra = ' style="animation-delay:' + (i * 0.03).toFixed(2) + 's"';
-                    }
-                    var extraClass = '';
-                    if (item.type === 'dir') {
-                        extraClass = ' toc-dir';
-                    } else if (item.type === 'back') {
-                        extraClass = ' toc-back-root';
-                    }
-                    var num = '';
-                    if (item.type === 'file') {
-                        fileIndex++;
-                        num = '<span class="toc-num">' + String(fileIndex).padStart(3, '0') + '</span>';
-                    } else if (item.type === 'dir') {
-                        num = '<span class="toc-num">[+]</span>';
-                    } else {
-                        num = '<span class="toc-num">[/]</span>';
-                    }
-                    return '<li class="toc-item' + extraClass + '"' + extra + '>' +
-                        num +
-                        '<a class="toc-link" href="' + item.url + '">' + item.label + '</a>' +
-                        '<span class="toc-date">' + item.time + '</span>' +
-                        '</li>';
-                }).join('');
-
-                document.body.classList.add('toc-animating');
-                document.getElementById('toc-loading').style.display = 'none';
-                var list = document.getElementById('toc-list');
-                list.innerHTML = html;
-                list.style.display = '';
-                list.classList.add('done');
-
-                setTimeout(function() {
-                    document.body.classList.remove('toc-animating');
-                }, 500);
-            };
+            });
 
             var initTheme = function() {
                 var saved = localStorage.getItem('pixel-theme');
@@ -822,11 +646,6 @@
                     applyLightTheme();
                 }
             });
-
-            fetch('/toc.json')
-                .then(function(res) { return res.json(); })
-                .then(renderToc)
-                .catch(function(err) { console.error('Failed to load toc.json:', err); });
 
             initTheme();
         })();

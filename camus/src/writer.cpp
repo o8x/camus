@@ -145,12 +145,12 @@ namespace camus
 			}
 
 			node.property.display_name = strings::replace(
-				node.property.display_name,
+				conf_.render_var(node.property.display_name),
 				std::map<std::string, std::string>{
-					{"/", ""},
-					{"\\", ""},
-					{"'", "‘"},
-					{"\"", "“"},
+					{"/", " "},
+					{"\\", " "},
+					{"'", " "},
+					{"\"", " "},
 				}
 			);
 
@@ -169,7 +169,10 @@ namespace camus
 			// node.property.external_path
 
 			// 合并替换，保留一个元素
-			const std::string text = strings::string_join(node.contents, "\n");
+			std::string text = strings::string_join(node.contents, "\n");
+			// 替换 markdown 中变量
+			text = conf_.render_var(text);
+
 			node.contents.clear();
 			node.contents.push_back(
 				strings::replace(
@@ -181,11 +184,13 @@ namespace camus
 							 conf_.camus().render.engine,
 							 conf_.camus().render.options
 						 )},
-						{"{{page.title}}", strings::replace(node.property.display_name, "\"", "'")},
+						{"{{page.title}}", node.property.display_name},
 						{"{{page.date}}", params["date"]},
 						{"{{page.tags}}", params["tags"]},
 						{"{{page.description}}", ""},
 						{" 00:00:00", ""},
+						{"<hr>", ""},
+						{"<hr/>", ""},
 						{"<hr />", ""},
 					}
 				)
@@ -348,8 +353,19 @@ namespace camus
 			return;
 		}
 
-		// 默认会将资源文件都提升到输出文件夹中
-		std::filesystem::copy(assets_dir, conf_.camus().output_dir, std::filesystem::copy_options::recursive);
+		// 自带的也要提升过去，并且禁止覆盖
+		std::filesystem::copy(
+			filesystem::clean_path(std::format("{}/assets", CAMUS_DIR), "./"),
+			conf_.camus().output_dir,
+			std::filesystem::copy_options::recursive
+		);
+
+		// 默认会将资源文件都提升到输出文件夹中，同时覆盖自带的
+		std::filesystem::copy(
+			assets_dir,
+			conf_.camus().output_dir,
+			std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
+		);
 
 		size_t count = 0;
 		for (const auto &entry : std::filesystem::recursive_directory_iterator(assets_dir)) {
@@ -426,38 +442,49 @@ namespace camus
 	{
 		cmd_.dryrun = true;
 
+		std::cout << std::endl << strings::coloring_yellow("Dry Build: ") << std::endl;
 		build();
 		logging::set_level(logging::INFO_LEVEL);
 
 		uint16_t max_length = 0;
+		std::cout << std::endl << strings::coloring_yellow("File System: ") << std::endl;
+		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
+			if (const size_t w = strings::get_display_width(item.path); w > max_length) {
+				max_length = w;
+			}
+		});
+
+		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
+			const int spaces = (depth == 0 ? 0 : depth - 1) * 4;
+
+			std::string path = strings::padding_left(item.path, max_length);
+			std::string name = item.link_url();
+			if (item.link_url().parent_path() != "/") {
+				path = strings::coloring_bright_green(path);
+				name = strings::coloring_green(item.link_url());
+			}
+
+			std::cout << std::format(
+							 "{}{}{} -> {}",
+							 item.is_directory() ? strings::coloring_bright_green("[D] ") : "    ",
+							 std::string(spaces, ' '),
+							 path,
+							 strings::coloring_simple(name)
+						 )
+					  << std::endl
+					  << std::flush;
+		});
+
+		max_length = 0;
 		for (const auto &[k, v] : conf_.map()) {
 			if (k.length() > max_length) {
 				max_length = k.length();
 			}
 		}
 
-		max_length *= 1.2;
-
-		std::cout << "File System: " << std::endl;
-		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
-			const int spaces = (depth == 0 ? 0 : depth - 1) * 4;
-			std::string path = item.path.string();
-			path.resize(max_length - spaces, ' ');
-
-			std::cout << std::format(
-							 "{} {}{} -> {}",
-							 item.children.empty() ? "   " : "[D]",
-							 std::string(spaces, ' '),
-							 path,
-							 strings::coloring_green(item.link_url())
-						 )
-					  << std::endl
-					  << std::flush;
-		});
-
-		std::cout << "Configure: " << std::endl;
+		std::cout << std::endl << strings::coloring_yellow("Configure: ") << std::endl;
 		for (const auto &[k, v] : conf_.map()) {
-			std::cout << "    " << std::left << std::setw(max_length) << k << ": " << strings::coloring_green(v)
+			std::cout << "    " << std::left << std::setw(max_length) << k << " : " << strings::coloring_green(v)
 					  << std::endl
 					  << std::flush;
 		}

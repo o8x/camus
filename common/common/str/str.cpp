@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <iostream>
 #include <random>
+#include <regex>
 #include <sstream>
 
 namespace strings
@@ -128,6 +130,20 @@ namespace strings
 		return result;
 	}
 
+	static std::unordered_map<std::string, std::regex> regx_history{};
+
+	std::string replace_nocase(const std::string &str, const std::string &from, const std::string &to)
+	{
+		std::regex pattern;
+		if (regx_history.contains(from)) {
+			pattern = regx_history.at(from);
+		} else {
+			pattern = std::regex(from, std::regex_constants::icase);
+		}
+
+		return std::regex_replace(str, pattern, to, std::regex_constants::format_default);
+	}
+
 	std::string string_join(const std::vector<std::string> &vec, const std::string &delimiter)
 	{
 		std::string result;
@@ -195,4 +211,43 @@ namespace strings
 	std::string coloring_simple(const std::string &t) {return coloring(t, "39m");}
 
 	// clang-format on
+
+	size_t get_display_width(const std::string &str)
+	{
+		size_t width = 0;
+		for (size_t i = 0; i < str.size(); ++i) {
+			// 判断是否为 UTF-8 多字节字符
+			if (const auto c = static_cast<unsigned char>(str[i]); (c & 0x80) == 0) {
+				// ASCII 字符（0xxxxxxx），占1个宽度
+				width += 1;
+			} else if ((c & 0xE0) == 0xC0) {
+				// 2字节 UTF-8 字符（110xxxxx），通常占1个宽度
+				width += 1;
+				i += 1; // 跳过后续字节
+			} else if ((c & 0xF0) == 0xE0) {
+				// 3字节 UTF-8 字符（1110xxxx），通常是中文，占2个宽度
+				width += 2;
+				i += 2; // 跳过后续字节
+			} else if ((c & 0xF8) == 0xF0) {
+				// 4字节 UTF-8 字符（11110xxx），如 Emoji，占2个宽度
+				width += 2;
+				i += 3; // 跳过后续字节
+			}
+		}
+
+		return width;
+	}
+
+	std::string padding_left(const std::string &str, const size_t resize_width)
+	{
+		const size_t w = get_display_width(str);
+		if (w >= resize_width) {
+			// 如果字符串宽度已经达到或超过目标宽度，直接返回
+			// 注意：如果超过，可以考虑截断，这里简单返回原字符串
+			return str;
+		}
+
+		// 返回左对齐并填充空格的字符串
+		return str + std::string(resize_width - w, ' ');
+	}
 } // namespace strings

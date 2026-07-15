@@ -42,7 +42,15 @@ namespace camus::config
 					continue;
 				}
 
-				flattened_map.emplace(std::format("env.{}", strings::to_lower(k)), strings::trim_space(kv[1]));
+				// 全局词典
+				if (k.starts_with("DICT_")) {
+					flattened_map.emplace(
+						std::format("dict.{}", strings::to_lower(strings::replace(k, "DICT_", ""))),
+						strings::trim_space(kv[1])
+					);
+				} else {
+					flattened_map.emplace(std::format("env.{}", strings::to_lower(k)), strings::trim_space(kv[1]));
+				}
 			}
 		}
 
@@ -293,7 +301,14 @@ namespace camus::config
 	{
 		std::string res = data;
 		for (const auto &[key, value] : flattened_map) {
-			res = strings::replace(res, "{{" + key + "}}", value);
+			std::string key_name = "{{" + key + "}}";
+			// 字典替换不带括号
+			if (key.starts_with("dict.")) {
+				key_name = strings::replace(key, "dict.", "");
+				res = strings::replace_nocase(res, key_name, value);
+			} else {
+				res = strings::replace(res, "{{" + key + "}}", value);
+			}
 		}
 
 		return res;

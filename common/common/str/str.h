@@ -23,6 +23,9 @@ namespace strings
 	// 替换字符串
 	std::string replace(const std::string &str, const std::string &from, const std::string &to);
 	std::string replace(const std::string &str, const std::map<std::string, std::string> &ctx);
+	// 不区分大小写替换
+	std::string replace_nocase(const std::string &str, const std::string &from, const std::string &to);
+
 	// 连接字符串
 	std::string string_join(const std::vector<std::string> &vec, const std::string &delimiter);
 	// 转义 URL 中的 unicode 字符
@@ -48,6 +51,10 @@ namespace strings
 	std::string coloring_white(const std::string &t);
 	std::string coloring_bright_white(const std::string &t);
 	std::string coloring_simple(const std::string &t);
+	// 获取字符串长度
+	size_t get_display_width(const std::string &str);
+	// 左对齐填充到指定长度
+	std::string padding_left(const std::string &str, const size_t resize_width);
 
 	template <typename T> std::string dump_json(const T &t, const uint8_t indent = 4)
 	{
