@@ -20,7 +20,7 @@ namespace camus::config
 		flattened_map.emplace("build.basedir", std::filesystem::current_path());
 		flattened_map.emplace("site.title", camus_.site.title);
 		flattened_map.emplace("site.subtitle", camus_.site.subtitle);
-		flattened_map.emplace("site.description", camus_.site.description);
+		flattened_map.emplace("site.desc", camus_.site.description);
 
 		for (const auto &r : routes_) {
 			flattened_map.emplace(std::format("route.{}.path", r.path), r.path);
@@ -108,8 +108,10 @@ namespace camus::config
 		for (const auto &it : camus_data) {
 			const auto key = strings::trim_space(it.first.as<std::string>());
 
+			camus_.render.static_engine = "default";
 			if (key == "render") {
 				camus_.render.engine = it.second["engine"].as<std::string>();
+				camus_.render.static_engine = it.second["static"].as<std::string>();
 				flattened_map.emplace("camus.render.engine", camus_.render.engine);
 
 				std::vector<std::string> options;
@@ -154,6 +156,7 @@ namespace camus::config
 					}
 				}
 
+				flattened_map.emplace("camus.render.static", camus_.render.static_engine);
 				flattened_map.emplace("camus.render.engine", camus_.render.engine);
 				flattened_map.emplace(
 					"camus.render.options",
@@ -177,22 +180,7 @@ namespace camus::config
 			} else if (key == "sitemap") {
 				camus_.sitemap = value == "true";
 			} else if (key == "theme") {
-				// 默认使用本地主题
-				std::string home_file = std::format("theme/{}/home.html", value);
-				std::string page_file = std::format("theme/{}/page.html", value);
-
-				// 检查是否存在 .camus/theme/default/home.html
-				if (std::filesystem::exists(std::filesystem::path(CAMUS_DIR) / "theme" / value / "home.html")) {
-					home_file = std::format("{}/theme/{}/home.html", CAMUS_DIR, value);
-					page_file = std::format("{}/theme/{}/page.html", CAMUS_DIR, value);
-				}
-
-				if (!std::filesystem::exists(home_file)) {
-					logging::fatal("theme {} not found file={}", value, std::filesystem::absolute(home_file).c_str());
-				}
-
-				camus_.theme_home = filesystem::read_file(home_file);
-				camus_.theme_page = filesystem::read_file(page_file);
+				camus_.theme_home = value;
 			} else if (key == "filename_case") {
 				camus_.filename_case = value;
 			} else if (key == "toc_format") {
@@ -213,6 +201,32 @@ namespace camus::config
 		if (!std::filesystem::exists(camus_.assets_dir)) {
 			logging::fatal("assets dir not exists name={}", camus_.assets_dir.string());
 		}
+
+		if (camus_.render.static_engine != "default") {
+			camus_.theme_home = std::format("{}/{}", camus_.theme_home, camus_.render.static_engine);
+		}
+
+		// 默认使用 .camus/theme
+		std::string home_file = std::format("{}/theme/{}/home.html", CAMUS_DIR, camus_.theme_home);
+		std::string page_file = std::format("{}/theme/{}/page.html", CAMUS_DIR, camus_.theme_home);
+
+		// 检查是否存在覆盖主题
+		if (std::filesystem::exists(std::format("theme/{}/home.html", camus_.theme_home))) {
+			home_file = std::format("theme/{}/home.html", camus_.theme_home);
+		}
+
+		if (std::filesystem::exists(std::format("theme/{}/page.html", camus_.theme_home))) {
+			page_file = std::format("theme/{}/page.html", camus_.theme_home);
+		}
+
+		if (!std::filesystem::exists(home_file) || !std::filesystem::exists(page_file)) {
+			logging::fatal("theme {} not found home={} page={}", camus_.theme_home, home_file, page_file);
+		}
+
+		logging::debug("load theme home={} page={}", home_file, page_file);
+
+		camus_.theme_home = filesystem::read_file(home_file);
+		camus_.theme_page = filesystem::read_file(page_file);
 
 		const YAML::Node catalog_data = root["catalog"];
 		if (!catalog_data.IsSequence()) {
@@ -290,6 +304,22 @@ namespace camus::config
 	camus_conf yaml_config::camus() const
 	{
 		return camus_;
+	}
+
+	nlohmann::json yaml_config::json() const
+	{
+		nlohmann::json j;
+
+		for (const auto &[name, val] : flattened_map) {
+			auto [key, sub_key] = strings::split_pair(name, ".");
+			if (key.empty()) {
+				continue;
+			}
+
+			j[key][strings::replace(sub_key, "-", "_")] = val;
+		}
+
+		return j;
 	}
 
 	std::map<std::string, std::string> yaml_config::map() const

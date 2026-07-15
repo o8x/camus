@@ -2,6 +2,7 @@
 
 #include "catalog.h"
 #include "httplib.h"
+#include "inja/inja.hpp"
 #include "yaml_config.h"
 
 namespace camus
@@ -25,6 +26,8 @@ namespace camus
 		catalog::catalog_node catalog_{};
 		// CMD 参数
 		cmdline cmd_;
+		// 模板引擎
+		inja::Environment inja_;
 
 		void run_only_live(const std::function<void()> &func) const;
 

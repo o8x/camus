@@ -22,7 +22,7 @@ namespace strings
 	std::vector<std::string> split(std::string_view s, std::string_view delimiter, size_t n = 0);
 	// 替换字符串
 	std::string replace(const std::string &str, const std::string &from, const std::string &to);
-	std::string replace(const std::string &str, const std::map<std::string, std::string> &ctx);
+	std::string replace(const std::string &str, const std::map<std::string, std::string> &ctx, const bool deep = false);
 	// 不区分大小写替换
 	std::string replace_nocase(const std::string &str, const std::string &from, const std::string &to);
 
@@ -55,6 +55,8 @@ namespace strings
 	size_t get_display_width(const std::string &str);
 	// 左对齐填充到指定长度
 	std::string padding_left(const std::string &str, const size_t resize_width);
+	// 获取准确长度
+	size_t get_unicode_length(const std::string &str);
 
 	template <typename T> std::string dump_json(const T &t, const uint8_t indent = 4)
 	{

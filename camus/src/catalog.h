@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "common/filesystem/filesystem.h"
+#include "common/functions/functions.h"
 #include "common/str/str.h"
 #include "nlohmann/json.hpp"
 
@@ -56,13 +57,14 @@ namespace camus::catalog
 			json["title"] = data.property.display_name;
 			json["write_time"] = data.property.write_time;
 			json["path"] = data.real_url();
+			json["is_dir"] = data.is_directory();
+			json["link_path"] = "";
 
 			if (!data.property.short_path.empty()) {
 				json["link_path"] = data.link_url();
 			}
 
 			if (data.is_directory()) {
-				json["is_dir"] = data.is_directory();
 				json["desc"] = data.property.description;
 				json["subtitle"] = data.property.subtitle;
 			} else {

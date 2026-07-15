@@ -114,7 +114,7 @@ namespace strings
 		return data;
 	}
 
-	std::string replace(const std::string &str, const std::map<std::string, std::string> &ctx)
+	std::string replace(const std::string &str, const std::map<std::string, std::string> &ctx, const bool deep)
 	{
 		std::string result = str;
 
@@ -125,6 +125,10 @@ namespace strings
 			}
 
 			result = replace(result, std::format("{}", from), to);
+		}
+
+		if (deep) {
+			return replace(result, ctx, false);
 		}
 
 		return result;
@@ -249,5 +253,19 @@ namespace strings
 
 		// 返回左对齐并填充空格的字符串
 		return str + std::string(resize_width - w, ' ');
+	}
+
+	size_t get_unicode_length(const std::string &str)
+	{
+		size_t length = 0;
+		for (size_t i = 0; i < str.size(); ++i) {
+			unsigned char c = static_cast<unsigned char>(str[i]);
+			// UTF-8 多字节字符的首字节范围：0xC0 到 0xFD
+			if ((c & 0xC0) != 0x80) {
+				// 如果不是“后续字节”（以 10 开头），则代表一个新字符的开始
+				++length;
+			}
+		}
+		return length;
 	}
 } // namespace strings

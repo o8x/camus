@@ -16,6 +16,7 @@ camus:
     domain_name: stdout.com.cn
     # 自定义 cmark-gfm 渲染选项
     render:
+        static: inja                            # 默认 default，设置 inja 将使用 inja 对 home 模板进行纯静态渲染
         engine: cmark-gfm
         options:
             - DEFAULT                           # 默认选项，采用安全模式（过滤原始HTML和危险链接）
