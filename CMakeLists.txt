@@ -62,6 +62,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     endif ()
 endif ()
 
+add_compile_definitions(
+    "$<$<CONFIG:Debug>:WORK_ON_DEBUG=true>"
+    "$<$<CONFIG:RelWithDebInfo>:WORK_ON_DEBUG=true>"
+    "$<$<CONFIG:Release>:WORK_ON_DEBUG=false>"
+)
+
 add_subdirectory(camus)
 add_subdirectory(common)
 

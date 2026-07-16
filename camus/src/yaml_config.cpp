@@ -118,7 +118,7 @@ namespace camus::config
 
 				if (camus_.render.engine == "cmark-gfm") {
 					camus_.render.options = CMARK_OPT_DEFAULT;
-					if (BUILD_TYPE == "Debug") {
+					if (WORK_ON_DEBUG) {
 						camus_.render.options |= CMARK_OPT_SOURCEPOS;
 					}
 
