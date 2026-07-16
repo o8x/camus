@@ -555,18 +555,37 @@ namespace camus
 	{
 		cmd_.dryrun = true;
 
+		uint16_t max_length = 0;
+		for (const auto &[k, v] : conf_.map()) {
+			if (k.length() > max_length) {
+				max_length = k.length();
+			}
+		}
+
+		std::cout << std::endl << strings::coloring_yellow("Configure: ") << std::endl;
+		for (const auto &[k, v] : conf_.map()) {
+			std::cout << "    " << std::left << std::setw(max_length) << k << " : " << strings::coloring_green(v)
+					  << std::endl
+					  << std::flush;
+		}
+
+		if (catalog_ = catalog::build_catalog_tree(conf_.camus().source_dir); catalog_.empty()) {
+			logging::warn("No articles found");
+		}
+
+		logging::set_level(logging::DEBUG_LEVEL);
 		std::cout << std::endl << strings::coloring_yellow("Dry Build: ") << std::endl;
 		build();
-		logging::set_level(logging::INFO_LEVEL);
+		logging::set_level(logging::DEBUG_LEVEL);
 
-		uint16_t max_length = 0;
-		std::cout << std::endl << strings::coloring_yellow("File System: ") << std::endl;
+		max_length = 0;
 		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
 			if (const size_t w = strings::get_display_width(item.path); w > max_length) {
 				max_length = w;
 			}
 		});
 
+		std::cout << std::endl << strings::coloring_yellow("Catalog: ") << std::endl;
 		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
 			const int spaces = (depth == 0 ? 0 : depth - 1) * 4;
 
@@ -587,20 +606,6 @@ namespace camus
 					  << std::endl
 					  << std::flush;
 		});
-
-		max_length = 0;
-		for (const auto &[k, v] : conf_.map()) {
-			if (k.length() > max_length) {
-				max_length = k.length();
-			}
-		}
-
-		std::cout << std::endl << strings::coloring_yellow("Configure: ") << std::endl;
-		for (const auto &[k, v] : conf_.map()) {
-			std::cout << "    " << std::left << std::setw(max_length) << k << " : " << strings::coloring_green(v)
-					  << std::endl
-					  << std::flush;
-		}
 	}
 
 	int writer::build()
