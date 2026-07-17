@@ -80,7 +80,11 @@ namespace camus::config
 		flattened_map.emplace(
 			"build.powered-by",
 			std::format(
-				R"(<small><em>Powered by <a href="{}/releases/tag/v{}" target="_blank" title="Camus v{}">Camus</a> built with {}</em></small>)",
+				R"(
+<small>
+	<a class="site-stats-link" href="/stats.html" target="_blank">site stats</a><br />
+	<em>Powered by <a href="{}/releases/tag/v{}" target="_blank" title="Camus v{}">Camus</a> built with {}</em>
+</small>)",
 				GIT_REPO,
 				PROJECT_VERSION,
 				PROJECT_VERSION,
@@ -213,6 +217,7 @@ namespace camus::config
 		// 默认使用 .camus/theme
 		std::string home_file = std::format("{}/theme/{}/home.html", CAMUS_DIR, camus_.theme_home);
 		std::string page_file = std::format("{}/theme/{}/page.html", CAMUS_DIR, camus_.theme_home);
+		std::string stats_file = std::format("{}/theme/{}/stats.html", CAMUS_DIR, camus_.theme_home);
 
 		// 检查是否存在覆盖主题
 		if (std::filesystem::exists(std::format("theme/{}/home.html", camus_.theme_home))) {
@@ -223,14 +228,25 @@ namespace camus::config
 			page_file = std::format("theme/{}/page.html", camus_.theme_home);
 		}
 
-		if (!std::filesystem::exists(home_file) || !std::filesystem::exists(page_file)) {
-			logging::fatal("theme {} not found home={} page={}", camus_.theme_home, home_file, page_file);
+		if (std::filesystem::exists(std::format("theme/{}/stats.html", camus_.theme_home))) {
+			stats_file = std::format("theme/{}/stats.html", camus_.theme_home);
 		}
 
-		logging::debug("load theme home={} page={}", home_file, page_file);
+		if (!std::filesystem::exists(home_file) || !std::filesystem::exists(page_file)) {
+			logging::fatal(
+				"theme {} not found home={} page={} stats={}",
+				camus_.theme_home,
+				home_file,
+				page_file,
+				stats_file
+			);
+		}
+
+		logging::debug("load theme home={} page={} stats={}", home_file, page_file, stats_file);
 
 		camus_.theme_home = filesystem::read_file(home_file);
 		camus_.theme_page = filesystem::read_file(page_file);
+		camus_.theme_stats = filesystem::read_file(stats_file);
 
 		const YAML::Node catalog_data = root["catalog"];
 		if (!catalog_data.IsSequence()) {

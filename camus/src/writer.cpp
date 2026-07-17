@@ -31,6 +31,18 @@ namespace camus
 		func();
 	}
 
+	struct article_stats {
+		uint16_t articles;
+		uint32_t words;
+		uint32_t read_mins;
+		time_t min_time;
+		time_t max_time;
+
+		std::set<std::string> tags;
+
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(article_stats, articles, words, read_mins, min_time, max_time, tags);
+	};
+
 	void writer::emit_article()
 	{
 		// 解析目录链接
@@ -190,6 +202,9 @@ namespace camus
 			return a.property.write_time > b.property.write_time;
 		});
 
+		// 年度统计
+		std::unordered_map<std::string, article_stats> stats{};
+
 		// 写入其他文件
 		const std::filesystem::path out_dir = std::filesystem::relative(conf_.camus().output_dir, cmd_.workdir);
 		for (int i = 0; i < articles.size(); ++i) {
@@ -207,6 +222,23 @@ namespace camus
 
 			const std::string markdown = strings::string_join(node.contents, "\n");
 			const size_t markdown_length = strings::get_unicode_length(markdown);
+
+			stats["all"].max_time = std::max(stats["all"].max_time, node.property.write_time);
+			stats["all"].min_time = std::max(stats["all"].min_time, node.property.write_time);
+			stats["all"].articles++;
+			stats["all"].words += markdown_length;
+			stats["all"].read_mins += markdown_length / 400;
+			stats["all"].tags.insert(node.property.tags.begin(), node.property.tags.end());
+
+			if (uint16_t year = 1970 + node.property.write_time / (365 * 86400); year > 1996 && year < 2200) {
+				const std::string year_name = std::to_string(year);
+				stats[year_name].max_time = std::max(stats[year_name].max_time, node.property.write_time);
+				stats[year_name].min_time = std::max(stats[year_name].min_time, node.property.write_time);
+				stats[year_name].articles++;
+				stats[year_name].words += markdown_length;
+				stats[year_name].read_mins += markdown_length / 400;
+				stats[year_name].tags.insert(node.property.tags.begin(), node.property.tags.end());
+			}
 
 			nlohmann::json j = conf_.json();
 			j["stats"]["word_count"] = markdown_length;
@@ -273,6 +305,12 @@ namespace camus
 				});
 			}
 		}
+
+		nlohmann::json j = conf_.json();
+		j["stats"] = stats;
+
+		const std::string contents = inja_.render(conf_.camus().theme_stats, j);
+		filesystem::write_file(conf_.camus().output_dir / "stats.html", contents);
 
 		// 填充文件夹属性
 		catalog::traverse_catalog_tree(catalog_, [&](catalog::catalog_node &node, int) {
@@ -490,6 +528,11 @@ namespace camus
 		inja_.add_callback("format_datetime", 1, [](const inja::Arguments &args) {
 			const int unix_ts = args.at(0)->get<int>();
 			return functions::format_time_t(unix_ts);
+		});
+
+		inja_.add_callback("format_date", 1, [](const inja::Arguments &args) {
+			const int unix_ts = args.at(0)->get<int>();
+			return functions::format_time_t(unix_ts, "%Y-%m-%d");
 		});
 	}
 

@@ -48,6 +48,7 @@ namespace camus::config
 		std::string domain_name;
 		std::string theme_home;
 		std::string theme_page;
+		std::string theme_stats;
 		std::string filename_case = "keep";
 		std::string toc_format = "json";
 		// 站点属性
