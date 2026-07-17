@@ -239,14 +239,17 @@ namespace camus::config
 
 			if (item["title"]) {
 				c.title = strings::trim_space(item["title"].as<std::string>());
+				c.title = strings::replace(c.title , "\n", "<br />");
 			}
 
 			if (item["subtitle"]) {
 				c.subtitle = strings::trim_space(item["subtitle"].as<std::string>());
+				c.subtitle = strings::replace(c.subtitle , "\n", "<br />");
 			}
 
 			if (item["description"]) {
 				c.description = strings::trim_space(item["description"].as<std::string>());
+				c.description = strings::replace(c.description , "\n", "<br />");
 			}
 
 			if (item["path"]) {

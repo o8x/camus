@@ -388,10 +388,7 @@ namespace camus
 							std::format("{}/index.html", dir_node->real_url().string()),
 							conf_.camus().output_dir
 						),
-						strings::replace(
-							inja_.render(conf_.camus().theme_home, json),
-							std::map<std::string, std::string>{{"  ", ""}, {"\t", ""}, {"\r", ""}, {"\n", ""}}
-						)
+						inja_.render(conf_.camus().theme_home, json)
 					);
 				});
 			}
