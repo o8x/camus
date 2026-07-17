@@ -41,6 +41,7 @@ namespace camus
 
 			// 对外目录默认和自身同级
 			node.property.external_path = node.path;
+			node.property.display_name = node.path.filename();
 
 			if (const auto route = conf_.match_route(node.path)) {
 				node.property.display_name = route->title;
@@ -315,12 +316,9 @@ namespace camus
 				toc.push_back(node);
 			});
 
-			std::ranges::sort(toc, [](const catalog::catalog_node &a, const catalog::catalog_node &b) -> bool {
-				return a.property.write_time > b.property.write_time;
-			});
+			std::sort(toc.begin(), toc.end());
 
-			nlohmann::json json = toc;
-
+			const nlohmann::json json = toc;
 			if (const std::string format = conf_.camus().toc_format; format == "all" || format == "json") {
 				filesystem::write_file(conf_.camus().output_dir / "toc.json", json.dump(4));
 			} else if (format == "all" || format == "javascript") {
@@ -334,74 +332,68 @@ namespace camus
 		}
 
 		if (conf_.camus().render.static_engine == "inja") {
-			// 生成平铺目录树
-			std::vector<catalog::catalog_node> file_nodes;
-			std::map<std::filesystem::path, catalog::catalog_node> dir_nodes;
+			struct dir_ctx {
+				const catalog::catalog_node *parent = nullptr;
+				std::vector<const catalog::catalog_node *> children;
+			};
 
-			std::map<std::filesystem::path, std::vector<catalog::catalog_node>> toc;
+			std::map<const catalog::catalog_node *, dir_ctx> dirs;
+
 			catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
-				if (node.is_directory()) {
-					dir_nodes[node.real_url()] = node;
-					toc[node.real_url()] = {};
-				} else {
-					file_nodes.push_back(node);
+				if (!node.is_directory()) {
+					return;
+				}
+
+				auto &[parent, children] = dirs[&node];
+				for (const auto &child : node.children) {
+					if (child.is_directory()) {
+						dirs[&child].parent = &node;
+					}
+					children.push_back(&child);
 				}
 			});
 
-			// 每一级生成不同的 /index.html
-			for (auto &[dir, files] : toc) {
-				nlohmann::json toc_json = conf_.json();
+			for (const auto &[dir_node, ctx] : dirs) {
+				nlohmann::json json = conf_.json();
 
-				// 填充目录和子目录
-				for (const auto &node : dir_nodes | std::views::values) {
-					std::filesystem::path parent_path = node.real_url();
-					// / 不进行再次处理
-					if (parent_path == "/") {
-						continue;
+				if (ctx.parent) {
+					json["parent"]["url"] = ctx.parent->link_url();
+					if (json["parent"]["label"] = ctx.parent->property.display_name; json["parent"]["url"] == "/") {
+						json["parent"]["label"] = "/";
 					}
-
-					while (true) {
-						// 循环查找目录是否在某个子目录下，如果找不到，会自动加入根目录，因为 parent_path
-						// 在没有上级目录时会始终返回 /
-						if (parent_path = parent_path.parent_path(); toc.contains(parent_path)) {
-							toc_json["parent"]["url"] = parent_path;
-							toc_json["parent"]["label"] = parent_path;
-							toc.at(parent_path).push_back(node);
-							break;
-						}
-
-						if (parent_path == "/") {
-							break;
-						}
-					}
+				} else {
+					json["parent"]["url"] = "";
+					json["parent"]["label"] = "";
 				}
 
-				// 填充目录 -> 文件
-				for (const auto &f : file_nodes) {
-					// 文件访问链接是否包含这个路径
-					if (f.real_url().parent_path() == dir) {
-						files.push_back(f);
-					}
+				std::vector<nlohmann::json> items;
+				for (const auto *child : ctx.children) {
+					items.push_back(nlohmann::json(*child));
 				}
 
-				// 按时间倒序排序
-				std::ranges::sort(files, [](const catalog::catalog_node &a, const catalog::catalog_node &b) -> bool {
-					if (a.is_directory()) {
-						return true;
+				std::ranges::sort(items, [](const nlohmann::json &a, const nlohmann::json &b) -> bool {
+					if (const bool a_dir = a.value("is_dir", false); a_dir != b.value("is_dir", false)) {
+						return a_dir;
 					}
 
-					return a.property.write_time > b.property.write_time;
+					return a.value("write_time", 0) > b.value("write_time", 0);
 				});
 
-				toc_json["items"] = files;
-				toc_json["current"] = dir_nodes.at(dir);
-				filesystem::write_file(
-					filesystem::clean_path(std::format("{}/index.html", dir.string()), conf_.camus().output_dir),
-					strings::replace(
-						inja_.render(conf_.camus().theme_home, toc_json),
-						std::map<std::string, std::string>{{"  ", ""}, {"\t", ""}, {"\r", ""}, {"\n", ""}}
-					)
-				);
+				json["items"] = items;
+				json["current"] = *dir_node;
+
+				run_only_live([&]() {
+					filesystem::write_file(
+						filesystem::clean_path(
+							std::format("{}/index.html", dir_node->real_url().string()),
+							conf_.camus().output_dir
+						),
+						strings::replace(
+							inja_.render(conf_.camus().theme_home, json),
+							std::map<std::string, std::string>{{"  ", ""}, {"\t", ""}, {"\r", ""}, {"\n", ""}}
+						)
+					);
+				});
 			}
 
 			return;

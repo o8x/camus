@@ -49,6 +49,15 @@ namespace camus::catalog
 		// 递归子目录
 		std::vector<catalog_node> children;
 
+		friend bool operator<(const catalog_node &a, const catalog_node &b)
+		{
+			if (a.is_directory() || b.is_directory()) {
+				return false;
+			}
+
+			return a.property.write_time > b.property.write_time;
+		}
+
 		template <
 			typename BasicJsonType,
 			nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
