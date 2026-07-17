@@ -14,7 +14,7 @@ function get_file_size() {
 }
 
 CAMUS_SIZE=$(get_file_size "$TARGET")
-COPYFILE_DISABLE=1 tar -c -b 1 -f - --no-xattrs -C "$DATA_DIR/example" --exclude=html . | gzip -c >> "$TARGET"
+COPYFILE_DISABLE=1 tar -c -b 1 -f - --no-xattrs -C "$DATA_DIR/example" --exclude=html --exclude=.camus . | gzip -c >> "$TARGET"
 TEMPLATE_SIZE=$(($(get_file_size "$TARGET") - $CAMUS_SIZE))
 
 # 固定 8 位的十六进制字符串，实际是 4 字节
