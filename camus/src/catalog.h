@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "common/filesystem/filesystem.h"
+#include "common/functions/functions.h"
 #include "common/str/str.h"
 #include "nlohmann/json.hpp"
 
@@ -48,6 +49,15 @@ namespace camus::catalog
 		// 递归子目录
 		std::vector<catalog_node> children;
 
+		friend bool operator<(const catalog_node &a, const catalog_node &b)
+		{
+			if (a.is_directory() || b.is_directory()) {
+				return false;
+			}
+
+			return a.property.write_time > b.property.write_time;
+		}
+
 		template <
 			typename BasicJsonType,
 			nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
@@ -56,13 +66,14 @@ namespace camus::catalog
 			json["title"] = data.property.display_name;
 			json["write_time"] = data.property.write_time;
 			json["path"] = data.real_url();
+			json["is_dir"] = data.is_directory();
+			json["link_path"] = "";
 
 			if (!data.property.short_path.empty()) {
 				json["link_path"] = data.link_url();
 			}
 
 			if (data.is_directory()) {
-				json["is_dir"] = data.is_directory();
 				json["desc"] = data.property.description;
 				json["subtitle"] = data.property.subtitle;
 			} else {

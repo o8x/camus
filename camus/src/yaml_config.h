@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "common/filesystem/filesystem.h"
+#include "nlohmann/json.hpp"
 
 namespace camus::config
 {
@@ -34,6 +35,7 @@ namespace camus::config
 	};
 
 	struct render_conf {
+		std::string static_engine;
 		std::string engine;
 		int options;
 	};
@@ -66,6 +68,7 @@ namespace camus::config
 		explicit yaml_config(const std::string &filename);
 
 		[[nodiscard]] camus_conf camus() const;
+		[[nodiscard]] nlohmann::json json() const;
 		[[nodiscard]] std::map<std::string, std::string> map() const;
 		[[nodiscard]] std::string render_var(const std::string &data) const;
 		[[nodiscard]] std::expected<route_conf, std::string> match_route(const std::filesystem::path &path) const;

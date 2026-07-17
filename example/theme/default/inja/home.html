@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="{{ site.subtitle }}">
+    <meta name="build-time" content="{{ build.time }}">
+    <meta name="build-type" content="{{ build.build_type }}">
+    <meta name="cmake-version" content="{{ build.cmake_version }}">
+    <meta name="cxx-standard" content="{{ build.cxx_standard }}">
+    <title>
+        {% if current.path != "/" and current.title %}
+        {{ current.title }} - {{ site.title }}
+        {% else %}
+        {{ site.title }} - {{ site.subtitle }}
+        {% endif %}
+    </title>
+    <link rel="icon" href="/favicon.ico">
+    <style>
+        .toc-item {
+            padding: 0.3rem 0;
+        }
+
+        .toc-num {
+            margin-right: 0.5rem;
+            color: #666;
+        }
+
+        .toc-link {
+            text-decoration: none;
+        }
+
+        .toc-date {
+            margin-left: 0.5rem;
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .toc-dir .toc-link {
+            font-weight: bold;
+        }
+
+        .toc-back-root .toc-link {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<table width="800" align="center" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td>
+            <center>
+                {% if current.path != "/" and current.title %}
+                <h1>{{ current.title }}</h1>
+                {% if current.subtitle %}<p><em>{{ current.subtitle }}</em></p>{% endif %}
+                {% else %}
+                <h1>{{ site.title }}</h1>
+                {% if site.subtitle %}<p><em>{{ site.subtitle }}</em></p>{% endif %}
+                {% endif %}
+            </center>
+            <blockquote>
+                {% if current.path != "/" and current.desc %}
+                <p>{{ current.desc }}</p>
+                {% else %}
+                <p>{{ default(site.desc, "") }}</p>
+                {% endif %}
+            </blockquote>
+            <h3>&#9733; Index of Posts</h3>
+            <ol>
+                {% if current.path != "/" %}
+                <li class="toc-item toc-back-root">
+                    <span class="toc-num">/</span>
+                    <a class="toc-link" href="{{ parent.url }}">{{ parent.label }}</a>
+                    <span class="toc-date"></span>
+                </li>
+                {% endif %}
+                {% for item in items %}
+                {% if item.is_dir %}
+                <li class="toc-item toc-dir">
+                    <b>
+                        <a class="toc-link" href="{{ item.path }}">{{ item.title }} /</a>
+                        <span class="toc-date">{{ format_datetime(item.write_time) }}</span>
+                    </b>
+                </li>
+                {% else %}
+                <li class="toc-item">
+                    {% if item.link_path != "" %}
+                    <a class="toc-link" href="{{ item.link_path }}">{{ item.title }}</a>
+                    {% else %}
+                    <a class="toc-link" href="{{ item.path }}">{{ item.title }}</a>
+                    {% endif %}
+                    <span class="toc-date">{{ format_datetime(item.write_time) }}</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ol>
+            <center>{{ build.powered_by }}</center>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

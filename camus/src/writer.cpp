@@ -17,6 +17,7 @@
 #include "common/markdown/markdown.h"
 #include "common/net/net.h"
 #include "common/str/str.h"
+#include "inja/inja.hpp"
 #include "yaml_config.h"
 
 namespace camus
@@ -40,6 +41,7 @@ namespace camus
 
 			// 对外目录默认和自身同级
 			node.property.external_path = node.path;
+			node.property.display_name = node.path.filename();
 
 			if (const auto route = conf_.match_route(node.path)) {
 				node.property.display_name = route->title;
@@ -167,49 +169,31 @@ namespace camus
 
 			// 目前只支持 md 文件，都会自动编译 html，因此文件移动无意义
 			// node.property.external_path
-
-			// 合并替换，保留一个元素
-			std::string text = strings::string_join(node.contents, "\n");
-			// 替换 markdown 中变量
-			text = conf_.render_var(text);
-
-			node.contents.clear();
-			node.contents.push_back(
-				strings::replace(
-					conf_.render_var(conf_.camus().theme_page),
-					std::map<std::string, std::string>{
-						{"{{page.content}}",
-						 markdown::render_markdown(
-							 text.data(),
-							 conf_.camus().render.engine,
-							 conf_.camus().render.options
-						 )},
-						{"{{page.title}}", node.property.display_name},
-						{"{{page.date}}", params["date"]},
-						{"{{page.tags}}", params["tags"]},
-						{"{{page.description}}", ""},
-						{" 00:00:00", ""},
-						{"<hr>", ""},
-						{"<hr/>", ""},
-						{"<hr />", ""},
-					}
-				)
-			);
 		});
 
 		run_only_live([&]() {
 			// 清理输出文件夹
 			filesystem::empty_path(conf_.camus().output_dir, true);
-			// 写入 Index.html
-			filesystem::write_file(conf_.camus().output_dir / "index.html", conf_.render_var(conf_.camus().theme_home));
 		});
 
-		// 写入其他文件
-		const std::filesystem::path out_dir = std::filesystem::relative(conf_.camus().output_dir, cmd_.workdir);
+		// 扁平化所有文章，生成 nav
+		std::vector<catalog::catalog_node> articles;
 		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
 			if (node.path.extension() != ".md" || node.property.visibility == catalog::hidden) {
 				return;
 			}
+
+			articles.push_back(node);
+		});
+
+		std::ranges::sort(articles, [](const catalog::catalog_node &a, const catalog::catalog_node &b) -> bool {
+			return a.property.write_time > b.property.write_time;
+		});
+
+		// 写入其他文件
+		const std::filesystem::path out_dir = std::filesystem::relative(conf_.camus().output_dir, cmd_.workdir);
+		for (int i = 0; i < articles.size(); ++i) {
+			catalog::catalog_node node = articles[i];
 
 			if (node.link_url().empty()) {
 				logging::fatal(
@@ -221,31 +205,74 @@ namespace camus
 				);
 			}
 
-			const std::filesystem::path output_filename = out_dir / filesystem::clean_path(node.link_url(), "./");
+			const std::string markdown = strings::string_join(node.contents, "\n");
+			const size_t markdown_length = strings::get_unicode_length(markdown);
+
+			nlohmann::json j = conf_.json();
+			j["stats"]["word_count"] = markdown_length;
+			j["stats"]["read_min"] = markdown_length / 400;
+			j["page"]["title"] = node.property.display_name;
+			j["page"]["write_time"] = node.property.write_time;
+			j["page"]["description"] = "";
+			j["page"]["contents"] =
+				markdown::render_markdown(markdown.data(), conf_.camus().render.engine, conf_.camus().render.options);
+
+			j["nav"]["next_path"] = "";
+			j["nav"]["next_title"] = "";
+			j["nav"]["prev_path"] = "";
+			j["nav"]["prev_title"] = "";
+
+			if (i + 1 < articles.size()) {
+				j["nav"]["next_path"] = articles[i + 1].link_url();
+				j["nav"]["next_title"] = articles[i + 1].property.display_name;
+			}
+
+			if (i > 0) {
+				j["nav"]["prev_path"] = articles[i - 1].link_url();
+				j["nav"]["prev_title"] = articles[i - 1].property.display_name;
+			}
 
 			logging::debug(
-				"make article name={} dest={}{}",
+				"make article words={} name={} dest={}{}",
+				markdown_length,
 				node.path.string(),
 				out_dir.string(),
 				node.link_url().string()
 			);
 			assert(!node.contents.empty());
 
-			run_only_live([&]() {
+			const std::string contents = strings::replace(
+				inja_.render(conf_.camus().theme_page, j),
+				std::map<std::string, std::string>{
+					{" 00:00:00", ""},
+					{"<img ", R"(<img width="100%")"}, // 避免图片破坏 default 居中
+					{"<hr>", ""},
+					{"<hr/>", ""},
+					{"<hr />", ""},
+				},
+				true
+			);
+
+			// 转换文件和原始文件都写入本地
+			for (const auto &f : std::set{node.link_url(), node.real_url()}) {
+				const std::filesystem::path output_filename = out_dir / filesystem::clean_path(f, "./");
+
 				if (std::filesystem::exists(output_filename)) {
 					logging::fatal(
 						"article already exist name={} dest={}{}",
 						node.path.string(),
 						out_dir.string(),
-						node.link_url().string()
+						f.string()
 					);
 				}
 
-				// 空转模式支持
-				std::filesystem::create_directories(output_filename.parent_path());
-				filesystem::write_file(output_filename, node.contents[0]);
-			});
-		});
+				run_only_live([&] {
+					// 空转模式支持
+					std::filesystem::create_directories(output_filename.parent_path());
+					filesystem::write_file(output_filename, contents);
+				});
+			}
+		}
 
 		// 填充文件夹属性
 		catalog::traverse_catalog_tree(catalog_, [&](catalog::catalog_node &node, int) {
@@ -281,25 +308,98 @@ namespace camus
 			return;
 		}
 
-		// 生成平铺的目录树
-		std::vector<catalog::catalog_node> toc;
-		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) { toc.push_back(node); });
+		if (conf_.camus().render.static_engine == "default") {
+			filesystem::write_file(conf_.camus().output_dir / "index.html", conf_.render_var(conf_.camus().theme_home));
 
-		// 按时间倒序排序
-		std::ranges::sort(toc, [](const catalog::catalog_node &a, const catalog::catalog_node &b) -> bool {
-			return a.property.write_time > b.property.write_time;
-		});
+			std::vector<catalog::catalog_node> toc;
+			catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
+				toc.push_back(node);
+			});
 
-		const nlohmann::json json = toc;
-		const std::string toc_json = json.dump(4);
-		if (const std::string format = conf_.camus().toc_format; format == "all" || format == "json") {
-			filesystem::write_file(conf_.camus().output_dir / "toc.json", toc_json);
-		} else if (format == "all" || format == "javascript") {
-			filesystem::write_file(
-				conf_.camus().output_dir / "toc.json",
-				std::format(R"(const toc_json = {})", toc_json)
-			);
+			std::sort(toc.begin(), toc.end());
+
+			const nlohmann::json json = toc;
+			if (const std::string format = conf_.camus().toc_format; format == "all" || format == "json") {
+				filesystem::write_file(conf_.camus().output_dir / "toc.json", json.dump(4));
+			} else if (format == "all" || format == "javascript") {
+				filesystem::write_file(
+					conf_.camus().output_dir / "toc.json",
+					std::format(R"(const toc_json = {})", json.dump(4))
+				);
+			}
+
+			return;
 		}
+
+		if (conf_.camus().render.static_engine == "inja") {
+			struct dir_ctx {
+				const catalog::catalog_node *parent = nullptr;
+				std::vector<const catalog::catalog_node *> children;
+			};
+
+			std::map<const catalog::catalog_node *, dir_ctx> dirs;
+
+			catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
+				if (!node.is_directory()) {
+					return;
+				}
+
+				auto &[parent, children] = dirs[&node];
+				for (const auto &child : node.children) {
+					if (child.is_directory()) {
+						dirs[&child].parent = &node;
+					}
+					children.push_back(&child);
+				}
+			});
+
+			for (const auto &[dir_node, ctx] : dirs) {
+				nlohmann::json json = conf_.json();
+
+				if (ctx.parent) {
+					json["parent"]["url"] = ctx.parent->link_url();
+					if (json["parent"]["label"] = ctx.parent->property.display_name; json["parent"]["url"] == "/") {
+						json["parent"]["label"] = "/";
+					}
+				} else {
+					json["parent"]["url"] = "";
+					json["parent"]["label"] = "";
+				}
+
+				std::vector<nlohmann::json> items;
+				for (const auto *child : ctx.children) {
+					items.push_back(nlohmann::json(*child));
+				}
+
+				std::ranges::sort(items, [](const nlohmann::json &a, const nlohmann::json &b) -> bool {
+					if (const bool a_dir = a.value("is_dir", false); a_dir != b.value("is_dir", false)) {
+						return a_dir;
+					}
+
+					return a.value("write_time", 0) > b.value("write_time", 0);
+				});
+
+				json["items"] = items;
+				json["current"] = *dir_node;
+
+				run_only_live([&]() {
+					filesystem::write_file(
+						filesystem::clean_path(
+							std::format("{}/index.html", dir_node->real_url().string()),
+							conf_.camus().output_dir
+						),
+						strings::replace(
+							inja_.render(conf_.camus().theme_home, json),
+							std::map<std::string, std::string>{{"  ", ""}, {"\t", ""}, {"\r", ""}, {"\n", ""}}
+						)
+					);
+				});
+			}
+
+			return;
+		}
+
+		logging::fatal("html engine '{}' not supported", conf_.camus().render.static_engine);
 	}
 
 	void writer::emit_sitemap()
@@ -389,6 +489,11 @@ namespace camus
 		if (cmd_.workdir = filesystem::path_abs(cmd_.workdir); !std::filesystem::exists(cmd_.workdir)) {
 			error::panic("work directory not exists name={}", cmd_.workdir.string());
 		}
+
+		inja_.add_callback("format_datetime", 1, [](const inja::Arguments &args) {
+			const int unix_ts = args.at(0)->get<int>();
+			return functions::format_time_t(unix_ts);
+		});
 	}
 
 	void writer::watch()
@@ -442,18 +547,37 @@ namespace camus
 	{
 		cmd_.dryrun = true;
 
+		uint16_t max_length = 0;
+		for (const auto &[k, v] : conf_.map()) {
+			if (k.length() > max_length) {
+				max_length = k.length();
+			}
+		}
+
+		std::cout << std::endl << strings::coloring_yellow("Configure: ") << std::endl;
+		for (const auto &[k, v] : conf_.map()) {
+			std::cout << "    " << std::left << std::setw(max_length) << k << " : " << strings::coloring_green(v)
+					  << std::endl
+					  << std::flush;
+		}
+
+		if (catalog_ = catalog::build_catalog_tree(conf_.camus().source_dir); catalog_.empty()) {
+			logging::warn("No articles found");
+		}
+
+		logging::set_level(logging::DEBUG_LEVEL);
 		std::cout << std::endl << strings::coloring_yellow("Dry Build: ") << std::endl;
 		build();
-		logging::set_level(logging::INFO_LEVEL);
+		logging::set_level(logging::DEBUG_LEVEL);
 
-		uint16_t max_length = 0;
-		std::cout << std::endl << strings::coloring_yellow("File System: ") << std::endl;
+		max_length = 0;
 		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
 			if (const size_t w = strings::get_display_width(item.path); w > max_length) {
 				max_length = w;
 			}
 		});
 
+		std::cout << std::endl << strings::coloring_yellow("Catalog: ") << std::endl;
 		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
 			const int spaces = (depth == 0 ? 0 : depth - 1) * 4;
 
@@ -474,20 +598,6 @@ namespace camus
 					  << std::endl
 					  << std::flush;
 		});
-
-		max_length = 0;
-		for (const auto &[k, v] : conf_.map()) {
-			if (k.length() > max_length) {
-				max_length = k.length();
-			}
-		}
-
-		std::cout << std::endl << strings::coloring_yellow("Configure: ") << std::endl;
-		for (const auto &[k, v] : conf_.map()) {
-			std::cout << "    " << std::left << std::setw(max_length) << k << " : " << strings::coloring_green(v)
-					  << std::endl
-					  << std::flush;
-		}
 	}
 
 	int writer::build()

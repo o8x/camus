@@ -62,6 +62,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     endif ()
 endif ()
 
+add_compile_definitions(
+    "$<$<CONFIG:Debug>:WORK_ON_DEBUG=true>"
+    "$<$<CONFIG:RelWithDebInfo>:WORK_ON_DEBUG=true>"
+    "$<$<CONFIG:Release>:WORK_ON_DEBUG=false>"
+)
+
 add_subdirectory(camus)
 add_subdirectory(common)
 
@@ -69,3 +75,4 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 add_subdirectory(third-party/yaml-cpp EXCLUDE_FROM_ALL)
 add_subdirectory(third-party/cmark-gfm EXCLUDE_FROM_ALL)
 add_subdirectory(third-party/nlohmann_json EXCLUDE_FROM_ALL)
+add_subdirectory(third-party/inja EXCLUDE_FROM_ALL)

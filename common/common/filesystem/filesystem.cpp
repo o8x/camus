@@ -156,6 +156,10 @@ namespace filesystem
 
 	bool path_equal(const std::filesystem::path &p1, const std::filesystem::path &p2, const bool clean_check)
 	{
+		if (p1.string() == p2.string()) {
+			return true;
+		}
+
 		std::error_code ec;
 		if (std::filesystem::equivalent(p1, p2, ec)) {
 			return true; // 存在且相同

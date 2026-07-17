@@ -102,7 +102,7 @@ int main(const int argc, char **argv)
 		return 1;
 	}
 
-	if (arg.exist("debug") || std::string(BUILD_TYPE) == "Debug") {
+	if (arg.exist("debug") || WORK_ON_DEBUG) {
 		logging::set_level(logging::DEBUG_LEVEL);
 	}
 
@@ -123,7 +123,7 @@ int main(const int argc, char **argv)
 		if (arg.exist("install")) {
 			if (const int installed = install_template(
 					filesystem::get_self_path(argv[0]),
-					BUILD_TYPE == "Debug" || arg.exist("force"),
+					WORK_ON_DEBUG || arg.exist("force"),
 					cmd.workdir
 				);
 				installed != 0) {
@@ -146,7 +146,11 @@ int main(const int argc, char **argv)
 
 		c->watch();
 	} catch (const std::exception &e) {
-		logging::fatal("error: {}", e.what());
+		logging::fatal("exception exit error={}", e.what());
+
+		if constexpr (WORK_ON_DEBUG) {
+			throw std::runtime_error(std::format("exception error={}", e.what()));
+		}
 	}
 
 	return 0;
