@@ -257,16 +257,16 @@ namespace camus
 			for (const auto &f : std::set{node.link_url(), node.real_url()}) {
 				const std::filesystem::path output_filename = out_dir / filesystem::clean_path(f, "./");
 
-				if (std::filesystem::exists(output_filename)) {
-					logging::fatal(
-						"article already exist name={} dest={}{}",
-						node.path.string(),
-						out_dir.string(),
-						f.string()
-					);
-				}
-
 				run_only_live([&] {
+					if (std::filesystem::exists(output_filename)) {
+						logging::fatal(
+							"article already exist name={} dest={}{}",
+							node.path.string(),
+							out_dir.string(),
+							f.string()
+						);
+					}
+
 					// 空转模式支持
 					std::filesystem::create_directories(output_filename.parent_path());
 					filesystem::write_file(output_filename, contents);
