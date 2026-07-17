@@ -70,8 +70,8 @@
             <ol>
                 {% if current.path != "/" %}
                 <li class="toc-item toc-back-root">
-                    <span class="toc-num">[../]</span>
-                    <a class="toc-link" href="{{ parent.url }}">../</a>
+                    <span class="toc-num">/</span>
+                    <a class="toc-link" href="{{ parent.url }}">{{ parent.label }}</a>
                     <span class="toc-date"></span>
                 </li>
                 {% endif %}

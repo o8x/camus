@@ -1,7 +1,6 @@
 ---
-short-path: auto
 display-name: Changer
-date: 2025-03-16
+date: 2025-03-16 14:15:00
 visibility: open
 ---
 
