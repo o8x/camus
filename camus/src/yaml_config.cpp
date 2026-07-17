@@ -89,21 +89,25 @@ namespace camus::config
 		);
 	}
 
-	yaml_config::yaml_config(const std::string &filename)
+	yaml_config::yaml_config(const std::string &filename) : camus_({}), filename_(filename)
 	{
-		if (!std::filesystem::exists(filename)) {
-			error::panic("config file not fount name={}", filename);
+	}
+
+	void yaml_config::reload()
+	{
+		if (!std::filesystem::exists(filename_)) {
+			error::panic("config file not fount name={}", filename_);
 		}
 
-		logging::info("with config: {}", filesystem::path_abs(filename));
+		logging::info("load config: {}", filesystem::path_abs(filename_));
 
-		const YAML::Node root = YAML::LoadFile(filename);
+		const YAML::Node root = YAML::LoadFile(filename_);
 		const YAML::Node camus_data = root["camus"];
 		if (!camus_data.IsMap()) {
 			error::panic("config file parse failed");
 		}
 
-		flattened_map.emplace("build.config", filesystem::path_abs(filename));
+		flattened_map.emplace("build.config", filesystem::path_abs(filename_));
 
 		for (const auto &it : camus_data) {
 			const auto key = strings::trim_space(it.first.as<std::string>());
@@ -239,17 +243,17 @@ namespace camus::config
 
 			if (item["title"]) {
 				c.title = strings::trim_space(item["title"].as<std::string>());
-				c.title = strings::replace(c.title , "\n", "<br />");
+				c.title = strings::replace(c.title, "\n", "<br />");
 			}
 
 			if (item["subtitle"]) {
 				c.subtitle = strings::trim_space(item["subtitle"].as<std::string>());
-				c.subtitle = strings::replace(c.subtitle , "\n", "<br />");
+				c.subtitle = strings::replace(c.subtitle, "\n", "<br />");
 			}
 
 			if (item["description"]) {
 				c.description = strings::trim_space(item["description"].as<std::string>());
-				c.description = strings::replace(c.description , "\n", "<br />");
+				c.description = strings::replace(c.description, "\n", "<br />");
 			}
 
 			if (item["path"]) {

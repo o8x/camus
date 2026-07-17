@@ -62,10 +62,13 @@ namespace camus::config
 		camus_conf camus_;
 		std::vector<route_conf> routes_;
 
+		const std::string filename_;
+
 		void supplement_other_vars();
 
 	  public:
 		explicit yaml_config(const std::string &filename);
+		void reload();
 
 		[[nodiscard]] camus_conf camus() const;
 		[[nodiscard]] nlohmann::json json() const;

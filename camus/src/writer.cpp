@@ -504,7 +504,8 @@ namespace camus
 			watch_server_.listen(server_addr, server_port);
 		});
 
-		logging::info("watch directory: {}", conf_.camus().source_dir.string());
+		const std::filesystem::path watch_path = cmd_.workdir;
+		logging::info("watch directory: {}", watch_path.string());
 		logging::info("watch server listen on http://{}:{}", server_addr, server_port);
 
 		while (true) {
@@ -512,14 +513,16 @@ namespace camus
 				break;
 			}
 
-			if (!std::filesystem::exists(conf_.camus().source_dir)) {
-				logging::fatal("watch directory not exists name={}", conf_.camus().source_dir.string());
+			if (!std::filesystem::exists(watch_path)) {
+				logging::fatal("watch directory not exists name={}", watch_path.string());
 				continue;
 			}
 
 			std::stringstream buffer;
-			for (const auto &entry : std::filesystem::recursive_directory_iterator(conf_.camus().source_dir)) {
-				if (entry.path().extension() == ".md") {
+			for (const auto &entry : std::filesystem::recursive_directory_iterator(watch_path)) {
+				if (const auto ext = entry.path().extension();
+					ext == ".md" || ext == ".yaml" || ext == ".json" ||
+					entry.path().string().find("/theme/") != std::string::npos) {
 					buffer << filesystem::read_file(entry.path());
 				}
 			}
@@ -602,6 +605,8 @@ namespace camus
 		if (cmd_.dryrun) {
 			logging::info("camus running on dryrun mode");
 		}
+
+		conf_.reload();
 
 		std::filesystem::current_path(cmd_.workdir);
 
