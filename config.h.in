@@ -12,6 +12,8 @@
 
 #define GIT_FOUND "@GIT_FOUND@"
 #define GIT_BRANCH "@GIT_BRANCH@"
+#define GIT_CLEAN @GIT_IS_CLEAN@
+#define GIT_DIRTY_FLAG (GIT_CLEAN == false ? "@CMAKE_BUILD_TYPE@ build @BUILD_TIMESTAMP@" : "")
 #define GIT_REPO "https://github.com/o8x/camus"
 #define GIT_COMMIT_HASH "@GIT_COMMIT_LONG@"
 

@@ -87,12 +87,13 @@ namespace camus::config
 <a class="site-stats-link" href="{{env.github_url}}" target="_blank">GitHub</a>
 <br />
 <small>
-	<em>Powered by <a href="{}/releases/tag/v{}" target="_blank" title="Camus v{}">Camus</a> built with {}</em>
+	<em>Powered by <a href="{}/releases/tag/v{}" target="_blank" title="Camus v{}">Camus {}</a> built with {}</em>
 </small>
 )",
 				GIT_REPO,
 				PROJECT_VERSION,
 				PROJECT_VERSION,
+				GIT_DIRTY_FLAG,
 				compiler_version
 			)
 		);
