@@ -12,48 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="/css/pixel-inja.css">
     <style>
-        :root {
-            --bg: #1a1a2e;
-            --card-bg: #16213e;
-            --text: #c7d2e0;
-            --text-secondary: #7b8ca3;
-            --accent: #ff6b35;
-            --accent-glow: #ff9f45;
-            --border: #2a3a5c;
-            --divider: #2a3a5c;
-            --progress-bg: #2a3a5c;
-            --nav-hover-bg: #1e2d4a;
-            --code-bg: #0f1425;
-            --code-shadow: none;
-            --green: #4ade80;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Courier New', 'Source Code Pro', 'Noto Sans SC', monospace;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            line-height: 1.8;
-            image-rendering: pixelated;
-        }
-
-        .scanlines {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            z-index: 999;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0, 0, 0, 0.06) 2px,
-                rgba(0, 0, 0, 0.06) 4px
-            );
-        }
-
         .reading-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -75,8 +35,7 @@
             color: var(--accent);
             letter-spacing: 0.1em;
             line-height: 1.8;
-            text-shadow: 2px 2px 0 var(--bg),
-            3px 3px 0 var(--accent);
+            text-shadow: 2px 2px 0 var(--bg), 3px 3px 0 var(--accent);
             image-rendering: pixelated;
         }
 
@@ -87,9 +46,7 @@
             color: var(--text-secondary);
         }
 
-        .chapter-meta span {
-            margin: 0 0.5rem;
-        }
+        .chapter-meta span { margin: 0 0.5rem; }
 
         .chapter-content {
             font-size: 1rem;
@@ -98,17 +55,10 @@
             word-break: break-word;
         }
 
-        .chapter-content p {
-            text-indent: 2em;
-            margin-bottom: 1rem;
-        }
+        .chapter-content p { text-indent: 2em; margin-bottom: 1rem; }
 
-        .chapter-content h1,
-        .chapter-content h2,
-        .chapter-content h3,
-        .chapter-content h4,
-        .chapter-content h5,
-        .chapter-content h6 {
+        .chapter-content h1, .chapter-content h2, .chapter-content h3,
+        .chapter-content h4, .chapter-content h5, .chapter-content h6 {
             font-family: 'Press Start 2P', monospace;
             text-indent: 0;
             margin: 2.5rem 0 1rem;
@@ -126,33 +76,15 @@
             margin: 1.5rem 0;
             padding: 1rem 1.5rem;
             border-left: 4px solid var(--accent);
-            border-image: repeating-linear-gradient(
-                0deg,
-                var(--accent),
-                var(--accent) 4px,
-                transparent 4px,
-                transparent 8px
-            ) 4;
+            border-image: repeating-linear-gradient(0deg, var(--accent), var(--accent) 4px, transparent 4px, transparent 8px) 4;
             background: var(--card-bg);
             color: var(--text-secondary);
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.03);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.03);
         }
 
-        .chapter-content blockquote p {
-            text-indent: 0;
-            margin-bottom: 0.5rem;
-        }
-
-        .chapter-content ul,
-        .chapter-content ol {
-            text-indent: 0;
-            margin: 1rem 0 1rem 2rem;
-        }
-
-        .chapter-content li {
-            margin-bottom: 0.3rem;
-        }
+        .chapter-content blockquote p { text-indent: 0; margin-bottom: 0.5rem; }
+        .chapter-content ul, .chapter-content ol { text-indent: 0; margin: 1rem 0 1rem 2rem; }
+        .chapter-content li { margin-bottom: 0.3rem; }
 
         .chapter-content code:not(.hljs) {
             background: var(--code-bg);
@@ -171,8 +103,7 @@
             line-height: 1.7;
             border: 2px solid var(--border);
             background: var(--code-bg);
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.02);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.3), inset 2px 2px 0 rgba(255,255,255,0.02);
         }
 
         .chapter-content pre {
@@ -181,8 +112,7 @@
             text-indent: 0;
             border: 2px solid var(--border);
             background: var(--code-bg);
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.02);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.3), inset 2px 2px 0 rgba(255,255,255,0.02);
         }
 
         .chapter-content pre code.hljs {
@@ -210,9 +140,7 @@
             border-bottom: 2px dotted var(--accent);
         }
 
-        .chapter-content a:hover {
-            color: var(--accent-glow);
-        }
+        .chapter-content a:hover { color: var(--accent-glow); }
 
         .chapter-nav {
             display: flex;
@@ -236,28 +164,22 @@
             font-size: 0.4rem;
             transition: all 0.1s;
             max-width: 45%;
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.05);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05);
         }
 
         .nav-link:hover {
             border-color: var(--accent);
             color: var(--accent);
             transform: translate(-1px, -1px);
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.05),
-            3px 3px 0 var(--accent);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05), 3px 3px 0 var(--accent);
         }
 
         .nav-link:active {
             transform: translate(1px, 1px);
-            box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.2),
-            inset -2px -2px 0 rgba(255, 255, 255, 0.05);
+            box-shadow: inset 2px 2px 0 rgba(0,0,0,0.2), inset -2px -2px 0 rgba(255,255,255,0.05);
         }
 
-        .nav-link-placeholder {
-            width: 45%;
-        }
+        .nav-link-placeholder { width: 45%; }
 
         .nav-link .nav-label {
             font-family: 'Press Start 2P', monospace;
@@ -282,14 +204,8 @@
             font-family: 'Press Start 2P', monospace;
         }
 
-        .nav-center a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        .nav-center a:hover {
-            color: var(--accent-glow);
-        }
+        .nav-center a { color: var(--accent); text-decoration: none; }
+        .nav-center a:hover { color: var(--accent-glow); }
 
         .page-footer {
             text-align: center;
@@ -299,42 +215,17 @@
             padding: 0 0 4rem 0;
         }
 
-        .page-footer a {
-            color: var(--accent);
-            text-decoration: none;
-            border-bottom: 1px dotted var(--accent);
-        }
-
-        .page-footer a:hover {
-            color: var(--accent-glow);
-        }
+        .page-footer a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+        .page-footer a:hover { color: var(--accent-glow); }
 
         @media (max-width: 640px) {
-            .reading-container {
-                padding: 0 1rem;
-            }
-            .chapter-header {
-                padding: 2.5rem 0 1.5rem;
-            }
-            .chapter-title {
-                font-size: 0.7rem;
-            }
-            .chapter-content {
-                font-size: 0.9rem;
-            }
-            .chapter-nav {
-                flex-direction: column;
-                gap: 0.8rem;
-                padding: 2rem 0;
-            }
-            .nav-link {
-                max-width: 100%;
-                width: 100%;
-                justify-content: center;
-            }
-            .nav-link-placeholder {
-                width: 100%;
-            }
+            .reading-container { padding: 0 1rem; }
+            .chapter-header { padding: 2.5rem 0 1.5rem; }
+            .chapter-title { font-size: 0.7rem; }
+            .chapter-content { font-size: 0.9rem; }
+            .chapter-nav { flex-direction: column; gap: 0.8rem; padding: 2rem 0; }
+            .nav-link { max-width: 100%; width: 100%; justify-content: center; }
+            .nav-link-placeholder { width: 100%; }
         }
     </style>
 </head>

@@ -2,11 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
-    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="{{page.description}}">
-    <title>{{page.title}} - {{site.title}}</title>
-    <link id="favicon" rel="icon" href="/favicon.ico">
+    <meta name="description" content="{{ page.description }}">
+    <title>{{ page.title }} - {{ site.title }}</title>
+    <link rel="icon" href="/favicon.ico">
 </head>
 <body>
 
@@ -14,32 +12,36 @@
     <tr>
         <td>
             <center>
-                <small>{{page.date}}</small>
-                <h1>{{page.title}}</h1>
-                <p><small id="word-count" style="color:#888"></small></p>
+                <small>{{ format_datetime(page.write_time) }}</small>
+                <h1>{{ page.title }}</h1>
+                <p><font size="-1" color="#888888">{{ stats.word_count }} words &middot; ~{{ stats.read_min }} min</font>
+                </p>
                 <hr width="40%">
             </center>
-            <article>
-                {{page.content}}
-            </article>
+
+            {{ page.contents }}
 
             <hr>
 
-            <table width="100%" id="chapter-nav">
+            <table width="100%" border="0" cellpadding="0" cellspacing="0">
                 <tr>
                     <td width="33%" align="left">
-                        <a id="prev-link" href="#">&laquo; Previous</a>
+                        {% if nav.prev_path != "" %}
+                        <a href="{{ nav.prev_path }}">&laquo; {{ nav.prev_title }}</a>
+                        {% endif %}
                     </td>
                     <td width="34%" align="center">
-                        <a id="toc-link" href="/">[ Index ]</a>
+                        <a href="/">[ Index ]</a>
                     </td>
                     <td width="33%" align="right">
-                        <a id="next-link" href="#">Next &raquo;</a>
+                        {% if nav.next_path != "" %}
+                        <a href="{{ nav.next_path }}">{{ nav.next_title }} &raquo;</a>
+                        {% endif %}
                     </td>
                 </tr>
             </table>
 
-            <center>{{build.powered-by}}</center>
+            <center><small>{{ build.powered_by }}</small></center>
         </td>
     </tr>
 </table>

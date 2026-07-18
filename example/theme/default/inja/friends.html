@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="description" content="{{ site.subtitle }}">
+    <meta name="build-time" content="{{ build.time }}">
+    <meta name="build-type" content="{{ build.build_type }}">
+    <meta name="cmake-version" content="{{ build.cmake_version }}">
+    <meta name="cxx-standard" content="{{ build.cxx_standard }}">
+    <title>Friends - {{ site.title }}</title>
+    <link rel="icon" href="/favicon.ico">
+</head>
+<body>
+
+<table width="800" align="center" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td>
+
+            <center><h1>Friends</h1></center>
+
+            <table width="100%" border="1" cellpadding="8" cellspacing="0">
+                {% for friend in friends %}
+                <tr>
+                    <td width="60" valign="top" align="center">
+                        <img src="{{ friend.image_url }}" alt="{{ friend.title }}" width="48" height="48" border="0">
+                    </td>
+                    <td valign="top">
+                        <b><a href="{{ friend.link_url }}" target="_blank">{{ friend.title }}</a></b>
+                        {% if friend.desc %}<br><font size="-1" color="#666666">{{ friend.desc }}</font>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <center><small>{{ build.powered_by }}</small></center>
+
+        </td>
+    </tr>
+</table>
+</body>
+</html>
