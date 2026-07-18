@@ -274,7 +274,7 @@ namespace camus
 			assert(!node.contents.empty());
 
 			const std::string contents = strings::replace(
-				inja_.render(conf_.camus().theme_page, j),
+				inja_.render(conf_.camus().theme[config::CAMUS_THEME_TYPE_PAGE], j),
 				std::map<std::string, std::string>{
 					{" 00:00:00", ""},
 					{"<img ", R"(<img width="100%")"}, // 避免图片破坏 default 居中
@@ -309,7 +309,7 @@ namespace camus
 		nlohmann::json j = conf_.json();
 		j["stats"] = stats;
 
-		const std::string contents = inja_.render(conf_.camus().theme_stats, j);
+		const std::string contents = inja_.render(conf_.camus().theme[config::CAMUS_THEME_TYPE_STATS], j);
 		filesystem::write_file(conf_.camus().output_dir / "stats.html", contents);
 
 		// 填充文件夹属性
@@ -340,6 +340,19 @@ namespace camus
 		});
 	}
 
+	void writer::emit_friends()
+	{
+		nlohmann::json json = conf_.json();
+		json["friends"] = conf_.camus().friends;
+
+		run_only_live([&]() {
+			filesystem::write_file(
+				filesystem::clean_path("friends.html", conf_.camus().output_dir),
+				inja_.render(conf_.camus().theme[config::CAMUS_THEME_TYPE_FRIENDS], json)
+			);
+		});
+	}
+
 	void writer::emit_toc()
 	{
 		if (cmd_.dryrun) {
@@ -347,7 +360,10 @@ namespace camus
 		}
 
 		if (conf_.camus().render.static_engine == "default") {
-			filesystem::write_file(conf_.camus().output_dir / "index.html", conf_.render_var(conf_.camus().theme_home));
+			filesystem::write_file(
+				conf_.camus().output_dir / "index.html",
+				conf_.render_var(conf_.camus().theme[config::CAMUS_THEME_TYPE_HOME])
+			);
 
 			std::vector<catalog::catalog_node> toc;
 			catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
@@ -426,7 +442,7 @@ namespace camus
 							std::format("{}/index.html", dir_node->real_url().string()),
 							conf_.camus().output_dir
 						),
-						inja_.render(conf_.camus().theme_home, json)
+						inja_.render(conf_.camus().theme[config::CAMUS_THEME_TYPE_HOME], json)
 					);
 				});
 			}
@@ -589,6 +605,7 @@ namespace camus
 	void writer::inspect()
 	{
 		cmd_.dryrun = true;
+		conf_.reload();
 
 		uint16_t max_length = 0;
 		for (const auto &[k, v] : conf_.map()) {
@@ -660,6 +677,7 @@ namespace camus
 
 		emit_article();
 		emit_toc();
+		emit_friends();
 		emit_sitemap();
 		emit_assets();
 

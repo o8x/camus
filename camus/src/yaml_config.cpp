@@ -81,10 +81,15 @@ namespace camus::config
 			"build.powered-by",
 			std::format(
 				R"(
+<a class="site-stats-link" href="/">Home</a> /
+<a class="site-stats-link" href="/friends.html">Friends</a> /
+<a class="site-stats-link" href="/stats.html">Stats</a> /
+<a class="site-stats-link" href="{{env.github_url}}" target="_blank">GitHub</a>
+<br />
 <small>
-	<a class="site-stats-link" href="/stats.html" target="_blank">site stats</a><br />
 	<em>Powered by <a href="{}/releases/tag/v{}" target="_blank" title="Camus v{}">Camus</a> built with {}</em>
-</small>)",
+</small>
+)",
 				GIT_REPO,
 				PROJECT_VERSION,
 				PROJECT_VERSION,
@@ -188,7 +193,7 @@ namespace camus::config
 			} else if (key == "sitemap") {
 				camus_.sitemap = value == "true";
 			} else if (key == "theme") {
-				camus_.theme_home = value;
+				camus_.theme_name = value;
 			} else if (key == "filename_case") {
 				camus_.filename_case = value;
 			} else if (key == "toc_format") {
@@ -211,42 +216,30 @@ namespace camus::config
 		}
 
 		if (camus_.render.static_engine != "default") {
-			camus_.theme_home = std::format("{}/{}", camus_.theme_home, camus_.render.static_engine);
+			camus_.theme_name = std::format("{}/{}", camus_.theme_name, camus_.render.static_engine);
 		}
 
-		// 默认使用 .camus/theme
-		std::string home_file = std::format("{}/theme/{}/home.html", CAMUS_DIR, camus_.theme_home);
-		std::string page_file = std::format("{}/theme/{}/page.html", CAMUS_DIR, camus_.theme_home);
-		std::string stats_file = std::format("{}/theme/{}/stats.html", CAMUS_DIR, camus_.theme_home);
+		const auto read_theme = [](const std::string &name, const std::string &type) -> std::string {
+			std::string home_file = std::format("{}/theme/{}/{}.html", CAMUS_DIR, name, type);
 
-		// 检查是否存在覆盖主题
-		if (std::filesystem::exists(std::format("theme/{}/home.html", camus_.theme_home))) {
-			home_file = std::format("theme/{}/home.html", camus_.theme_home);
-		}
+			// 检查是否存在覆盖主题
+			if (const std::string replace_theme = std::format("theme/{}/{}.html", name, type);
+				std::filesystem::exists(replace_theme)) {
+				home_file = replace_theme;
+			}
 
-		if (std::filesystem::exists(std::format("theme/{}/page.html", camus_.theme_home))) {
-			page_file = std::format("theme/{}/page.html", camus_.theme_home);
-		}
+			if (!std::filesystem::exists(home_file)) {
+				logging::fatal("read theme content failed name={}/{}", name, type);
+			}
 
-		if (std::filesystem::exists(std::format("theme/{}/stats.html", camus_.theme_home))) {
-			stats_file = std::format("theme/{}/stats.html", camus_.theme_home);
-		}
+			logging::debug("load  theme contents name={}/{}", name, type);
+			return filesystem::read_file(home_file);
+		};
 
-		if (!std::filesystem::exists(home_file) || !std::filesystem::exists(page_file)) {
-			logging::fatal(
-				"theme {} not found home={} page={} stats={}",
-				camus_.theme_home,
-				home_file,
-				page_file,
-				stats_file
-			);
-		}
-
-		logging::debug("load theme home={} page={} stats={}", home_file, page_file, stats_file);
-
-		camus_.theme_home = filesystem::read_file(home_file);
-		camus_.theme_page = filesystem::read_file(page_file);
-		camus_.theme_stats = filesystem::read_file(stats_file);
+		camus_.theme[CAMUS_THEME_TYPE_HOME] = read_theme(camus_.theme_name, "home");
+		camus_.theme[CAMUS_THEME_TYPE_PAGE] = read_theme(camus_.theme_name, "page");
+		camus_.theme[CAMUS_THEME_TYPE_STATS] = read_theme(camus_.theme_name, "stats");
+		camus_.theme[CAMUS_THEME_TYPE_FRIENDS] = read_theme(camus_.theme_name, "friends");
 
 		const YAML::Node catalog_data = root["catalog"];
 		if (!catalog_data.IsSequence()) {
@@ -319,6 +312,24 @@ namespace camus::config
 			c.title = c.title.empty() ? camus_.site.title : c.title;
 			c.subtitle = c.subtitle.empty() ? camus_.site.subtitle : c.subtitle;
 			c.description = c.description.empty() ? camus_.site.description : c.description;
+		}
+
+		if (const YAML::Node friends_data = root["friends"]; friends_data && friends_data.IsSequence()) {
+			for (const auto &tr : friends_data) {
+				friend_link_conf t{
+					.title = tr["title"].as<std::string>(),
+					.desc = tr["desc"].as<std::string>(),
+					.link_url = tr["link_url"].as<std::string>(),
+					.image_url = tr["image_url"].as<std::string>(),
+				};
+
+				camus_.friends.push_back(t);
+
+				flattened_map.emplace(std::format("friends.{}.title", t.title), t.title);
+				flattened_map.emplace(std::format("friends.{}.desc", t.title), t.desc);
+				flattened_map.emplace(std::format("friends.{}.link_url", t.title), t.link_url);
+				flattened_map.emplace(std::format("friends.{}.image_url", t.title), t.image_url);
+			}
 		}
 
 		supplement_other_vars();

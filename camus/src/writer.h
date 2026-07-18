@@ -32,6 +32,7 @@ namespace camus
 		void run_only_live(const std::function<void()> &func) const;
 
 		void emit_article();
+		void emit_friends();
 		void emit_toc();
 		void emit_sitemap();
 		void emit_assets() const;
