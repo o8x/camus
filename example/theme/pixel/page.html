@@ -29,20 +29,20 @@
             border-bottom: 4px double var(--border);
         }
 
-        .chapter-title {
+        .cover-title {
             font-family: 'Press Start 2P', monospace;
-            font-size: 1.7rem;
+            font-size: 2.2rem;
             color: var(--accent);
-            letter-spacing: 0.1em;
-            line-height: 1.8;
-            text-shadow: 2px 2px 0 var(--bg), 3px 3px 0 var(--accent);
+            letter-spacing: 0.15em;
+            line-height: 2;
+            text-shadow: 2px 2px 0 var(--bg), 4px 4px 0 var(--accent);
             image-rendering: pixelated;
         }
 
         .chapter-meta {
             margin-top: 1.2rem;
             font-family: 'Press Start 2P', monospace;
-            font-size: 0.8rem;
+            font-size: 1rem;
             color: var(--text-secondary);
         }
 
@@ -99,7 +99,7 @@
             display: block;
             overflow-x: auto;
             padding: 1rem 1.5rem;
-            font-size: 0.8rem;
+            font-size: 1rem;
             line-height: 1.7;
             border: 2px solid var(--border);
             background: var(--code-bg);
@@ -117,7 +117,7 @@
 
         .chapter-content pre code.hljs {
             padding: 1.2rem 1.5rem;
-            font-size: 0.82rem;
+            font-size: 1rem;
             line-height: 1.7;
             background: transparent;
             border: none;
@@ -161,7 +161,7 @@
             border: 2px solid var(--border);
             background: var(--card-bg);
             font-family: 'Press Start 2P', monospace;
-            font-size: 0.4rem;
+            font-size: 1rem;
             transition: all 0.1s;
             max-width: 45%;
             box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05);
@@ -183,7 +183,7 @@
 
         .nav-link .nav-label {
             font-family: 'Press Start 2P', monospace;
-            font-size: 0.35rem;
+            font-size: 1rem;
             color: var(--text-secondary);
             display: block;
             line-height: 1.6;
@@ -195,12 +195,12 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             font-family: 'Courier New', 'Noto Sans SC', monospace;
-            font-size: 0.8rem;
+            font-size: 1rem;
         }
 
         .nav-center {
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-family: 'Press Start 2P', monospace;
         }
 
@@ -211,7 +211,7 @@
             text-align: center;
             color: var(--text-secondary);
             font-family: 'Courier New', 'Noto Sans SC', monospace;
-            font-size: 0.8rem;
+            font-size: 1rem;
             padding: 0 0 4rem 0;
         }
 
@@ -221,8 +221,7 @@
         @media (max-width: 640px) {
             .reading-container { padding: 0 1rem; }
             .chapter-header { padding: 2.5rem 0 1.5rem; }
-            .chapter-title { font-size: 0.7rem; }
-            .chapter-content { font-size: 0.9rem; }
+            .chapter-content { font-size: 1rem; }
             .chapter-nav { flex-direction: column; gap: 0.8rem; padding: 2rem 0; }
             .nav-link { max-width: 100%; width: 100%; justify-content: center; }
             .nav-link-placeholder { width: 100%; }
@@ -234,7 +233,7 @@
 
 <div class="reading-container">
     <header class="chapter-header">
-        <h1 class="chapter-title">{{ page.title }}</h1>
+        <h1 class="cover-title">{{ page.title }}</h1>
         <div class="chapter-meta">
             <span>{{ stats.word_count }} 字 · 约 {{ stats.read_min }} 分钟</span>
             <span>&#124;</span>
