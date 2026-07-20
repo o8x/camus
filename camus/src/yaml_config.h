@@ -44,9 +44,10 @@ namespace camus::config
 	};
 
 	struct render_conf {
-		std::string static_engine;
-		std::string engine;
-		int options;
+		bool meta;
+		std::string html_engine;
+		std::string markdown_engine;
+		int markdown_options;
 	};
 
 	enum camus_theme_type : uint8_t {
@@ -63,7 +64,6 @@ namespace camus::config
 		std::filesystem::path assets_dir = "";
 		std::string domain_name;
 		std::string filename_case = "keep";
-		std::string toc_format = "json";
 		std::string theme_name = "default";
 		// 主题数据
 		std::unordered_map<camus_theme_type, std::string> theme;
@@ -77,7 +77,7 @@ namespace camus::config
 
 	class yaml_config
 	{
-		std::map<std::string, std::string> flattened_map;
+		std::map<std::string, std::string> public_map_;
 		camus_conf camus_;
 		std::vector<route_conf> routes_;
 
@@ -92,6 +92,7 @@ namespace camus::config
 		[[nodiscard]] camus_conf camus() const;
 		[[nodiscard]] nlohmann::json json() const;
 		[[nodiscard]] std::map<std::string, std::string> map() const;
+		[[nodiscard]] std::map<std::string, std::string> public_map() const;
 		[[nodiscard]] std::string render_var(const std::string &data) const;
 		[[nodiscard]] std::expected<route_conf, std::string> match_route(const std::filesystem::path &path) const;
 	};
