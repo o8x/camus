@@ -10,66 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/pixel-inja.css">
     <style>
-        :root {
-            --bg: #1a1a2e;
-            --card-bg: #16213e;
-            --text: #c7d2e0;
-            --text-secondary: #7b8ca3;
-            --accent: #ff6b35;
-            --accent-glow: #ff9f45;
-            --border: #2a3a5c;
-            --divider: #2a3a5c;
-            --nav-hover-bg: #1e2d4a;
-            --green: #4ade80;
-            --yellow: #facc15;
-            --pink: #f472b6;
-            --cyan: #22d3ee;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Press Start 2P', 'Courier New', 'Source Code Pro', 'Noto Sans SC', monospace;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            line-height: 1.8;
-            image-rendering: pixelated;
-        }
-
-        .scanlines {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            z-index: 999;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0, 0, 0, 0.06) 2px,
-                rgba(0, 0, 0, 0.06) 4px
-            );
-        }
-
-        .pixel-stars {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            z-index: 0;
-            background-image:
-                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), transparent),
-                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.2), transparent),
-                radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.4), transparent),
-                radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.2), transparent),
-                radial-gradient(1px 1px at 230px 80px, rgba(255,255,255,0.3), transparent),
-                radial-gradient(2px 2px at 310px 50px, rgba(255,255,255,0.2), transparent),
-                radial-gradient(1px 1px at 400px 100px, rgba(255,255,255,0.3), transparent),
-                radial-gradient(2px 2px at 500px 30px, rgba(255,255,255,0.2), transparent),
-                radial-gradient(1px 1px at 600px 90px, rgba(255,255,255,0.3), transparent),
-                radial-gradient(2px 2px at 700px 60px, rgba(255,255,255,0.15), transparent);
-        }
-
         .cover {
             max-width: 1200px;
             margin: 0 auto;
@@ -78,54 +20,9 @@
             z-index: 1;
         }
 
-        .pixel-deco {
-            text-align: center;
-            margin-bottom: 1rem;
-            color: var(--accent);
-            font-size: 0.5rem;
-            letter-spacing: 0.5rem;
-            font-family: 'Press Start 2P', monospace;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .cover-header {
-            text-align: center;
-            padding: 3rem 0;
-            margin-bottom: 2rem;
-            border: 4px solid var(--accent);
-            border-image: repeating-linear-gradient(
-                45deg,
-                var(--accent),
-                var(--accent) 4px,
-                var(--bg) 4px,
-                var(--bg) 8px
-            ) 4;
-            background: var(--card-bg);
-            box-shadow:
-                0 0 0 4px var(--bg),
-                0 0 0 8px var(--accent),
-                0 0 20px rgba(255, 107, 53, 0.3);
-        }
-
-        .cover-title {
-            font-family: 'Press Start 2P', monospace;
-            color: var(--accent);
-            text-shadow:
-                2px 2px 0 var(--bg),
-                4px 4px 0 var(--accent);
-            letter-spacing: 0.15em;
-            line-height: 2;
-            image-rendering: pixelated;
-        }
-
-        /* ── Section Headers ── */
         .section-header {
             font-family: 'Press Start 2P', monospace;
+            font-size: 0.8rem;
             color: var(--accent);
             text-align: center;
             margin: 3rem 0 1.5rem;
@@ -133,40 +30,34 @@
             text-shadow: 2px 2px 0 var(--bg);
         }
 
-        /* ── Summary Cards ── */
         .stats-summary {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
             margin-bottom: 2rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .stats-card {
-            flex: 1 1 200px;
-            max-width: 280px;
             text-align: center;
-            padding: 2rem 1.2rem;
+            padding: 1.2rem 1rem;
             background: var(--card-bg);
             border: 3px solid var(--border);
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05);
             position: relative;
         }
 
         .stats-card:hover {
             border-color: var(--accent);
             transform: translate(-2px, -2px);
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05),
-                4px 4px 0 var(--accent);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05), 4px 4px 0 var(--accent);
         }
 
         .stats-card-value {
             font-family: 'Press Start 2P', monospace;
-            font-size: 1.8rem;
+            font-size: 1.3rem;
             color: var(--accent);
             text-shadow: 2px 2px 0 var(--bg);
             display: block;
@@ -174,12 +65,13 @@
 
         .stats-card-label {
             display: block;
+            margin-top: 0.5rem;
             font-family: 'Press Start 2P', monospace;
+            font-size: 0.5rem;
             color: var(--text-secondary);
             letter-spacing: 0.2em;
         }
 
-        /* ── Year Cards Grid ── */
         .year-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -191,61 +83,32 @@
             background: var(--card-bg);
             border: 2px solid var(--border);
             padding: 1.5rem;
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05);
             transition: all 0.15s;
         }
 
         .year-card:hover {
             border-color: var(--accent);
             transform: translate(-2px, -2px);
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05),
-                4px 4px 0 var(--accent);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05), 4px 4px 0 var(--accent);
         }
 
         .year-card-year {
-            font-size: 1.2rem;
+            font-size: 0.8rem;
             font-family: 'Press Start 2P', monospace;
             color: var(--accent);
             margin-bottom: 0.8rem;
             letter-spacing: 0.15em;
         }
 
-        .year-card-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.4rem 1rem;
-        }
+        .year-card-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 1rem; }
+        .year-stat { font-size: 0.85rem; }
+        .year-stat-label { color: var(--text-secondary); font-size: 0.7rem; }
+        .year-stat-value { font-family: 'Press Start 2P', monospace; font-size: 0.55rem; color: var(--accent); }
 
-        .year-stat {
-            font-size: 0.85rem;
-        }
+        .bar-chart { margin-bottom: 2rem; }
 
-        .year-stat-label {
-            color: var(--text-secondary);
-            font-size: 0.7rem;
-        }
-
-        .year-stat-value {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.55rem;
-            color: var(--accent);
-        }
-
-        /* ── Bar Chart ── */
-        .bar-chart {
-            margin-bottom: 2rem;
-        }
-
-        .bar-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.6rem;
-            gap: 0.8rem;
-        }
+        .bar-row { display: flex; align-items: center; margin-bottom: 0.6rem; gap: 0.8rem; }
 
         .bar-label {
             font-family: 'Press Start 2P', monospace;
@@ -261,60 +124,26 @@
             height: 20px;
             background: var(--bg);
             border: 2px solid var(--border);
-            box-shadow:
-                inset 2px 2px 0 rgba(0,0,0,0.3),
-                inset -1px -1px 0 rgba(255,255,255,0.03);
+            box-shadow: inset 2px 2px 0 rgba(0,0,0,0.3), inset -1px -1px 0 rgba(255,255,255,0.03);
             position: relative;
             overflow: hidden;
         }
 
         .bar-fill {
             height: 100%;
-            background: repeating-linear-gradient(
-                90deg,
-                var(--accent),
-                var(--accent) 4px,
-                var(--accent-glow) 4px,
-                var(--accent-glow) 8px
-            );
+            background: repeating-linear-gradient(90deg, var(--accent), var(--accent) 4px, var(--accent-glow) 4px, var(--accent-glow) 8px);
             box-shadow: 0 0 8px rgba(255, 107, 53, 0.4);
             transition: width 0.8s steps(20);
         }
 
-        .bar-value {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.45rem;
-            color: var(--accent);
-            min-width: 2.5rem;
-            flex-shrink: 0;
-        }
+        .bar-value { font-family: 'Press Start 2P', monospace; font-size: 0.45rem; color: var(--accent); min-width: 2.5rem; flex-shrink: 0; }
+        .bar-sub { font-family: 'Press Start 2P', monospace; font-size: 0.35rem; color: var(--text-secondary); min-width: 3rem; flex-shrink: 0; }
 
-        .bar-sub {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.35rem;
-            color: var(--text-secondary);
-            min-width: 3rem;
-            flex-shrink: 0;
-        }
+        .tag-tabs { margin-bottom: 2rem; }
 
-        /* ── Tag Cloud Tabs (CSS-only) ── */
-        .tag-tabs {
-            margin-bottom: 2rem;
-        }
+        .tag-year-radio { position: absolute; opacity: 0; pointer-events: none; }
 
-        .tag-year-radio {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .tag-tab-nav {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.3rem;
-            margin-bottom: 1rem;
-        }
+        .tag-tab-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3rem; margin-bottom: 1rem; }
 
         .tag-tab-btn {
             font-family: 'Press Start 2P', monospace;
@@ -325,31 +154,21 @@
             background: var(--card-bg);
             cursor: pointer;
             transition: all 0.1s;
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05);
         }
 
-        .tag-tab-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
+        .tag-tab-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* Highlight active tab via CSS sibling trick */
         {% for year, data in stats %}
         #tag-year-{{ year }}:checked ~ .tag-tab-nav label[for="tag-year-{{ year }}"] {
             border-color: var(--accent);
             color: var(--accent);
             background: var(--nav-hover-bg);
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05),
-                0 0 8px rgba(255, 107, 53, 0.3);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05), 0 0 8px rgba(255, 107, 53, 0.3);
         }
         {% endfor %}
 
         .tag-cloud-pane {
-            font-family: 'Press Start 2P', monospace;
             display: none;
             flex-wrap: wrap;
             justify-content: center;
@@ -358,9 +177,7 @@
             padding: 2rem 1rem;
             background: var(--card-bg);
             border: 2px solid var(--border);
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05);
             min-height: 120px;
         }
 
@@ -375,52 +192,34 @@
             cursor: default;
         }
 
-        .tag-item:hover {
-            transform: scale(1.15);
-            text-shadow: 0 0 8px rgba(255, 107, 53, 0.6);
-        }
-
+        .tag-item:hover { transform: scale(1.15); text-shadow: 0 0 8px rgba(255, 107, 53, 0.6); }
         .tag-item:nth-child(3n+1) { color: var(--accent); }
         .tag-item:nth-child(3n+2) { color: var(--green); }
         .tag-item:nth-child(3n)   { color: var(--cyan); }
         .tag-item:nth-child(5n+3) { color: var(--pink); }
         .tag-item:nth-child(7n+2) { color: var(--yellow); }
 
-        /* ── Stats Table ── */
-        .stats-table-wrap {
-            overflow-x: auto;
-            margin-bottom: 2rem;
-        }
+        .stats-table-wrap { overflow-x: auto; margin-bottom: 2rem; }
 
-        .stats-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.5rem;
-        }
+        .stats-table { width: 100%; border-collapse: collapse; font-size: 0.5rem; }
 
         .stats-table thead th {
             font-family: 'Press Start 2P', monospace;
+            font-size: 0.4rem;
             color: var(--accent);
             text-align: left;
             padding: 1rem 0.8rem;
             border-bottom: 3px double var(--accent);
             letter-spacing: 0.1em;
             white-space: nowrap;
-            font-size: 0.7rem;
         }
 
-        .stats-table tbody td {
-            padding: 0.7rem 0.8rem;
-            border-bottom: 1px solid var(--border);
-            white-space: nowrap;
-        }
-
-        .stats-table tbody tr:hover td {
-            background: var(--nav-hover-bg);
-        }
+        .stats-table tbody td { padding: 0.7rem 0.8rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .stats-table tbody tr:hover td { background: var(--nav-hover-bg); }
 
         .stats-table .total-row td {
             font-family: 'Press Start 2P', monospace;
+            font-size: 0.5rem;
             color: var(--accent);
             border-top: 2px solid var(--accent);
             border-bottom: 2px solid var(--accent);
@@ -428,57 +227,72 @@
             background: rgba(255, 107, 53, 0.06);
         }
 
-        .stats-table .tag-cell {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: var(--text-secondary);
+        .stats-table .num-cell { text-align: right; font-family: 'Courier New', monospace; }
+        .stats-table .tag-cell { max-width: 300px; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); font-size: 0.78rem; }
+        .stats-table .date-cell { font-size: 0.75rem; color: var(--text-secondary); }
+
+        @media (max-width: 768px) {
+            .cover { padding: 2rem 1.2rem 4rem; }
+            .cover-title { font-size: 1rem; }
+            .section-header { font-size: 0.55rem; letter-spacing: 0.15em; margin: 2.2rem 0 1rem; }
+            .stats-summary { gap: 0.8rem; max-width: none; }
+            .stats-card { padding: 1rem 0.6rem; }
+            .stats-card-value { font-size: 1rem; }
+            .stats-card-label { font-size: 0.35rem; margin-top: 0.3rem; }
+            .year-grid { grid-template-columns: 1fr; gap: 0.7rem; }
+            .year-card { padding: 1rem 1.2rem; }
+            .year-card-year { font-size: 0.55rem; margin-bottom: 0.5rem; }
+            .year-card-stats { gap: 0.3rem 0.8rem; }
+            .year-stat-value { font-size: 0.45rem; }
+            .year-stat-label { font-size: 0.6rem; }
+            .bar-row { gap: 0.5rem; margin-bottom: 0.4rem; }
+            .bar-label { font-size: 0.35rem; min-width: 2.5rem; }
+            .bar-track { height: 14px; }
+            .bar-value { font-size: 0.32rem; min-width: 2rem; }
+            .tag-tab-nav { gap: 0.2rem; margin-bottom: 0.7rem; }
+            .tag-tab-btn { font-size: 0.3rem; padding: 0.4rem 0.6rem; }
+            .tag-cloud-pane { padding: 1.2rem 0.8rem; gap: 0.4rem 0.7rem; min-height: 80px; }
+            .tag-item { font-size: 0.85rem !important; }
+            .stats-table-wrap {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border: 1px solid var(--border);
+                box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2);
+            }
+            .stats-table { min-width: 500px; font-size: 0.72rem; }
+            .stats-table thead th { font-size: 0.3rem; padding: 0.6rem 0.5rem; }
+            .stats-table tbody td { padding: 0.5rem 0.5rem; font-size: 0.7rem; }
+            .stats-table .total-row td { font-size: 0.35rem; padding: 0.6rem 0.5rem; }
+            .stats-table .date-cell { display: none; }
+            .stats-table .tag-cell { max-width: 140px; font-size: 0.65rem; }
+            .stats-table .num-cell { font-size: 0.68rem; }
         }
 
-        .stats-table .date-cell {
-            color: var(--text-secondary);
-        }
-
-        /* ── Footer ── */
-        .cover-footer {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            padding-top: 2rem;
-            font-family: 'Courier New', 'Noto Sans SC', monospace;
-        }
-
-        @media (max-width: 640px) {
-            .cover {
-                padding: 2rem 1rem 3rem;
-            }
-            .cover-title {
-                font-size: 0.8rem;
-            }
-            .stats-summary {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .stats-card {
-                max-width: none;
-            }
-            .year-grid {
-                grid-template-columns: 1fr;
-            }
-            .bar-label {
-                font-size: 0.4rem;
-                min-width: 3rem;
-            }
-            .bar-value {
-                font-size: 0.38rem;
-            }
-            .stats-table thead th,
-            .stats-table tbody td {
-                padding: 0.5rem 0.5rem;
-                font-size: 0.7rem;
-            }
-            .stats-table .tag-cell {
-                max-width: 120px;
-            }
+        @media (max-width: 480px) {
+            .cover { padding: 1.2rem 0.8rem 3rem; }
+            .cover-title { font-size: 0.75rem; }
+            .section-header { font-size: 0.42rem; letter-spacing: 0.1em; margin: 1.8rem 0 0.8rem; }
+            .stats-summary { gap: 0.5rem; }
+            .stats-card { padding: 0.8rem 0.4rem; }
+            .stats-card-value { font-size: 0.85rem; }
+            .stats-card-label { font-size: 0.28rem; margin-top: 0.3rem; }
+            .year-card { padding: 0.8rem 1rem; }
+            .year-card-year { font-size: 0.45rem; }
+            .year-stat-value { font-size: 0.38rem; }
+            .year-stat-label { font-size: 0.5rem; }
+            .bar-row { gap: 0.3rem; margin-bottom: 0.3rem; }
+            .bar-label { font-size: 0.28rem; min-width: 2rem; }
+            .bar-track { height: 10px; border-width: 1px; }
+            .bar-value { font-size: 0.26rem; min-width: 1.5rem; }
+            .tag-tab-btn { font-size: 0.25rem; padding: 0.35rem 0.5rem; border-width: 1px; }
+            .tag-cloud-pane { padding: 1rem 0.6rem; gap: 0.3rem 0.5rem; min-height: 60px; }
+            .tag-item { font-size: 0.75rem !important; }
+            .stats-table { min-width: 420px; font-size: 0.65rem; }
+            .stats-table thead th { font-size: 0.25rem; padding: 0.5rem 0.4rem; }
+            .stats-table tbody td { padding: 0.4rem 0.4rem; font-size: 0.62rem; }
+            .stats-table .total-row td { font-size: 0.3rem; padding: 0.5rem 0.4rem; }
+            .stats-table .tag-cell { max-width: 100px; font-size: 0.58rem; }
+            .stats-table .num-cell { font-size: 0.6rem; }
         }
     </style>
 </head>
@@ -609,7 +423,7 @@
                         <th>articles</th>
                         <th>words</th>
                         <th>reading(mins)</th>
-                        <th>datetime</th>
+                        <th class="date-cell">datetime</th>
                         <th>tags</th>
                     </tr>
                 </thead>
