@@ -2,37 +2,19 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
-    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="{{page.description}}">
-    <title>{{page.title}} - {{site.title}}</title>
-    <link id="favicon" rel="icon" href="/favicon.ico">
+    <meta name="description" content="{{ page.description }}">
+    <meta name="build-time" content="{{ build.time }}">
+    <meta name="build-type" content="{{ build.build_type }}">
+    <meta name="cmake-version" content="{{ build.cmake_version }}">
+    <meta name="cxx-standard" content="{{ build.cxx_standard }}">
+    <title>{{ page.title }} - {{ site.title }}</title>
+    <link rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <link rel="stylesheet" id="hljs-theme"
-          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <style id="terminal-style">
-        :root {
-            --bg: #0a0a08;
-            --card-bg: #0f0f0c;
-            --text: #33ff33;
-            --text-secondary: #22aa22;
-            --text-dim: #116611;
-            --accent: #66ff66;
-            --accent-glow: #88ff88;
-            --accent-dim: #228822;
-            --border: #1a331a;
-            --divider: #1a331a;
-            --code-bg: #080808;
-            --nav-hover-bg: #141412;
-            --bezel: #1a1a1a;
-            --bezel-dark: #0d0d0d;
-            --green: #33ff33;
-            --yellow: #cccc44;
-            --pink: #cc6688;
-            --cyan: #44aacc;
-        }
+    <link rel="stylesheet" href="/css/terminal-inja.css">
+    <style>
+        body { font-size: 1.8rem; }
 
         @keyframes bootWarmupFlash {
             0% { opacity: 0; }
@@ -63,40 +45,10 @@
             100% { opacity: 1; }
         }
 
-        html {
-            overflow: hidden;
-            height: 100%;
+        @keyframes bootDismiss {
+            0%, 70% { opacity: 1; }
+            100% { opacity: 0; }
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family:
-                    'VT323',
-                    'Courier New',
-                    'NSimSun',
-                    'GB18030 Bitmap',
-                    'Unifont',
-                    'WenQuanYi Bitmap Song',
-                    '文泉驿点阵宋体',
-                    'SimSun',
-                    '宋体',
-                    'Noto Serif CJK SC',
-                    'AR PL UMing CN',
-                    'Noto Sans SC',
-                    serif,
-                    monospace;
-            font-size: 1.3rem;
-            background: #000;
-            color: var(--text);
-            line-height: 1.4;
-            overflow: hidden !important;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        body.keyboard-mode * { cursor: none !important; }
-        body.keyboard-mode { user-select: none !important; }
 
         .boot-screen {
             position: fixed;
@@ -107,12 +59,8 @@
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            transition: opacity 0.5s steps(5);
-        }
-
-        .boot-screen.fade-out {
-            opacity: 0;
             pointer-events: none;
+            animation: bootDismiss 0.4s steps(3) 2.6s forwards;
         }
 
         .boot-warmup-flash {
@@ -163,199 +111,6 @@
             animation: bootCursorBlink 0.8s steps(1) 0.9s forwards;
         }
 
-        body.boot-active {
-            pointer-events: none;
-        }
-
-        .tuner-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            z-index: 1000;
-            background: #000;
-            pointer-events: none;
-        }
-
-        .tuner-fill {
-            height: 100%;
-            background: var(--accent);
-            box-shadow: 0 0 8px var(--text), 0 0 16px var(--accent);
-            transition: width 0.15s linear;
-            width: 0;
-        }
-
-        .terminal {
-            width: 100vw;
-            height: 100vh;
-            background: var(--bezel);
-            position: relative;
-            padding: 2.5vh 3vw 3.5vh;
-            display: flex;
-            flex-direction: column;
-            border-radius: 0;
-            box-shadow:
-                inset 0 0 3px rgba(255,255,255,0.04),
-                inset 0 0 100px rgba(0,0,0,0.4),
-                0 0 0 1.5px #444,
-                0 0 0 3px var(--bezel-dark),
-                0 0 0 5px #222,
-                0 0 0 6px var(--bezel-dark);
-        }
-
-        .terminal-vent {
-            position: absolute;
-            top: 1vh;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 3px;
-        }
-
-        .terminal-vent-line {
-            width: 2px;
-            height: 7px;
-            background: #0a0a0a;
-            border-radius: 1px;
-        }
-
-        .terminal-label {
-            position: absolute;
-            bottom: 0.6vh;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'VT323', monospace;
-            font-size: 0.85rem;
-            color: #111;
-            letter-spacing: 0.3em;
-        }
-
-        .terminal-corner {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: #111;
-            border-radius: 1px;
-        }
-
-        .terminal-corner.tl { top: 0.8vh; left: 1.5vw; }
-        .terminal-corner.tr { top: 0.8vh; right: 1.5vw; }
-        .terminal-corner.bl { bottom: 1vh; left: 1.5vw; }
-        .terminal-corner.br { bottom: 1vh; right: 1.5vw; }
-
-        .terminal-led {
-            position: absolute;
-            bottom: 0.8vh;
-            right: 3.5vw;
-            width: 5px;
-            height: 5px;
-            background: var(--green);
-            border-radius: 50%;
-            box-shadow: 0 0 4px var(--green), 0 0 10px var(--green);
-        }
-
-        .terminal-led.off { background: #111; box-shadow: none; }
-
-        .terminal-badge {
-            position: absolute;
-            bottom: 0.7vh;
-            left: 3.5vw;
-            font-family: 'VT323', monospace;
-            font-size: 0.7rem;
-            color: #111;
-            letter-spacing: 0.15em;
-        }
-
-        .terminal-line {
-            position: absolute;
-            top: 1vh;
-            right: 4vw;
-            font-family: 'VT323', monospace;
-            font-size: 0.75rem;
-            color: #111;
-        }
-
-        .screen {
-            background: var(--bg);
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            border-radius: 30px;
-            border: 3px solid #090909;
-            box-shadow:
-                inset 0 0 150px rgba(0,0,0,0.9),
-                inset 0 0 40px rgba(51,255,51,0.02),
-                inset 0 0 3px rgba(0,0,0,0.5),
-                0 0 0 2px #0d0d0d,
-                0 0 0 5px #111,
-                0 2px 2px rgba(0,0,0,0.5) inset;
-        }
-
-        .crt-distort {
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            border-radius: inherit;
-            background: radial-gradient(ellipse at 50% 50%,
-                transparent 30%,
-                rgba(0,0,0,0.08) 60%,
-                rgba(0,0,0,0.3) 85%,
-                rgba(0,0,0,0.75) 100%
-            );
-        }
-
-        .screen-vignette {
-            position: absolute;
-            inset: 0;
-            z-index: 2;
-            pointer-events: none;
-            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 80%, rgba(0,0,0,0.8) 100%);
-            border-radius: inherit;
-        }
-
-        .screen-glare {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 30%;
-            z-index: 2;
-            pointer-events: none;
-            background: linear-gradient(to bottom,
-                rgba(51,255,51,0.025) 0%,
-                rgba(51,255,51,0.01) 30%,
-                transparent 100%);
-            border-radius: 30px 30px 0 0;
-        }
-
-        .screen-scanlines {
-            position: absolute;
-            inset: 0;
-            z-index: 3;
-            pointer-events: none;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0, 0, 0, 0.25) 2px,
-                rgba(0, 0, 0, 0.25) 4px
-            );
-            border-radius: inherit;
-        }
-
-        .screen-phosphor {
-            position: absolute;
-            inset: 0;
-            z-index: 2;
-            pointer-events: none;
-            border-radius: inherit;
-            background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.15) 85%, rgba(0,0,0,0.4) 100%);
-        }
-
         .screen-content {
             position: relative;
             z-index: 5;
@@ -367,51 +122,23 @@
             scroll-behavior: smooth;
         }
 
-        .screen-content::-webkit-scrollbar { width: 4px; }
-        .screen-content::-webkit-scrollbar-track { background: transparent; }
-        .screen-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-        .term-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.2rem 0.3rem;
-            margin-bottom: 0.8rem;
-            border-bottom: 1px solid var(--border);
-            font-family: 'VT323', monospace;
-            font-size: 1rem;
-            color: var(--text-dim);
-        }
-
-        .chapter-header {
-            text-align: left;
-            padding: 0.3rem 0 0.5rem;
+        .page-header {
             margin-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
         }
 
-        .chapter-title {
-            font-size: 1.8rem;
-            color: var(--accent);
-            letter-spacing: 0.05em;
+        .page-title {
             line-height: 1.6;
-            text-shadow: 0 0 30px var(--accent-dim);
-            image-rendering: pixelated;
         }
 
         .chapter-meta {
             margin-top: 1rem;
             font-family: 'VT323', monospace;
-            font-size: 1rem;
             color: var(--text-dim);
         }
 
         .chapter-meta span { margin: 0 0.3rem; }
 
-        .chapter-content {
-            line-height: 1.5;
-            word-break: break-word;
-        }
+        .chapter-content { line-height: 1.5; word-break: break-word; }
 
         .chapter-content p {
             color: var(--text-secondary);
@@ -419,33 +146,15 @@
             text-shadow: 0 0 3px rgba(51,255,51,0.2);
         }
 
-        .chapter-content h1,
-        .chapter-content h2,
-        .chapter-content h3,
-        .chapter-content h4,
-        .chapter-content h5,
-        .chapter-content h6 {
+        .chapter-content h1, .chapter-content h2, .chapter-content h3,
+        .chapter-content h4, .chapter-content h5, .chapter-content h6 {
             margin: 1.8rem 0 0.8rem;
             color: var(--accent);
         }
 
         .chapter-content h1 { font-size: 1.8rem; }
         .chapter-content h2 { font-size: 1.5rem; }
-        .chapter-content h3 { font-size: 1rem; }
-
-        @media (max-width: 768px) {
-            body {
-                font-size: 1rem !important;
-            }
-
-            .chapter-content h1 { font-size: 1.2rem !important; }
-            .chapter-content h2 { font-size: 1.1rem !important; }
-            .chapter-content h3 { font-size: 1.0rem !important; }
-
-            .keyboard-hint {
-                display: none !important;
-            }
-        }
+        .chapter-content h3 { font-size: 1.2rem; }
 
         .chapter-content blockquote {
             margin: 1rem 0;
@@ -458,41 +167,19 @@
 
         .chapter-content blockquote p { margin-bottom: 0.3rem; }
 
-        .chapter-content ul,
-        .chapter-content ol {
+        .chapter-content ul, .chapter-content ol {
             margin: 0.8rem 0 0.8rem 1.2rem;
         }
 
-        .chapter-content li {
-            color: var(--text-secondary);
-            margin-bottom: 0.2rem;
-        }
+        .chapter-content li { color: var(--text-secondary); margin-bottom: 0.2rem; }
 
         .chapter-content code {
-            color: var(--text-secondary);
             font-family: 'Courier New', monospace;
-        }
-
-        .hljs {
-            color: var(--text) !important;
-        }
-
-        .chapter-content code:not(.hljs) {
             background: var(--code-bg);
             padding: 0.1em 0.3em;
             color: var(--accent);
             border: 1px solid var(--border);
             text-shadow: 0 0 2px var(--text);
-        }
-
-        .chapter-content code.hljs {
-            display: block;
-            overflow-x: auto;
-            padding: 0.8rem 1rem;
-            line-height: 1.5;
-            border: 1px solid var(--border);
-            background: var(--code-bg);
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
         }
 
         .chapter-content pre {
@@ -503,14 +190,15 @@
             box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
         }
 
-        .chapter-content pre code.hljs {
+        .chapter-content pre code {
+            display: block;
             padding: 1rem;
             line-height: 1.5;
             background: transparent;
             border: none;
             box-shadow: none;
-            display: block;
             text-shadow: none;
+            color: var(--text-secondary);
         }
 
         .chapter-content img {
@@ -522,6 +210,7 @@
         }
 
         .chapter-content a { color: var(--accent); text-decoration: none; }
+        .chapter-content a:hover { text-shadow: 0 0 8px var(--accent); }
 
         .chapter-nav {
             display: flex;
@@ -542,19 +231,27 @@
             border: 1px solid var(--border);
             background: var(--card-bg);
             font-family: 'VT323', monospace;
-            font-size: 0.9rem;
+            font-size: 1rem;
             max-width: 42%;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .nav-link:hover {
+            color: var(--accent);
+            border-color: var(--accent-dim);
+            text-shadow: 0 0 6px var(--accent);
         }
 
         .nav-link.disabled {
             color: var(--text-dim);
             border-color: var(--border);
+            text-decoration: none;
+            cursor: default;
         }
 
         .nav-link .nav-label {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.28rem;
+            font-family: 'VT323', monospace;
+            font-size: 1rem;
             color: var(--text-dim);
             display: block;
             line-height: 1.5;
@@ -565,80 +262,36 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
 
         .nav-center {
             color: var(--text-dim);
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-family: 'VT323', monospace;
         }
 
         .nav-center a { color: var(--text-secondary); text-decoration: none; text-shadow: 0 0 4px var(--text-secondary); }
-
-        .theme-toggle {
-            position: absolute;
-            top: 1vh;
-            right: 4.5vw;
-            z-index: 10;
-            background: none;
-            border: none;
-            color: #222;
-            cursor: none;
-            font-family: 'VT323', monospace;
-            font-size: 0.8rem;
-            padding: 2px 4px;
-        }
+        .nav-center a:hover { color: var(--accent); text-shadow: 0 0 8px var(--accent); }
 
         .page-footer {
-            color: var(--text-dim);
-            font-size: 0.8rem;
             padding: 0 0 1.5rem 0;
-            text-shadow: 0 0 4px var(--text-dim);
         }
 
         .page-footer a { color: var(--text-secondary); text-decoration: none; text-shadow: 0 0 4px var(--text-secondary); }
 
-        .keyboard-hint {
-            position: absolute;
-            bottom: 0.3rem;
-            left: 0;
-            right: 0;
-            z-index: 6;
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            padding: 0.3rem 1rem;
-            font-family: 'VT323', monospace;
-            font-size: 1rem;
-            color: var(--text-dim);
-            pointer-events: none;
-        }
-
-        .keyboard-hint kbd {
-            font-family: 'VT323', monospace;
-            font-size: 1rem;
-            color: var(--accent);
-            text-shadow: 0 0 6px var(--accent);
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            padding: 0 0.3rem;
-            margin: 0 0.2rem;
-            border-radius: 2px;
-            display: inline-block;
-            min-width: 1.4rem;
-            text-align: center;
-        }
-
-        .keyboard-hint .hint-sep {
-            color: var(--text-dim);
-            opacity: 0.5;
-            margin: 0 0.3rem;
+        @media (max-width: 768px) {
+            body { font-size: 1rem; }
+            .screen-content { flex: none; overflow: visible; overscroll-behavior: auto; }
+            .page-title { font-size: 1.2rem !important; }
+            .chapter-content h1 { font-size: 1.2rem !important; }
+            .chapter-content h2 { font-size: 1.1rem !important; }
+            .chapter-content h3 { font-size: 1rem !important; }
         }
     </style>
 </head>
-<body class="keyboard-mode">
-    <div id="boot-screen" class="boot-screen">
+<body>
+    <div class="boot-screen">
         <div class="boot-warmup-flash"></div>
         <div class="boot-beam"></div>
         <div class="boot-content">
@@ -650,22 +303,13 @@ READY<span class="boot-cursor"></span></div>
         </div>
     </div>
 
-    <div class="tuner-bar">
-        <div class="tuner-fill" id="tuner-fill"></div>
-    </div>
-
     <div class="terminal">
         <div class="terminal-vent">
-            <span class="terminal-vent-line"></span>
-            <span class="terminal-vent-line"></span>
-            <span class="terminal-vent-line"></span>
-            <span class="terminal-vent-line"></span>
-            <span class="terminal-vent-line"></span>
-            <span class="terminal-vent-line"></span>
-            <span class="terminal-vent-line"></span>
-            <span class="terminal-vent-line"></span>
-            <span class="terminal-vent-line"></span>
-            <span class="terminal-vent-line"></span>
+            <span class="terminal-vent-line"></span><span class="terminal-vent-line"></span>
+            <span class="terminal-vent-line"></span><span class="terminal-vent-line"></span>
+            <span class="terminal-vent-line"></span><span class="terminal-vent-line"></span>
+            <span class="terminal-vent-line"></span><span class="terminal-vent-line"></span>
+            <span class="terminal-vent-line"></span><span class="terminal-vent-line"></span>
         </div>
         <div class="terminal-corner tl"></div>
         <div class="terminal-corner tr"></div>
@@ -673,402 +317,84 @@ READY<span class="boot-cursor"></span></div>
         <div class="terminal-corner br"></div>
         <div class="terminal-badge">VT-100</div>
         <div class="terminal-label">TTY1</div>
-        <div class="terminal-line" id="terminal-line">LN 0001</div>
-        <div class="terminal-led" id="terminal-led"></div>
-        <button class="theme-toggle" id="theme-toggle" tabindex="-1" aria-label="切换主题">BRT</button>
+        <div class="terminal-led"></div>
 
-        <div class="screen" id="screen">
+        <div class="screen">
             <div class="crt-distort"></div>
             <div class="screen-phosphor"></div>
             <div class="screen-vignette"></div>
             <div class="screen-glare"></div>
             <div class="screen-scanlines"></div>
 
-            <div class="screen-content" id="screen-content">
+            <div class="screen-content">
                 <div class="term-bar">
-                    <span>[ {{site.title}}@host ~ ]$ cat "{{page.title}}"</span>
+                    <span>[ {{ site.title }}@host ~ ]$ cat "{{ page.title }}"</span>
                     <span>tty1</span>
                 </div>
 
-                <header class="chapter-header">
-                    <h1 class="chapter-title">{{page.title}}</h1>
+                <header class="page-header">
+                    <h1 class="page-title">{{ page.title }}</h1>
                     <div class="chapter-meta">
-                        <span id="word-count"></span>
+                        <span>{{ stats.word_count }} 字 &middot; ~{{ stats.read_min }} 分钟</span>
                         <span>&#124;</span>
-                        <span>{{page.date}}</span>
+                        <span>{{ format_datetime(page.write_time) }}</span>
                     </div>
                 </header>
 
                 <article class="chapter-content">
-                    {{page.content}}
+                    {{ page.contents }}
                 </article>
 
-                <nav class="chapter-nav" id="chapter-nav">
-                    <a class="nav-link disabled" id="prev-link" href="#">
+                <nav class="chapter-nav">
+                    {% if nav.prev_path and nav.prev_path != "" %}
+                    <a class="nav-link" href="{{ nav.prev_path }}">
+                        <span class="nav-label">&lt; PREV</span>
+                        <span class="nav-title">{{ nav.prev_title }}</span>
+                    </a>
+                    {% else %}
+                    <a class="nav-link disabled">
                         <span class="nav-label">&lt; PREV</span>
                         <span class="nav-title"></span>
                     </a>
+                    {% endif %}
+
                     <span class="nav-center">
-                        <a id="toc-link" href="/">目 录</a>
+                        <a href="/">目 录</a>
                     </span>
-                    <a class="nav-link disabled" id="next-link" href="#">
+
+                    {% if nav.next_path and nav.next_path != "" %}
+                    <a class="nav-link" href="{{ nav.next_path }}">
+                        <span class="nav-label">NEXT &gt;</span>
+                        <span class="nav-title">{{ nav.next_title }}</span>
+                    </a>
+                    {% else %}
+                    <a class="nav-link disabled">
                         <span class="nav-label">NEXT &gt;</span>
                         <span class="nav-title"></span>
                     </a>
+                    {% endif %}
                 </nav>
 
-                <footer class="page-footer">{{build.powered-by}}</footer>
-            </div>
-
-            <div class="keyboard-hint" id="keyboard-hint">
-                <span><kbd>j</kbd><kbd>k</kbd> 滚动</span>
-                <span class="hint-sep">|</span>
-                <span><kbd>Space</kbd> 翻页</span>
-                <span class="hint-sep">|</span>
-                <span><kbd>n</kbd><kbd>p</kbd> 章节</span>
-                <span class="hint-sep">|</span>
-                <span><kbd>h</kbd> 目录</span>
-                <span class="hint-sep">|</span>
-                <span><kbd>b</kbd> 主题</span>
+                <footer class="page-footer">{{ build.powered_by }}</footer>
             </div>
         </div>
     </div>
+<script>
+(function() {
+    var KEY = 'terminal-booted';
+    var WEEK = 7 * 24 * 60 * 60 * 1000;
+    var boot = document.querySelector('.boot-screen');
+    if (!boot) return;
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script>
-        (function () {
-            var normalizePath = function(p) {
-                if (!p || p === '/') return '/';
-                if (!p.startsWith('/')) p = '/' + p;
-                if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
-                return p;
-            };
+    var last = localStorage.getItem(KEY);
+    if (last && (Date.now() - parseInt(last, 10)) < WEEK) {
+        boot.remove();
+        return;
+    }
 
-            var isFirstBoot = !sessionStorage.getItem('terminal-booted');
-            var bootScreen = document.getElementById('boot-screen');
-
-            if (isFirstBoot) {
-                sessionStorage.setItem('terminal-booted', '1');
-                document.body.classList.add('boot-active');
-
-                setTimeout(function() {
-                    bootScreen.classList.add('fade-out');
-                    setTimeout(function() {
-                        bootScreen.remove();
-                        document.body.classList.remove('boot-active');
-                    }, 500);
-                }, 1800);
-            } else {
-                bootScreen.remove();
-            }
-
-            var nextUrl = null;
-            var prevUrl = null;
-
-            var preventWheel = function(e) {
-                e.preventDefault();
-            };
-
-            var isMouseEnabled = function() {
-                return !!localStorage.getItem("terminal-mouse-mode");
-            };
-
-            var enableMouse = function() {
-                document.body.classList.remove("keyboard-mode");
-                document.removeEventListener("wheel", preventWheel, {passive: false});
-                localStorage.setItem("terminal-mouse-mode", "1");
-            };
-
-            var disableMouse = function() {
-                document.body.classList.add("keyboard-mode");
-                document.addEventListener("wheel", preventWheel, {passive: false});
-                localStorage.removeItem("terminal-mouse-mode");
-            };
-
-            if (isMouseEnabled()) {
-                enableMouse();
-            } else {
-                disableMouse();
-            }
-
-            var formatDate = function (ts) {
-                var d = new Date(ts * 1000);
-                return d.getFullYear() + "-" +
-                    String(d.getMonth() + 1).padStart(2, "0") + "-" +
-                    String(d.getDate()).padStart(2, "0");
-            };
-
-            var countWords = function () {
-                var content = document.querySelector(".chapter-content");
-                if (!content) return 0;
-                var text = content.textContent || "";
-                var chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
-                var words = text.replace(/[\u4e00-\u9fff]/g, "").split(/\s+/).filter(Boolean).length;
-                return chineseChars + words;
-            };
-
-            var updateWordCount = function () {
-                var count = countWords();
-                var el = document.getElementById("word-count");
-                if (el && count > 0) {
-                    var readMin = Math.max(1, Math.ceil(count / 400));
-                    el.textContent = count + " 字 · 约 " + readMin + " 分钟";
-                }
-            };
-
-            var scEl = document.getElementById("screen-content");
-
-            var updateProgress = function () {
-                var fill = document.getElementById("tuner-fill");
-                if (!fill || !scEl) return;
-                var scrollTop = scEl.scrollTop;
-                var maxScroll = scEl.scrollHeight - scEl.clientHeight;
-                if (maxScroll <= 0) {
-                    fill.style.width = "0%";
-                    return;
-                }
-                var progress = Math.min(100, Math.max(0, (scrollTop / maxScroll) * 100));
-                fill.style.width = progress + "%";
-            };
-
-            scEl.addEventListener("scroll", updateProgress, { passive: true });
-
-            document.addEventListener('keydown', function(e) {
-                if (!scEl) return;
-
-                var lineHeight = parseFloat(getComputedStyle(document.body).fontSize) * 1.4;
-                var pageHeight = scEl.clientHeight;
-
-                if (e.key === 'j' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    scEl.scrollBy({ top: lineHeight * 3, behavior: 'smooth' });
-                } else if (e.key === 'k' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    scEl.scrollBy({ top: -lineHeight * 3, behavior: 'smooth' });
-                } else if (e.key === ' ' || e.key === 'PageDown') {
-                    e.preventDefault();
-                    scEl.scrollBy({ top: pageHeight * 0.8, behavior: 'smooth' });
-                } else if (e.key === 'PageUp') {
-                    e.preventDefault();
-                    scEl.scrollBy({ top: -pageHeight * 0.8, behavior: 'smooth' });
-                } else if (e.key === 'g' || e.key === 'Home') {
-                    e.preventDefault();
-                    scEl.scrollTo({ top: 0, behavior: 'smooth' });
-                } else if (e.key === 'G' || e.key === 'End') {
-                    e.preventDefault();
-                    scEl.scrollTo({ top: scEl.scrollHeight, behavior: 'smooth' });
-                } else if (e.key === 'n') {
-                    e.preventDefault();
-                    if (nextUrl) window.location.href = nextUrl;
-                } else if (e.key === 'p') {
-                    e.preventDefault();
-                    if (prevUrl) window.location.href = prevUrl;
-                } else if (e.key === 'h' || e.key === 'Backspace') {
-                    e.preventDefault();
-                    window.location.href = '/';
-                } else if (e.key === 'b' || e.key === 'B') {
-                    toggleTheme();
-                }
-            });
-
-            var getParent = function(p) {
-                var np = normalizePath(p);
-                if (np === '/') return null;
-                var parts = np.split('/');
-                parts.pop();
-                if (parts.length === 0 || (parts.length === 1 && parts[0] === '')) return '/';
-                return parts.join('/');
-            };
-
-            var flattenArticles = function(flat) {
-                var result = [];
-                for (var i = 0; i < flat.length; i++) {
-                    if (!flat[i].is_dir) {
-                        result.push({
-                            url: normalizePath(flat[i].link_path || flat[i].path),
-                            display_name: flat[i].title,
-                            path: normalizePath(flat[i].path)
-                        });
-                    }
-                }
-                return result;
-            };
-
-            var findParentPath = function(flat, articleUrl) {
-                var au = normalizePath(articleUrl);
-                var articlePath = null;
-                for (var i = 0; i < flat.length; i++) {
-                    if (!flat[i].is_dir) {
-                        var entryUrl = normalizePath(flat[i].link_path || flat[i].path);
-                        var entryPath = normalizePath(flat[i].path);
-                        if (entryUrl === au || entryPath === au) {
-                            articlePath = entryPath;
-                            break;
-                        }
-                    }
-                }
-                if (!articlePath) return '/';
-                var bestMatch = null;
-                var bestLen = 0;
-                for (var i = 0; i < flat.length; i++) {
-                    if (flat[i].is_dir) {
-                        var dp = normalizePath(flat[i].path);
-                        var prefix = dp === '/' ? '/' : dp + '/';
-                        if (articlePath.startsWith(prefix)) {
-                            if (dp.length > bestLen) {
-                                bestLen = dp.length;
-                                bestMatch = dp;
-                            }
-                        }
-                    }
-                }
-                return bestMatch || '/';
-            };
-
-            var setupNavigation = function (tocData) {
-                if (!tocData) return;
-
-                var allArticles = flattenArticles(tocData);
-                if (allArticles.length === 0) return;
-
-                var currentPath = window.location.pathname;
-                var currentIndex = -1;
-                for (var k = 0; k < allArticles.length; k++) {
-                    if (allArticles[k].url === currentPath || allArticles[k].path === currentPath) {
-                        currentIndex = k;
-                        break;
-                    }
-                }
-                if (currentIndex === -1) return;
-
-                var prevLink = document.getElementById("prev-link");
-                var nextLink = document.getElementById("next-link");
-                var lineEl = document.getElementById("terminal-line");
-                if (lineEl) {
-                    lineEl.textContent = "LN " + String(currentIndex + 1).padStart(4, '0');
-                }
-
-                if (currentIndex > 0) {
-                    prevLink.classList.remove("disabled");
-                    prevUrl = allArticles[currentIndex - 1].url;
-                    prevLink.querySelector(".nav-title").textContent = allArticles[currentIndex - 1].display_name;
-                }
-                if (currentIndex < allArticles.length - 1) {
-                    nextLink.classList.remove("disabled");
-                    nextUrl = allArticles[currentIndex + 1].url;
-                    nextLink.querySelector(".nav-title").textContent = allArticles[currentIndex + 1].display_name;
-                }
-
-                var tocLink = document.getElementById("toc-link");
-                if (tocLink) {
-                    var parentPath = findParentPath(tocData, currentPath);
-                    if (parentPath === '/') {
-                        tocLink.href = '/';
-                    } else {
-                        var p = parentPath.replace(/^\//, '');
-                        tocLink.href = '/?dir=' + encodeURIComponent(p);
-                    }
-                }
-            };
-
-            var loadToc = function () {
-                var xhr = new XMLHttpRequest();
-                xhr.open("GET", "/toc.json", true);
-                xhr.onload = function () {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            var data = JSON.parse(xhr.responseText);
-                            setupNavigation(data);
-                        } catch (e) {
-                            console.error("Failed to parse toc.json:", e);
-                        }
-                    }
-                };
-                xhr.onerror = function () {
-                    console.error("Failed to load toc.json");
-                };
-                xhr.send();
-            };
-
-            var initTheme = function () {
-                var saved = localStorage.getItem("terminal-theme");
-                if (saved === "amber") {
-                    applyAmberTheme();
-                }
-            };
-
-            var applyAmberTheme = function () {
-                var style = document.getElementById("terminal-style");
-                style.textContent = style.textContent.replace(/:root\s*\{[^}]*\}/, function () {
-                    return ":root {" +
-                        "--bg: #0a0a08;" +
-                        "--card-bg: #0f0f0c;" +
-                        "--text: #ffb000;" +
-                        "--text-secondary: #cc8800;" +
-                        "--text-dim: #664400;" +
-                        "--accent: #ffcc44;" +
-                        "--accent-glow: #ffdd66;" +
-                        "--accent-dim: #996600;" +
-                        "--border: #332200;" +
-                        "--divider: #332200;" +
-                        "--code-bg: #080808;" +
-                        "--nav-hover-bg: #14120c;" +
-                        "--bezel: #1a1a1a;" +
-                        "--bezel-dark: #0d0d0d;" +
-                        "--green: #ffb000;" +
-                        "--yellow: #ccaa33;" +
-                        "--pink: #cc6688;" +
-                        "--cyan: #44aacc;" +
-                        "}";
-                });
-                document.getElementById("hljs-theme").href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css";
-                document.getElementById("terminal-led").classList.remove("off");
-                localStorage.setItem("terminal-theme", "amber");
-            };
-
-            var applyGreenTheme = function () {
-                var style = document.getElementById("terminal-style");
-                style.textContent = style.textContent.replace(/:root\s*\{[^}]*\}/, function () {
-                    return ":root {" +
-                        "--bg: #0a0a08;" +
-                        "--card-bg: #0f0f0c;" +
-                        "--text: #33ff33;" +
-                        "--text-secondary: #22aa22;" +
-                        "--text-dim: #116611;" +
-                        "--accent: #66ff66;" +
-                        "--accent-glow: #88ff88;" +
-                        "--accent-dim: #228822;" +
-                        "--border: #1a331a;" +
-                        "--divider: #1a331a;" +
-                        "--code-bg: #080808;" +
-                        "--nav-hover-bg: #141412;" +
-                        "--bezel: #1a1a1a;" +
-                        "--bezel-dark: #0d0d0d;" +
-                        "--green: #33ff33;" +
-                        "--yellow: #cccc44;" +
-                        "--pink: #cc6688;" +
-                        "--cyan: #44aacc;" +
-                        "}";
-                });
-                document.getElementById("hljs-theme").href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css";
-                document.getElementById("terminal-led").classList.remove("off");
-                localStorage.setItem("terminal-theme", "green");
-            };
-
-            var toggleTheme = function() {
-                if (localStorage.getItem('terminal-theme') === 'amber') {
-                    applyGreenTheme();
-                } else {
-                    applyAmberTheme();
-                }
-            };
-
-            updateWordCount();
-            updateProgress();
-            loadToc();
-            initTheme();
-            hljs.highlightAll();
-        })();
-    </script>
+    localStorage.setItem(KEY, String(Date.now()));
+    setTimeout(function() { boot.remove(); }, 3200);
+})();
+</script>
 </body>
 </html>

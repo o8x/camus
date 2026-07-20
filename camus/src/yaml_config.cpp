@@ -17,19 +17,21 @@ namespace camus::config
 {
 	void yaml_config::supplement_other_vars()
 	{
-		flattened_map.emplace("build.basedir", std::filesystem::current_path());
-		flattened_map.emplace("site.title", camus_.site.title);
-		flattened_map.emplace("site.subtitle", camus_.site.subtitle);
-		flattened_map.emplace("site.desc", camus_.site.description);
+		const std::filesystem::path basedir = std::filesystem::current_path();
+
+		public_map_.emplace("build.basedir", basedir);
+		public_map_.emplace("site.title", camus_.site.title);
+		public_map_.emplace("site.subtitle", camus_.site.subtitle);
+		public_map_.emplace("site.desc", camus_.site.description);
 
 		for (const auto &r : routes_) {
-			flattened_map.emplace(std::format("route.{}.path", r.path), r.path);
-			flattened_map.emplace(std::format("route.{}.title", r.path), r.title);
-			flattened_map.emplace(std::format("route.{}.subtitle", r.path), r.subtitle);
-			flattened_map.emplace(std::format("route.{}.description", r.path), r.description);
+			public_map_.emplace(std::format("route.{}.path", r.path), r.path);
+			public_map_.emplace(std::format("route.{}.title", r.path), r.title);
+			public_map_.emplace(std::format("route.{}.subtitle", r.path), r.subtitle);
+			public_map_.emplace(std::format("route.{}.description", r.path), r.description);
 			for (const auto &[source, target] : r.transfers) {
-				flattened_map.emplace(std::format("route.{}.transfers.{}.source", r.path, source.string()), source);
-				flattened_map.emplace(std::format("route.{}.transfers.{}.target", r.path, source.string()), target);
+				public_map_.emplace(std::format("route.{}.transfers.{}.source", r.path, source.string()), source);
+				public_map_.emplace(std::format("route.{}.transfers.{}.target", r.path, source.string()), target);
 			}
 		}
 
@@ -44,12 +46,12 @@ namespace camus::config
 
 				// 全局词典
 				if (k.starts_with("DICT_")) {
-					flattened_map.emplace(
+					public_map_.emplace(
 						std::format("dict.{}", strings::to_lower(strings::replace(k, "DICT_", ""))),
 						strings::trim_space(kv[1])
 					);
 				} else {
-					flattened_map.emplace(std::format("env.{}", strings::to_lower(k)), strings::trim_space(kv[1]));
+					public_map_.emplace(std::format("env.{}", strings::to_lower(k)), strings::trim_space(kv[1]));
 				}
 			}
 		}
@@ -66,31 +68,41 @@ namespace camus::config
 		const time_t now = std::time(nullptr);
 		char buf[20];
 		std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
-		flattened_map.emplace("build.timestamp", std::to_string(now * 1000));
-		flattened_map.emplace("build.time", buf);
-		flattened_map.emplace("build.build-type", BUILD_TYPE);
-		flattened_map.emplace("build.cmake-version", CMAKE_VERSION);
-		flattened_map.emplace("build.cxx-standard", std::to_string(CXX_STANDARD));
-		flattened_map.emplace("build.version", PROJECT_VERSION);
-		flattened_map.emplace("build.version_major", std::to_string(PROJECT_VERSION_MAJOR));
-		flattened_map.emplace("build.compiler", compiler_version);
-		flattened_map.emplace("git.repo", GIT_REPO);
-		flattened_map.emplace("git.branch", GIT_BRANCH);
-		flattened_map.emplace("git.commit-hash", GIT_COMMIT_HASH);
-		flattened_map.emplace(
+		public_map_.emplace("build.timestamp", std::to_string(now * 1000));
+		public_map_.emplace("build.time", buf);
+		public_map_.emplace("build.build-type", BUILD_TYPE);
+		public_map_.emplace("build.cmake-version", CMAKE_VERSION);
+		public_map_.emplace("build.cxx-standard", std::to_string(CXX_STANDARD));
+		public_map_.emplace("build.version", PROJECT_VERSION);
+		public_map_.emplace("build.version_major", std::to_string(PROJECT_VERSION_MAJOR));
+		public_map_.emplace("build.compiler", compiler_version);
+		public_map_.emplace("git.repo", GIT_REPO);
+		public_map_.emplace("git.branch", GIT_BRANCH);
+		public_map_.emplace("git.commit-hash", GIT_COMMIT_HASH);
+		public_map_.emplace(
 			"build.powered-by",
 			std::format(
 				R"(
+<a class="site-stats-link" href="/">Home</a> /
+<a class="site-stats-link" href="/friends.html">Friends</a> /
+<a class="site-stats-link" href="/stats.html">Stats</a> /
+<a class="site-stats-link" href="{{env.github_url}}" target="_blank">GitHub</a>
+<br />
 <small>
-	<a class="site-stats-link" href="/stats.html" target="_blank">site stats</a><br />
 	<em>Powered by <a href="{}/releases/tag/v{}" target="_blank" title="Camus v{}">Camus</a> built with {}</em>
-</small>)",
+</small>
+)",
 				GIT_REPO,
 				PROJECT_VERSION,
 				PROJECT_VERSION,
 				compiler_version
 			)
 		);
+
+		// 不暴露真实目录
+		for (auto &val : public_map_ | std::views::values) {
+			val = strings::replace(val, basedir, "/");
+		}
 	}
 
 	yaml_config::yaml_config(const std::string &filename) : camus_({}), filename_(filename)
@@ -111,23 +123,26 @@ namespace camus::config
 			error::panic("config file parse failed");
 		}
 
-		flattened_map.emplace("build.config", filesystem::path_abs(filename_));
+		public_map_.emplace("build.config", filesystem::path_abs(filename_));
 
 		for (const auto &it : camus_data) {
 			const auto key = strings::trim_space(it.first.as<std::string>());
 
-			camus_.render.static_engine = "default";
+			camus_.render.html_engine = "default";
 			if (key == "render") {
-				camus_.render.engine = it.second["engine"].as<std::string>();
-				camus_.render.static_engine = it.second["static"].as<std::string>();
-				flattened_map.emplace("camus.render.engine", camus_.render.engine);
+				camus_.render.markdown_engine = it.second["markdown_engine"].as<std::string>();
+				camus_.render.html_engine = it.second["html_engine"].as<std::string>();
+				camus_.render.meta = it.second["meta"].as<bool>();
+				public_map_.emplace("camus.render.meta", camus_.render.meta ? "true" : "false");
+				public_map_.emplace("camus.render.html_engine", camus_.render.html_engine);
+				public_map_.emplace("camus.render.markdown_engine", camus_.render.markdown_engine);
 
 				std::vector<std::string> options;
 
-				if (camus_.render.engine == "cmark-gfm") {
-					camus_.render.options = CMARK_OPT_DEFAULT;
+				if (camus_.render.markdown_engine == "cmark-gfm") {
+					camus_.render.markdown_options = CMARK_OPT_DEFAULT;
 					if (WORK_ON_DEBUG) {
-						camus_.render.options |= CMARK_OPT_SOURCEPOS;
+						camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
 					}
 
 					for (const auto &opt : it.second["options"]) {
@@ -135,40 +150,38 @@ namespace camus::config
 						options.push_back(name);
 
 						if (name == "SOURCEPOS") {
-							camus_.render.options |= CMARK_OPT_SOURCEPOS;
+							camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
 						} else if (name == "HARDBREAKS") {
-							camus_.render.options |= CMARK_OPT_HARDBREAKS;
+							camus_.render.markdown_options |= CMARK_OPT_HARDBREAKS;
 						} else if (name == "UNSAFE") {
-							camus_.render.options |= CMARK_OPT_UNSAFE;
+							camus_.render.markdown_options |= CMARK_OPT_UNSAFE;
 						} else if (name == "NOBREAKS") {
-							camus_.render.options |= CMARK_OPT_NOBREAKS;
+							camus_.render.markdown_options |= CMARK_OPT_NOBREAKS;
 						} else if (name == "NORMALIZE") {
-							camus_.render.options |= CMARK_OPT_NORMALIZE;
+							camus_.render.markdown_options |= CMARK_OPT_NORMALIZE;
 						} else if (name == "VALIDATE_UTF8") {
-							camus_.render.options |= CMARK_OPT_VALIDATE_UTF8;
+							camus_.render.markdown_options |= CMARK_OPT_VALIDATE_UTF8;
 						} else if (name == "SMART") {
-							camus_.render.options |= CMARK_OPT_SMART;
+							camus_.render.markdown_options |= CMARK_OPT_SMART;
 						} else if (name == "GITHUB_PRE_LANG") {
-							camus_.render.options |= CMARK_OPT_GITHUB_PRE_LANG;
+							camus_.render.markdown_options |= CMARK_OPT_GITHUB_PRE_LANG;
 						} else if (name == "LIBERAL_HTML_TAG") {
-							camus_.render.options |= CMARK_OPT_LIBERAL_HTML_TAG;
+							camus_.render.markdown_options |= CMARK_OPT_LIBERAL_HTML_TAG;
 						} else if (name == "FOOTNOTES") {
-							camus_.render.options |= CMARK_OPT_FOOTNOTES;
+							camus_.render.markdown_options |= CMARK_OPT_FOOTNOTES;
 						} else if (name == "STRIKETHROUGH_DOUBLE_TILDE") {
-							camus_.render.options |= CMARK_OPT_STRIKETHROUGH_DOUBLE_TILDE;
+							camus_.render.markdown_options |= CMARK_OPT_STRIKETHROUGH_DOUBLE_TILDE;
 						} else if (name == "TABLE_PREFER_STYLE_ATTRIBUTES") {
-							camus_.render.options |= CMARK_OPT_TABLE_PREFER_STYLE_ATTRIBUTES;
+							camus_.render.markdown_options |= CMARK_OPT_TABLE_PREFER_STYLE_ATTRIBUTES;
 						} else if (name == "FULL_INFO_STRING") {
-							camus_.render.options |= CMARK_OPT_FULL_INFO_STRING;
+							camus_.render.markdown_options |= CMARK_OPT_FULL_INFO_STRING;
 						}
 					}
 				}
 
-				flattened_map.emplace("camus.render.static", camus_.render.static_engine);
-				flattened_map.emplace("camus.render.engine", camus_.render.engine);
-				flattened_map.emplace(
+				public_map_.emplace(
 					"camus.render.options",
-					std::format("{}({})", camus_.render.options, strings::string_join(options, ","))
+					std::format("{}({})", camus_.render.markdown_options, strings::string_join(options, ","))
 				);
 				continue;
 			}
@@ -188,14 +201,12 @@ namespace camus::config
 			} else if (key == "sitemap") {
 				camus_.sitemap = value == "true";
 			} else if (key == "theme") {
-				camus_.theme_home = value;
+				camus_.theme_name = value;
 			} else if (key == "filename_case") {
 				camus_.filename_case = value;
-			} else if (key == "toc_format") {
-				camus_.toc_format = value;
 			}
 
-			flattened_map.emplace(std::format("camus.{}", key), value);
+			public_map_.emplace(std::format("camus.{}", key), value);
 		}
 
 		if (!std::filesystem::exists(camus_.source_dir)) {
@@ -210,43 +221,31 @@ namespace camus::config
 			logging::fatal("assets dir not exists name={}", camus_.assets_dir.string());
 		}
 
-		if (camus_.render.static_engine != "default") {
-			camus_.theme_home = std::format("{}/{}", camus_.theme_home, camus_.render.static_engine);
+		if (camus_.render.html_engine != "default") {
+			camus_.theme_name = std::format("{}/{}", camus_.theme_name, camus_.render.html_engine);
 		}
 
-		// 默认使用 .camus/theme
-		std::string home_file = std::format("{}/theme/{}/home.html", CAMUS_DIR, camus_.theme_home);
-		std::string page_file = std::format("{}/theme/{}/page.html", CAMUS_DIR, camus_.theme_home);
-		std::string stats_file = std::format("{}/theme/{}/stats.html", CAMUS_DIR, camus_.theme_home);
+		const auto read_theme = [](const std::string &name, const std::string &type) -> std::string {
+			std::string home_file = std::format("{}/theme/{}/{}.html", CAMUS_DIR, name, type);
 
-		// 检查是否存在覆盖主题
-		if (std::filesystem::exists(std::format("theme/{}/home.html", camus_.theme_home))) {
-			home_file = std::format("theme/{}/home.html", camus_.theme_home);
-		}
+			// 检查是否存在覆盖主题
+			if (const std::string replace_theme = std::format("theme/{}/{}.html", name, type);
+				std::filesystem::exists(replace_theme)) {
+				home_file = replace_theme;
+			}
 
-		if (std::filesystem::exists(std::format("theme/{}/page.html", camus_.theme_home))) {
-			page_file = std::format("theme/{}/page.html", camus_.theme_home);
-		}
+			if (!std::filesystem::exists(home_file)) {
+				logging::fatal("read theme content failed name={}/{}", name, type);
+			}
 
-		if (std::filesystem::exists(std::format("theme/{}/stats.html", camus_.theme_home))) {
-			stats_file = std::format("theme/{}/stats.html", camus_.theme_home);
-		}
+			logging::debug("load  theme contents name={}/{}", name, type);
+			return filesystem::read_file(home_file);
+		};
 
-		if (!std::filesystem::exists(home_file) || !std::filesystem::exists(page_file)) {
-			logging::fatal(
-				"theme {} not found home={} page={} stats={}",
-				camus_.theme_home,
-				home_file,
-				page_file,
-				stats_file
-			);
-		}
-
-		logging::debug("load theme home={} page={} stats={}", home_file, page_file, stats_file);
-
-		camus_.theme_home = filesystem::read_file(home_file);
-		camus_.theme_page = filesystem::read_file(page_file);
-		camus_.theme_stats = filesystem::read_file(stats_file);
+		camus_.theme[CAMUS_THEME_TYPE_HOME] = read_theme(camus_.theme_name, "home");
+		camus_.theme[CAMUS_THEME_TYPE_PAGE] = read_theme(camus_.theme_name, "page");
+		camus_.theme[CAMUS_THEME_TYPE_STATS] = read_theme(camus_.theme_name, "stats");
+		camus_.theme[CAMUS_THEME_TYPE_FRIENDS] = read_theme(camus_.theme_name, "friends");
 
 		const YAML::Node catalog_data = root["catalog"];
 		if (!catalog_data.IsSequence()) {
@@ -321,6 +320,24 @@ namespace camus::config
 			c.description = c.description.empty() ? camus_.site.description : c.description;
 		}
 
+		if (const YAML::Node friends_data = root["friends"]; friends_data && friends_data.IsSequence()) {
+			for (const auto &tr : friends_data) {
+				friend_link_conf t{
+					.title = tr["title"].as<std::string>(),
+					.desc = tr["desc"].as<std::string>(),
+					.link_url = tr["link_url"].as<std::string>(),
+					.image_url = tr["image_url"].as<std::string>(),
+				};
+
+				camus_.friends.push_back(t);
+
+				public_map_.emplace(std::format("friends.{}.title", t.title), t.title);
+				public_map_.emplace(std::format("friends.{}.desc", t.title), t.desc);
+				public_map_.emplace(std::format("friends.{}.link_url", t.title), t.link_url);
+				public_map_.emplace(std::format("friends.{}.image_url", t.title), t.image_url);
+			}
+		}
+
 		supplement_other_vars();
 	}
 
@@ -333,7 +350,7 @@ namespace camus::config
 	{
 		nlohmann::json j;
 
-		for (const auto &[name, val] : flattened_map) {
+		for (const auto &[name, val] : public_map_) {
 			auto [key, sub_key] = strings::split_pair(name, ".");
 			if (key.empty()) {
 				continue;
@@ -347,13 +364,13 @@ namespace camus::config
 
 	std::map<std::string, std::string> yaml_config::map() const
 	{
-		return flattened_map;
+		return public_map_;
 	}
 
 	std::string yaml_config::render_var(const std::string &data) const
 	{
 		std::string res = data;
-		for (const auto &[key, value] : flattened_map) {
+		for (const auto &[key, value] : public_map_) {
 			std::string key_name = "{{" + key + "}}";
 			// 字典替换不带括号
 			if (key.starts_with("dict.")) {

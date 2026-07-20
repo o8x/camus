@@ -4,118 +4,30 @@
     <meta charset="utf-8"/>
     <meta http-equiv="x-ua-compatible" content="ie=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="{{site.subtitle}}">
-    <meta name="build-time" content="{{build.time}}">
-    <meta name="build-type" content="{{build.build-type}}">
-    <meta name="cmake-version" content="{{build.cmake-version}}">
-    <meta name="cxx-standard" content="{{build.cxx-standard}}">
-    <title id="page-title">{{site.title}} - {{site.subtitle}}</title>
-    <link id="favicon" rel="icon" href="/favicon.ico">
+    <meta name="description" content="{{ site.subtitle }}">
+    <meta name="build-time" content="{{ build.time }}">
+    <meta name="build-type" content="{{ build.build_type }}">
+    <meta name="cmake-version" content="{{ build.cmake_version }}">
+    <meta name="cxx-standard" content="{{ build.cxx_standard }}">
+    <title>
+        {% if current.path != "/" and current.title %}
+        {{ current.title }} - {{ site.title }}
+        {% else %}
+        {{ site.title }} - {{ site.subtitle }}
+        {% endif %}
+    </title>
+    <link rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <style id="pixel-style">
-        :root {
-            --bg: #1a1a2e;
-            --card-bg: #16213e;
-            --text: #c7d2e0;
-            --text-secondary: #7b8ca3;
-            --accent: #ff6b35;
-            --accent-glow: #ff9f45;
-            --border: #2a3a5c;
-            --divider: #2a3a5c;
-            --code-bg: #0f1425;
-            --nav-hover-bg: #1e2d4a;
-            --green: #4ade80;
-            --yellow: #facc15;
-            --pink: #f472b6;
-            --cyan: #22d3ee;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Courier New', 'Source Code Pro', 'Noto Sans SC', monospace;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            line-height: 1.8;
-            image-rendering: pixelated;
-        }
-
-        .scanlines {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            z-index: 999;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0, 0, 0, 0.06) 2px,
-                rgba(0, 0, 0, 0.06) 4px
-            );
-        }
-
+    <link rel="stylesheet" href="/css/pixel-inja.css">
+    <style>
         .cover {
             max-width: 1350px;
             margin: 0 auto;
             padding: 3rem 2rem 6rem;
-        }
-
-        .pixel-deco {
-            text-align: center;
-            margin-bottom: 1rem;
-            color: var(--accent);
-            font-size: 0.5rem;
-            letter-spacing: 0.5rem;
-            font-family: 'Press Start 2P', monospace;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .cover-header {
-            text-align: center;
-            padding: 3rem 0;
-            margin-bottom: 2rem;
-            border: 4px solid var(--accent);
-            border-image: repeating-linear-gradient(
-                45deg,
-                var(--accent),
-                var(--accent) 4px,
-                var(--bg) 4px,
-                var(--bg) 8px
-            ) 4;
-            background: var(--card-bg);
-            box-shadow:
-                0 0 0 4px var(--bg),
-                0 0 0 8px var(--accent),
-                0 0 20px rgba(255, 107, 53, 0.3);
-        }
-
-        .cover-title {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1.7rem;
-            color: var(--accent);
-            text-shadow:
-                2px 2px 0 var(--bg),
-                4px 4px 0 var(--accent);
-            letter-spacing: 0.15em;
-            line-height: 2;
-            margin-bottom: 1rem;
-            image-rendering: pixelated;
-        }
-
-        .cover-subtitle {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.9rem;
-            color: var(--accent-glow);
-            letter-spacing: 0.3em;
-            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
         }
 
         .cover-description {
@@ -123,15 +35,13 @@
             text-align: center;
             color: var(--text-secondary);
             font-family: 'Press Start 2P', 'Courier New', 'NSimSun', 'GB18030 Bitmap', 'Noto Sans SC', serif, monospace;
-            font-size: 1.1rem;
+            font-size: 0.85rem;
             line-height: 2;
             padding: 2rem 1.5rem;
             margin: 2rem auto;
             border: 2px solid var(--border);
             background: var(--card-bg);
-            box-shadow:
-                inset 0 0 0 2px var(--bg),
-                0 0 0 2px var(--border);
+            box-shadow: inset 0 0 0 2px var(--bg), 0 0 0 2px var(--border);
             position: relative;
         }
 
@@ -158,131 +68,12 @@
             text-shadow: 2px 2px 0 var(--bg);
         }
 
-        .toc-loading {
-            text-align: center;
-            padding: 2rem 0;
-        }
-
-        .toc-loading-text {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.55rem;
-            color: var(--accent);
-            letter-spacing: 0.3em;
-            margin-bottom: 1.2rem;
-        }
-
-        .toc-loading-dots {
-            display: inline-flex;
-            gap: 0.4rem;
-            margin: 0 0.3rem;
-            vertical-align: middle;
-        }
-
-        .toc-loading-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--accent);
-            display: inline-block;
-            animation: dotBounce 0.8s infinite;
-        }
-
-        .toc-loading-dot:nth-child(2) { animation-delay: 0.2s; }
-        .toc-loading-dot:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes dotBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
-        }
-
-        .toc-loading-bar {
-            width: 240px;
-            height: 12px;
-            margin: 0 auto;
-            border: 2px solid var(--border);
-            background: var(--code-bg);
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.3),
-                inset 2px 2px 0 rgba(255,255,255,0.02);
-            padding: 1px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .toc-loading-bar-fill {
-            height: 100%;
-            width: 0;
-            background: repeating-linear-gradient(
-                90deg,
-                var(--accent),
-                var(--accent) 8px,
-                var(--accent-glow) 8px,
-                var(--accent-glow) 16px
-            );
-            animation: barFill 2.5s steps(6) infinite;
-        }
-
-        @keyframes barFill {
-            0% { width: 0; }
-            40% { width: 60%; }
-            70% { width: 70%; }
-            100% { width: 70%; }
-        }
-
-        .toc-loading-blocks {
-            display: flex;
-            justify-content: center;
-            gap: 4px;
-            margin-top: 0.8rem;
-        }
-
-        .toc-loading-block {
-            width: 10px;
-            height: 10px;
-            background: var(--border);
-            animation: blockFlash 1.8s infinite;
-        }
-
-        .toc-loading-block:nth-child(1) { animation-delay: 0s; }
-        .toc-loading-block:nth-child(2) { animation-delay: 0.225s; }
-        .toc-loading-block:nth-child(3) { animation-delay: 0.45s; }
-        .toc-loading-block:nth-child(4) { animation-delay: 0.675s; }
-        .toc-loading-block:nth-child(5) { animation-delay: 0.9s; }
-        .toc-loading-block:nth-child(6) { animation-delay: 1.125s; }
-        .toc-loading-block:nth-child(7) { animation-delay: 1.35s; }
-        .toc-loading-block:nth-child(8) { animation-delay: 1.575s; }
-
-        @keyframes blockFlash {
-            0%, 60% { background: var(--border); }
-            65% { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
-            70%, 100% { background: var(--border); }
-        }
-
-        body.toc-animating {
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .toc-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .toc-list.done .toc-item {
-            animation: tocFadeIn 0.3s steps(3) both;
-        }
+        .toc-list { list-style: none; padding: 0; }
 
         @keyframes tocFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(12px);
-            }
-            50% {
-                opacity: 0.5;
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(12px); }
+            50% { opacity: 0.5; }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .toc-item {
@@ -293,9 +84,7 @@
             background: var(--card-bg);
             border: 2px solid var(--border);
             transition: all 0.15s;
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05);
             position: relative;
         }
 
@@ -303,31 +92,20 @@
             border-color: var(--accent);
             background: var(--nav-hover-bg);
             transform: translate(-2px, -2px);
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05),
-                4px 4px 0 var(--accent);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05), 4px 4px 0 var(--accent);
         }
 
         .toc-item::before {
             content: '';
-            width: 8px;
-            height: 8px;
+            width: 8px; height: 8px;
             background: var(--green);
             margin-right: 1rem;
             flex-shrink: 0;
             box-shadow: 0 0 6px var(--green);
         }
 
-        .toc-item:nth-child(3n+2)::before {
-            background: var(--yellow);
-            box-shadow: 0 0 6px var(--yellow);
-        }
-
-        .toc-item:nth-child(3n)::before {
-            background: var(--pink);
-            box-shadow: 0 0 6px var(--pink);
-        }
+        .toc-item:nth-child(3n+2)::before { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+        .toc-item:nth-child(3n)::before   { background: var(--pink);   box-shadow: 0 0 6px var(--pink); }
 
         .toc-num {
             font-family: 'Press Start 2P', monospace;
@@ -339,15 +117,8 @@
             flex-shrink: 0;
         }
 
-        .toc-dir .toc-num {
-            color: var(--accent);
-            font-size: 0.42rem;
-        }
-
-        .toc-back-root .toc-num {
-            color: var(--cyan);
-            font-size: 0.42rem;
-        }
+        .toc-dir .toc-num       { color: var(--accent); font-size: 0.42rem; }
+        .toc-back-root .toc-num { color: var(--cyan);   font-size: 0.42rem; }
 
         .toc-link {
             color: var(--text);
@@ -358,9 +129,7 @@
             transition: color 0.15s;
         }
 
-        .toc-link:hover {
-            color: var(--accent);
-        }
+        .toc-link:hover { color: var(--accent); }
 
         .toc-date {
             font-family: 'Press Start 2P', monospace;
@@ -378,25 +147,17 @@
             letter-spacing: 0.05em;
         }
 
-        .toc-dir .toc-link::after {
-            content: '/';
-            margin-left: 0.3rem;
-            color: var(--accent-glow);
-        }
+        .toc-dir .toc-link::after { content: '/'; margin-left: 0.3rem; color: var(--accent-glow); }
 
         .toc-dir::before {
             background: var(--accent) !important;
             box-shadow: 0 0 6px var(--accent) !important;
-            width: 10px !important;
-            height: 10px !important;
+            width: 10px !important; height: 10px !important;
         }
 
         .toc-dir:hover {
             border-color: var(--accent-glow);
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05),
-                4px 4px 0 var(--accent-glow);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05), 4px 4px 0 var(--accent-glow);
         }
 
         .toc-back-root .toc-link {
@@ -409,245 +170,123 @@
         .toc-back-root::before {
             background: var(--cyan) !important;
             box-shadow: 0 0 6px var(--cyan) !important;
-            width: 10px !important;
-            height: 10px !important;
+            width: 10px !important; height: 10px !important;
         }
 
         .toc-back-root:hover {
             border-color: var(--cyan);
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.2),
-                inset 2px 2px 0 rgba(255,255,255,0.05),
-                4px 4px 0 var(--cyan);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05), 4px 4px 0 var(--cyan);
         }
 
-        .cover-footer {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            padding-top: 2rem;
-            font-family: 'Courier New', 'Noto Sans SC', monospace;
-        }
-
-        .cover-footer a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        .cover-footer a:hover {
-            color: var(--accent-glow);
-        }
-
-        .theme-toggle {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            width: 44px;
-            height: 44px;
-            border: 2px solid var(--border);
-            background: var(--card-bg);
-            color: var(--accent);
-            cursor: pointer;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.6rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.1s;
-            z-index: 1000;
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.3),
-                inset 2px 2px 0 rgba(255,255,255,0.05);
-        }
-
-        .theme-toggle:hover {
-            border-color: var(--accent);
-            background: var(--accent);
-            color: #1a1a2e;
-            box-shadow:
-                inset -2px -2px 0 rgba(0,0,0,0.3),
-                inset 2px 2px 0 rgba(255,255,255,0.1),
-                0 0 12px var(--accent);
-        }
-
-        .theme-toggle:active {
-            transform: translate(2px, 2px);
-            box-shadow:
-                inset 2px 2px 0 rgba(0,0,0,0.3),
-                inset -2px -2px 0 rgba(255,255,255,0.05);
-        }
-
-        .pixel-stars {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            z-index: 0;
-            background-image:
-                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), transparent),
-                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.2), transparent),
-                radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.4), transparent),
-                radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.2), transparent),
-                radial-gradient(1px 1px at 230px 80px, rgba(255,255,255,0.3), transparent),
-                radial-gradient(2px 2px at 310px 50px, rgba(255,255,255,0.2), transparent),
-                radial-gradient(1px 1px at 400px 100px, rgba(255,255,255,0.3), transparent),
-                radial-gradient(2px 2px at 500px 30px, rgba(255,255,255,0.2), transparent),
-                radial-gradient(1px 1px at 600px 90px, rgba(255,255,255,0.3), transparent),
-                radial-gradient(2px 2px at 700px 60px, rgba(255,255,255,0.15), transparent);
-        }
-
-        @media (max-width: 640px) {
-            .cover {
-                padding: 2rem 1rem 3rem;
+        @media (max-width: 768px) {
+            .cover { padding: 2rem 1.2rem 4rem; }
+            .cover-description {
+                font-size: 0.75rem;
+                line-height: 1.8;
+                padding: 1.5rem 1rem;
+                margin: 1.5rem auto;
             }
-            .cover-title {
-                font-size: 0.9rem;
+            .cover-description::before { font-size: 0.3rem; top: -0.5rem; }
+            .toc-header { font-size: 0.6rem; letter-spacing: 0.15em; margin: 2rem 0 1rem; }
+            .toc-item { padding: 0.5rem 0.6rem; flex-wrap: wrap; }
+            .toc-item::before { width: 6px; height: 6px; margin-right: 0.7rem; }
+            .toc-dir::before { width: 8px !important; height: 8px !important; }
+            .toc-back-root::before { width: 8px !important; height: 8px !important; }
+            .toc-num { font-size: 0.35rem; min-width: 2.5rem; margin-right: 0.7rem; }
+            .toc-dir .toc-num, .toc-back-root .toc-num { font-size: 0.32rem; }
+            .toc-link { font-size: 0.85rem; }
+            .toc-dir .toc-link { font-size: 0.85rem; }
+            .toc-back-root .toc-link { font-size: 0.8rem; }
+            .toc-date { font-size: 0.3rem; }
+        }
+
+        @media (max-width: 480px) {
+            .cover { padding: 1.2rem 0.8rem 3rem; }
+            .cover-description {
+                font-size: 0.62rem;
+                line-height: 1.7;
+                padding: 1rem 0.7rem;
+                margin: 1rem auto;
+                text-indent: 1.5em;
             }
-            .cover-subtitle {
-                font-size: 0.45rem;
+            .cover-description::before { font-size: 0.25rem; top: -0.4rem; left: 0.6rem; }
+            .toc-header { font-size: 0.45rem; letter-spacing: 0.1em; margin: 1.5rem 0 0.8rem; }
+            @keyframes tocFadeIn {
+                from { opacity: 0; transform: translateY(6px); }
+                50% { opacity: 0.5; }
+                to { opacity: 1; transform: translateY(0); }
             }
-            .toc-item {
-                flex-wrap: wrap;
-                padding: 0.5rem;
-            }
-            .toc-date {
-                width: 100%;
-                margin-left: 2.5rem;
-                margin-top: 0.3rem;
-            }
-            .toc-link {
-                font-size: 0.85rem;
-            }
+            .toc-item { padding: 0.4rem 0.5rem; flex-wrap: wrap; animation-duration: 0.2s !important; }
+            .toc-item::before { width: 5px; height: 5px; margin-right: 0.5rem; }
+            .toc-dir::before { width: 7px !important; height: 7px !important; }
+            .toc-back-root::before { width: 7px !important; height: 7px !important; }
+            .toc-num { font-size: 0.28rem; min-width: 2rem; margin-right: 0.5rem; }
+            .toc-dir .toc-num, .toc-back-root .toc-num { font-size: 0.26rem; }
+            .toc-link { font-size: 0.78rem; }
+            .toc-dir .toc-link { font-size: 0.78rem; }
+            .toc-back-root .toc-link { font-size: 0.72rem; }
+            .toc-date { font-size: 0.26rem; width: 100%; margin-left: 2.4rem; margin-top: 0.2rem; }
         }
     </style>
 </head>
 <body>
-    <div class="pixel-stars"></div>
-    <div class="scanlines"></div>
-    <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">[]</button>
+<div class="pixel-stars"></div>
+<div class="scanlines"></div>
 
-    <div class="cover" style="position:relative;z-index:1">
-        <div class="pixel-deco">[ * * * * * * * * * * ]</div>
-        <header class="cover-header">
-            <h1 class="cover-title" id="cover-title">{{site.title}}</h1>
-            <p class="cover-subtitle">{{site.subtitle}}</p>
-        </header>
+<div class="cover" style="position:relative;z-index:1">
+    <div class="pixel-deco">[ * * * * * * * * * * ]</div>
+    <header class="cover-header">
+        {% if current.path != "/" and current.title %}
+        <h1 class="cover-title">{{ current.title }}</h1>
+        {% if current.subtitle %}<p class="cover-subtitle">{{ current.subtitle }}</p>{% endif %}
+        {% else %}
+        <h1 class="cover-title">{{ site.title }}</h1>
+        {% if site.subtitle %}<p class="cover-subtitle">{{ site.subtitle }}</p>{% endif %}
+        {% endif %}
+    </header>
 
-        <p class="cover-description" id="cover-description">{{site.description}}</p>
+    <p class="cover-description">
+        {% if current.path != "/" and current.desc %}
+        {{ current.desc }}
+        {% else %}
+        {{ default(site.desc, "") }}
+        {% endif %}
+    </p>
 
-        <div class="toc-header">&#9654; 目 录 &#9664;</div>
+    <div class="toc-header">&#9654; 目 录 &#9664;</div>
 
-        <div id="toc-loading" class="toc-loading">
-            <div class="toc-loading-text">
-                LOADING
-                <span class="toc-loading-dots">
-                    <span class="toc-loading-dot"></span>
-                    <span class="toc-loading-dot"></span>
-                    <span class="toc-loading-dot"></span>
-                </span>
-            </div>
-            <div class="toc-loading-bar">
-                <div class="toc-loading-bar-fill"></div>
-            </div>
-            <div class="toc-loading-blocks">
-                <span class="toc-loading-block"></span>
-                <span class="toc-loading-block"></span>
-                <span class="toc-loading-block"></span>
-                <span class="toc-loading-block"></span>
-                <span class="toc-loading-block"></span>
-                <span class="toc-loading-block"></span>
-                <span class="toc-loading-block"></span>
-                <span class="toc-loading-block"></span>
-            </div>
-        </div>
+    <ul class="toc-list">
+        {% if current.path != "/" %}
+        <li class="toc-item toc-back-root" style="animation: tocFadeIn 0.3s steps(3) both; animation-delay: 0.00s;">
+            <span class="toc-num">[/]</span>
+            <a class="toc-link" href="{{ parent.url }}">{{ parent.label }}</a>
+            <span class="toc-date"></span>
+        </li>
+        {% endif %}
+        {% for item in items %}
+        {% if item.is_dir %}
+        <li class="toc-item toc-dir"
+            style="animation: tocFadeIn 0.3s steps(3) both; animation-delay: {{ round(loop.index1 * 0.015, 3) }}s;">
+            <span class="toc-num">[+]</span>
+            <a class="toc-link" href="{{ item.path }}">{{ item.title }}</a>
+            <span class="toc-date">{{ format_datetime(item.write_time) }}</span>
+        </li>
+        {% else %}
+        <li class="toc-item"
+            style="animation: tocFadeIn 0.3s steps(3) both; animation-delay: {{ round(loop.index1 * 0.015, 3) }}s;">
+            <span class="toc-num">{{ loop.index1 - 1 }}</span>
+            {% if item.link_path != "" %}
+            <a class="toc-link" href="{{ item.link_path }}">{{ item.title }}</a>
+            {% else %}
+            <a class="toc-link" href="{{ item.path }}">{{ item.title }}</a>
+            {% endif %}
+            <span class="toc-date">{{ format_datetime(item.write_time) }}</span>
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
 
-        <ul class="toc-list" id="toc-list" style="display:none"></ul>
-
-        <footer class="cover-footer">{{build.powered-by}}</footer>
-    </div>
-
-    <script src="/js/camus-home-common.js"></script>
-    <script>
-        (function() {
-            HomeCommon.init({
-                encodeFn: HomeCommon.encodePath,
-                animateCount: 30,
-                onRender: function() {
-                    document.body.classList.add('toc-animating');
-                    document.getElementById('toc-loading').style.display = 'none';
-                    var list = document.getElementById('toc-list');
-                    list.style.display = '';
-                    list.classList.add('done');
-                    setTimeout(function() {
-                        document.body.classList.remove('toc-animating');
-                    }, 500);
-                }
-            });
-
-            var initTheme = function() {
-                var saved = localStorage.getItem('pixel-theme');
-                if (saved === 'light') {
-                    applyLightTheme();
-                }
-            };
-
-            var applyLightTheme = function() {
-                var style = document.getElementById('pixel-style');
-                style.textContent = style.textContent.replace(/:root\s*\{[^}]*\}/, function() {
-                    return ':root {' +
-                        '--bg: #e8e8e0;' +
-                        '--card-bg: #f5f5ee;' +
-                        '--text: #2d2d2d;' +
-                        '--text-secondary: #6b6b6b;' +
-                        '--accent: #e07b39;' +
-                        '--accent-glow: #f09050;' +
-                        '--border: #c0c0b0;' +
-                        '--divider: #c0c0b0;' +
-                        '--code-bg: #d5d0c0;' +
-                        '--nav-hover-bg: #ddd8c5;' +
-                        '--green: #4a9c3f;' +
-                        '--yellow: #c0a030;' +
-                        '--pink: #c05070;' +
-                        '--cyan: #3090a0;' +
-                        '}';
-                });
-                document.getElementById('theme-toggle').innerHTML = '[ ]';
-                localStorage.setItem('pixel-theme', 'light');
-            };
-
-            var applyDarkTheme = function() {
-                var style = document.getElementById('pixel-style');
-                style.textContent = style.textContent.replace(/:root\s*\{[^}]*\}/, function() {
-                    return ':root {' +
-                        '--bg: #1a1a2e;' +
-                        '--card-bg: #16213e;' +
-                        '--text: #c7d2e0;' +
-                        '--text-secondary: #7b8ca3;' +
-                        '--accent: #ff6b35;' +
-                        '--accent-glow: #ff9f45;' +
-                        '--border: #2a3a5c;' +
-                        '--divider: #2a3a5c;' +
-                        '--code-bg: #0f1425;' +
-                        '--nav-hover-bg: #1e2d4a;' +
-                        '--green: #4ade80;' +
-                        '--yellow: #facc15;' +
-                        '--pink: #f472b6;' +
-                        '--cyan: #22d3ee;' +
-                        '}';
-                });
-                document.getElementById('theme-toggle').innerHTML = '[]';
-                localStorage.setItem('pixel-theme', 'dark');
-            };
-
-            document.getElementById('theme-toggle').addEventListener('click', function() {
-                if (localStorage.getItem('pixel-theme') === 'light') {
-                    applyDarkTheme();
-                } else {
-                    applyLightTheme();
-                }
-            });
-
-            initTheme();
-        })();
-    </script>
+    <footer class="cover-footer">{{ build.powered_by }}</footer>
+</div>
 </body>
 </html>

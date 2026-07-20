@@ -4,74 +4,16 @@
     <meta charset="utf-8"/>
     <meta http-equiv="x-ua-compatible" content="ie=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="{{page.description}}">
-    <title>{{page.title}} - {{site.title}}</title>
-    <link id="favicon" rel="icon" href="/favicon.ico">
+    <meta name="description" content="{{ page.description }}">
+    <title>{{ page.title }} - {{ site.title }}</title>
+    <link rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="stylesheet" id="hljs-theme"
+    <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <style id="pixel-style">
-        :root {
-            --bg: #1a1a2e;
-            --card-bg: #16213e;
-            --text: #c7d2e0;
-            --text-secondary: #7b8ca3;
-            --accent: #ff6b35;
-            --accent-glow: #ff9f45;
-            --border: #2a3a5c;
-            --divider: #2a3a5c;
-            --progress-bg: #2a3a5c;
-            --nav-hover-bg: #1e2d4a;
-            --code-bg: #0f1425;
-            --code-shadow: none;
-            --green: #4ade80;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Courier New', 'Source Code Pro', 'Noto Sans SC', monospace;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            line-height: 1.8;
-            image-rendering: pixelated;
-        }
-
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-            z-index: 999;
-            background: repeating-linear-gradient(
-                    0deg,
-                    transparent,
-                    transparent 2px,
-                    rgba(0, 0, 0, 0.06) 2px,
-                    rgba(0, 0, 0, 0.06) 4px
-            );
-        }
-
-        .progress-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 4px;
-            background: var(--accent);
-            z-index: 1000;
-            transition: width 0.1s linear;
-            box-shadow: 0 0 8px var(--accent-glow);
-        }
-
+    <link rel="stylesheet" href="/css/pixel-inja.css">
+    <style>
         .reading-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -93,8 +35,7 @@
             color: var(--accent);
             letter-spacing: 0.1em;
             line-height: 1.8;
-            text-shadow: 2px 2px 0 var(--bg),
-            3px 3px 0 var(--accent);
+            text-shadow: 2px 2px 0 var(--bg), 3px 3px 0 var(--accent);
             image-rendering: pixelated;
         }
 
@@ -105,9 +46,7 @@
             color: var(--text-secondary);
         }
 
-        .chapter-meta span {
-            margin: 0 0.5rem;
-        }
+        .chapter-meta span { margin: 0 0.5rem; }
 
         .chapter-content {
             font-size: 1rem;
@@ -116,17 +55,10 @@
             word-break: break-word;
         }
 
-        .chapter-content p {
-            text-indent: 2em;
-            margin-bottom: 1rem;
-        }
+        .chapter-content p { text-indent: 2em; margin-bottom: 1rem; }
 
-        .chapter-content h1,
-        .chapter-content h2,
-        .chapter-content h3,
-        .chapter-content h4,
-        .chapter-content h5,
-        .chapter-content h6 {
+        .chapter-content h1, .chapter-content h2, .chapter-content h3,
+        .chapter-content h4, .chapter-content h5, .chapter-content h6 {
             font-family: 'Press Start 2P', monospace;
             text-indent: 0;
             margin: 2.5rem 0 1rem;
@@ -134,17 +66,9 @@
             text-shadow: 2px 2px 0 var(--bg);
         }
 
-        .chapter-content h1 {
-            font-size: 1.4rem;
-        }
-
-        .chapter-content h2 {
-            font-size: 1.2rem;
-        }
-
-        .chapter-content h3 {
-            font-size: 1rem;
-        }
+        .chapter-content h1 { font-size: 1.4rem; }
+        .chapter-content h2 { font-size: 1.2rem; }
+        .chapter-content h3 { font-size: 1rem; }
 
         .chapter-content blockquote {
             font-family: 'Press Start 2P', monospace;
@@ -152,33 +76,15 @@
             margin: 1.5rem 0;
             padding: 1rem 1.5rem;
             border-left: 4px solid var(--accent);
-            border-image: repeating-linear-gradient(
-                    0deg,
-                    var(--accent),
-                    var(--accent) 4px,
-                    transparent 4px,
-                    transparent 8px
-            ) 4;
+            border-image: repeating-linear-gradient(0deg, var(--accent), var(--accent) 4px, transparent 4px, transparent 8px) 4;
             background: var(--card-bg);
             color: var(--text-secondary);
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.03);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.03);
         }
 
-        .chapter-content blockquote p {
-            text-indent: 0;
-            margin-bottom: 0.5rem;
-        }
-
-        .chapter-content ul,
-        .chapter-content ol {
-            text-indent: 0;
-            margin: 1rem 0 1rem 2rem;
-        }
-
-        .chapter-content li {
-            margin-bottom: 0.3rem;
-        }
+        .chapter-content blockquote p { text-indent: 0; margin-bottom: 0.5rem; }
+        .chapter-content ul, .chapter-content ol { text-indent: 0; margin: 1rem 0 1rem 2rem; }
+        .chapter-content li { margin-bottom: 0.3rem; }
 
         .chapter-content code:not(.hljs) {
             background: var(--code-bg);
@@ -197,8 +103,7 @@
             line-height: 1.7;
             border: 2px solid var(--border);
             background: var(--code-bg);
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.02);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.3), inset 2px 2px 0 rgba(255,255,255,0.02);
         }
 
         .chapter-content pre {
@@ -207,8 +112,7 @@
             text-indent: 0;
             border: 2px solid var(--border);
             background: var(--code-bg);
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.02);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.3), inset 2px 2px 0 rgba(255,255,255,0.02);
         }
 
         .chapter-content pre code.hljs {
@@ -236,9 +140,7 @@
             border-bottom: 2px dotted var(--accent);
         }
 
-        .chapter-content a:hover {
-            color: var(--accent-glow);
-        }
+        .chapter-content a:hover { color: var(--accent-glow); }
 
         .chapter-nav {
             display: flex;
@@ -262,33 +164,22 @@
             font-size: 0.4rem;
             transition: all 0.1s;
             max-width: 45%;
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.05);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05);
         }
 
         .nav-link:hover {
             border-color: var(--accent);
             color: var(--accent);
             transform: translate(-1px, -1px);
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.05),
-            3px 3px 0 var(--accent);
+            box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05), 3px 3px 0 var(--accent);
         }
 
         .nav-link:active {
             transform: translate(1px, 1px);
-            box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.2),
-            inset -2px -2px 0 rgba(255, 255, 255, 0.05);
+            box-shadow: inset 2px 2px 0 rgba(0,0,0,0.2), inset -2px -2px 0 rgba(255,255,255,0.05);
         }
 
-        .nav-link.disabled {
-            color: var(--text-secondary);
-            border-color: var(--border);
-            cursor: default;
-            pointer-events: none;
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.05);
-        }
+        .nav-link-placeholder { width: 45%; }
 
         .nav-link .nav-label {
             font-family: 'Press Start 2P', monospace;
@@ -313,140 +204,8 @@
             font-family: 'Press Start 2P', monospace;
         }
 
-        .nav-center a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        .nav-center a:hover {
-            color: var(--accent-glow);
-        }
-
-        .top-controls {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            display: flex;
-            gap: 0.5rem;
-            z-index: 1000;
-        }
-
-        .theme-toggle {
-            width: 44px;
-            height: 44px;
-            border: 2px solid var(--border);
-            background: var(--card-bg);
-            color: var(--accent);
-            cursor: pointer;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.6rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.1s;
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        .theme-toggle:hover {
-            border-color: var(--accent);
-            background: var(--accent);
-            color: #1a1a2e;
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.1),
-            0 0 12px var(--accent);
-        }
-
-        .theme-toggle:active {
-            transform: translate(2px, 2px);
-            box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.3),
-            inset -2px -2px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        .reader-menu {
-            position: relative;
-        }
-
-        .reader-icon {
-            width: 44px;
-            height: 44px;
-            border: 2px solid var(--border);
-            background: var(--card-bg);
-            color: var(--accent);
-            cursor: pointer;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.6rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.1s;
-            padding: 0;
-            line-height: 1;
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        .reader-menu:hover .reader-icon {
-            border-color: var(--accent);
-            background: var(--accent);
-            color: #1a1a2e;
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.1),
-            0 0 12px var(--accent);
-        }
-
-        .reader-dropdown {
-            display: none;
-            position: absolute;
-            top: 48px;
-            right: 0;
-            flex-direction: column;
-            gap: 0.2rem;
-        }
-
-        .reader-menu:hover .reader-dropdown {
-            display: flex;
-        }
-
-        .reader-dropbtn {
-            width: 36px;
-            height: 36px;
-            border: 2px solid var(--border);
-            background: var(--card-bg);
-            color: var(--accent);
-            cursor: pointer;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.45rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.1s;
-            padding: 0;
-            line-height: 1;
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        .reader-dropbtn:hover {
-            border-color: var(--accent);
-            background: var(--accent);
-            color: #1a1a2e;
-            box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.1),
-            0 0 8px var(--accent);
-        }
-
-        .reader-dropbtn.active {
-            border-color: var(--accent);
-            background: var(--accent);
-            color: #1a1a2e;
-        }
-
-        .reader-dropdown .reader-dropbtn:active {
-            transform: translate(1px, 1px);
-            box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.3),
-            inset -2px -2px 0 rgba(255, 255, 255, 0.05);
-        }
+        .nav-center a { color: var(--accent); text-decoration: none; }
+        .nav-center a:hover { color: var(--accent-glow); }
 
         .page-footer {
             text-align: center;
@@ -456,400 +215,63 @@
             padding: 0 0 4rem 0;
         }
 
-        .page-footer a {
-            color: var(--accent);
-            text-decoration: none;
-            border-bottom: 1px dotted var(--accent);
-        }
-
-        .page-footer a:hover {
-            color: var(--accent-glow);
-        }
+        .page-footer a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+        .page-footer a:hover { color: var(--accent-glow); }
 
         @media (max-width: 640px) {
-            .reading-container {
-                padding: 0 1rem;
-            }
-
-            .chapter-header {
-                padding: 2.5rem 0 1.5rem;
-            }
-
-            .chapter-title {
-                font-size: 0.7rem;
-            }
-
-            .chapter-content {
-                font-size: 0.9rem;
-            }
-
-            .chapter-nav {
-                flex-direction: column;
-                gap: 0.8rem;
-                padding: 2rem 0;
-            }
-
-            .nav-link {
-                max-width: 100%;
-                width: 100%;
-                justify-content: center;
-            }
+            .reading-container { padding: 0 1rem; }
+            .chapter-header { padding: 2.5rem 0 1.5rem; }
+            .chapter-title { font-size: 0.7rem; }
+            .chapter-content { font-size: 0.9rem; }
+            .chapter-nav { flex-direction: column; gap: 0.8rem; padding: 2rem 0; }
+            .nav-link { max-width: 100%; width: 100%; justify-content: center; }
+            .nav-link-placeholder { width: 100%; }
         }
     </style>
 </head>
 <body>
-<div class="progress-bar" id="progress-bar"></div>
 <div class="scanlines"></div>
-<div class="top-controls">
-    <div class="reader-menu" id="reader-menu">
-        <button class="reader-icon" aria-label="阅读设置">B</button>
-        <div class="reader-dropdown" id="reader-dropdown">
-            <button class="reader-dropbtn" id="btn-font-up" title="放大字体">+</button>
-            <button class="reader-dropbtn" id="btn-font-down" title="缩小字体">-</button>
-            <button class="reader-dropbtn" id="btn-font-serif" title="切换宋体">S</button>
-            <button class="reader-dropbtn" id="btn-reset" title="重置设置">R</button>
-        </div>
-    </div>
-    <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">[]</button>
-</div>
 
 <div class="reading-container">
     <header class="chapter-header">
-        <h1 class="chapter-title">{{page.title}}</h1>
+        <h1 class="chapter-title">{{ page.title }}</h1>
         <div class="chapter-meta">
-            <span id="word-count"></span>
+            <span>{{ stats.word_count }} 字 · 约 {{ stats.read_min }} 分钟</span>
             <span>&#124;</span>
-            <span>{{page.date}}</span>
+            <span>{{ format_datetime(page.write_time) }}</span>
         </div>
     </header>
 
     <article class="chapter-content">
-        {{page.content}}
+        {{ page.contents }}
     </article>
 
-    <nav class="chapter-nav" id="chapter-nav">
-        <a class="nav-link disabled" id="prev-link" href="#">
+    <nav class="chapter-nav">
+        {% if nav.prev_path != "" %}
+        <a class="nav-link" href="{{ nav.prev_path }}">
             <span class="nav-label">PREV</span>
-            <span class="nav-title"></span>
+            <span class="nav-title">{{ nav.prev_title }}</span>
         </a>
+        {% else %}
+        <span class="nav-link-placeholder"></span>
+        {% endif %}
         <span class="nav-center">
-                <a id="toc-link" href="/">目 录</a>
-            </span>
-        <a class="nav-link disabled" id="next-link" href="#">
+            <a href="/">目 录</a>
+        </span>
+        {% if nav.next_path != "" %}
+        <a class="nav-link" href="{{ nav.next_path }}">
             <span class="nav-label">NEXT</span>
-            <span class="nav-title"></span>
+            <span class="nav-title">{{ nav.next_title }}</span>
         </a>
+        {% else %}
+        <span class="nav-link-placeholder"></span>
+        {% endif %}
     </nav>
 
-    <footer class="page-footer">{{build.powered-by}}</footer>
+    <footer class="page-footer">{{ build.powered_by }}</footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script>
-    (function () {
-        var normalizePath = function(p) {
-            if (!p || p === '/') return '/';
-            if (!p.startsWith('/')) p = '/' + p;
-            if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
-            return p;
-        };
-
-        var encodePath = function(s) {
-            return /[\u4e00-\u9fff]/.test(s) ? encodeURIComponent(s) : s;
-        };
-
-        var countWords = function () {
-            var content = document.querySelector(".chapter-content")
-            if (!content) return 0
-            var text = content.textContent || ""
-            var chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length
-            var words = text.replace(/[\u4e00-\u9fff]/g, "").split(/\s+/).filter(Boolean).length
-            return chineseChars + words
-        }
-
-        var updateWordCount = function () {
-            var count = countWords()
-            var el = document.getElementById("word-count")
-            if (el && count > 0) {
-                var readMin = Math.max(1, Math.ceil(count / 400))
-                el.textContent = count + " 字 · 约 " + readMin + " 分钟"
-            }
-        }
-
-        var updateProgress = function () {
-            var bar = document.getElementById("progress-bar")
-            if (!bar) return
-            var scrollTop = window.scrollY || document.documentElement.scrollTop
-            var docHeight = document.documentElement.scrollHeight - window.innerHeight
-            if (docHeight <= 0) {
-                bar.style.width = "0%"
-                return
-            }
-            var progress = Math.min(100, Math.max(0, (scrollTop / docHeight) * 100))
-            bar.style.width = progress + "%"
-        }
-
-        var getParent = function(p) {
-            var np = normalizePath(p);
-            if (np === '/') return null;
-            var parts = np.split('/');
-            parts.pop();
-            if (parts.length === 0 || (parts.length === 1 && parts[0] === '')) return '/';
-            return parts.join('/');
-        };
-
-        var flattenArticles = function(flat) {
-            var result = [];
-            for (var i = 0; i < flat.length; i++) {
-                if (!flat[i].is_dir) {
-                    result.push({
-                        url: normalizePath(flat[i].link_path || flat[i].path),
-                        display_name: flat[i].title,
-                        path: normalizePath(flat[i].path)
-                    });
-                }
-            }
-            return result;
-        };
-
-        var findParentPath = function(flat, articleUrl) {
-            var au = normalizePath(articleUrl);
-            var articlePath = null;
-            for (var i = 0; i < flat.length; i++) {
-                if (!flat[i].is_dir) {
-                    var entryUrl = normalizePath(flat[i].link_path || flat[i].path);
-                    var entryPath = normalizePath(flat[i].path);
-                    if (entryUrl === au || entryPath === au) {
-                        articlePath = entryPath;
-                        break;
-                    }
-                }
-            }
-            if (!articlePath) return '/';
-            var bestMatch = null;
-            var bestLen = 0;
-            for (var i = 0; i < flat.length; i++) {
-                if (flat[i].is_dir) {
-                    var dp = normalizePath(flat[i].path);
-                    var prefix = dp === '/' ? '/' : dp + '/';
-                    if (articlePath.startsWith(prefix)) {
-                        if (dp.length > bestLen) {
-                            bestLen = dp.length;
-                            bestMatch = dp;
-                        }
-                    }
-                }
-            }
-            return bestMatch || '/';
-        };
-
-        var setupNavigation = function (tocData) {
-            if (!tocData) return
-
-            var allArticles = flattenArticles(tocData);
-            if (allArticles.length === 0) return;
-
-            var currentPath = window.location.pathname;
-            var currentIndex = -1;
-            for (var k = 0; k < allArticles.length; k++) {
-                if (allArticles[k].url === currentPath || allArticles[k].path === currentPath) {
-                    currentIndex = k;
-                    break;
-                }
-            }
-            if (currentIndex === -1) return;
-
-            var prevLink = document.getElementById("prev-link");
-            var nextLink = document.getElementById("next-link");
-
-            if (currentIndex > 0) {
-                prevLink.className = "nav-link";
-                prevLink.href = allArticles[currentIndex - 1].url;
-                prevLink.querySelector(".nav-title").textContent = allArticles[currentIndex - 1].display_name;
-            }
-            if (currentIndex < allArticles.length - 1) {
-                nextLink.className = "nav-link";
-                nextLink.href = allArticles[currentIndex + 1].url;
-                nextLink.querySelector(".nav-title").textContent = allArticles[currentIndex + 1].display_name;
-            }
-
-            var tocLink = document.getElementById("toc-link");
-            if (tocLink) {
-                var parentPath = findParentPath(tocData, currentPath);
-                if (parentPath === '/') {
-                    tocLink.href = '/';
-                } else {
-                    var p = parentPath.replace(/^\//, '');
-                    tocLink.href = '/?dir=' + encodePath(p);
-                }
-            }
-        }
-
-        var loadToc = function () {
-            var xhr = new XMLHttpRequest()
-            xhr.open("GET", "/toc.json", true)
-            xhr.onload = function () {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        var data = JSON.parse(xhr.responseText)
-                        setupNavigation(data)
-                    } catch (e) {
-                        console.error("Failed to parse toc.json:", e)
-                    }
-                }
-            }
-            xhr.onerror = function () {
-                console.error("Failed to load toc.json")
-            }
-            xhr.send()
-        }
-
-        var initTheme = function () {
-            var saved = localStorage.getItem("pixel-theme")
-            if (saved === "light") {
-                applyLightTheme()
-            }
-        }
-
-        var applyLightTheme = function () {
-            var style = document.getElementById("pixel-style")
-            style.textContent = style.textContent.replace(/:root\s*\{[^}]*\}/, function () {
-                return ":root {" +
-                    "--bg: #e8e8e0;" +
-                    "--card-bg: #f5f5ee;" +
-                    "--text: #2d2d2d;" +
-                    "--text-secondary: #6b6b6b;" +
-                    "--accent: #e07b39;" +
-                    "--accent-glow: #f09050;" +
-                    "--border: #c0c0b0;" +
-                    "--divider: #c0c0b0;" +
-                    "--progress-bg: #c0c0b0;" +
-                    "--nav-hover-bg: #e8e0d0;" +
-                    "--code-bg: #ddd8c8;" +
-                    "--code-shadow: none;" +
-                    "--green: #4a9c3f;" +
-                    "}"
-            })
-            document.getElementById("hljs-theme").href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
-            document.getElementById("theme-toggle").innerHTML = "[ ]"
-            localStorage.setItem("pixel-theme", "light")
-        }
-
-        var applyDarkTheme = function () {
-            var style = document.getElementById("pixel-style")
-            style.textContent = style.textContent.replace(/:root\s*\{[^}]*\}/, function () {
-                return ":root {" +
-                    "--bg: #1a1a2e;" +
-                    "--card-bg: #16213e;" +
-                    "--text: #c7d2e0;" +
-                    "--text-secondary: #7b8ca3;" +
-                    "--accent: #ff6b35;" +
-                    "--accent-glow: #ff9f45;" +
-                    "--border: #2a3a5c;" +
-                    "--divider: #2a3a5c;" +
-                    "--progress-bg: #2a3a5c;" +
-                    "--nav-hover-bg: #1e2d4a;" +
-                    "--code-bg: #0f1425;" +
-                    "--code-shadow: none;" +
-                    "--green: #4ade80;" +
-                    "}"
-            })
-            document.getElementById("hljs-theme").href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
-            document.getElementById("theme-toggle").innerHTML = "[]"
-            localStorage.setItem("pixel-theme", "dark")
-        }
-
-        document.getElementById("theme-toggle").addEventListener("click", function () {
-            if (localStorage.getItem("pixel-theme") === "light") {
-                applyDarkTheme()
-            } else {
-                applyLightTheme()
-            }
-        })
-
-        var READER_KEY = "pixel-reader"
-
-        var getReaderSettings = function () {
-            try { return JSON.parse(localStorage.getItem(READER_KEY)) || {} } catch (e) { return {} }
-        }
-
-        var saveReaderSettings = function (s) {
-            localStorage.setItem(READER_KEY, JSON.stringify(s))
-        }
-
-        var getContentEl = function () {
-            return document.querySelector(".chapter-content") || document.querySelector("article")
-        }
-
-        var applyReaderSettings = function () {
-            var s = getReaderSettings()
-            var el = getContentEl()
-            if (!el) return
-            if (s.fontSize) el.style.fontSize = s.fontSize + "px"
-            if (s.fontFamily === "serif") {
-                el.style.fontFamily = '"Times New Roman", "宋体", "SimSun", "NSimSun", serif'
-                var btn = document.getElementById("btn-font-serif")
-                if (btn) btn.classList.add("active")
-            }
-        }
-
-        var changeFontSize = function (delta) {
-            var el = getContentEl()
-            if (!el) return
-            var cur = parseFloat(getComputedStyle(el).fontSize)
-            var next = Math.max(12, Math.min(36, cur + delta))
-            el.style.fontSize = next + "px"
-            var s = getReaderSettings()
-            s.fontSize = next
-            saveReaderSettings(s)
-        }
-
-        var toggleSerif = function () {
-            var el = getContentEl()
-            if (!el) return
-            var s = getReaderSettings()
-            var btn = document.getElementById("btn-font-serif")
-            if (s.fontFamily === "serif") {
-                s.fontFamily = "default"
-                el.style.fontFamily = ""
-                if (btn) btn.classList.remove("active")
-            } else {
-                s.fontFamily = "serif"
-                el.style.fontFamily = '"Times New Roman", "宋体", "SimSun", "NSimSun", serif'
-                if (btn) btn.classList.add("active")
-            }
-            if (!s.fontSize) {
-                s.fontSize = parseFloat(getComputedStyle(el).fontSize)
-            }
-            saveReaderSettings(s)
-        }
-
-        var resetReaderSettings = function () {
-            var el = getContentEl()
-            if (el) {
-                el.style.fontSize = ""
-                el.style.fontFamily = ""
-            }
-            localStorage.removeItem(READER_KEY)
-            var btn = document.getElementById("btn-font-serif")
-            if (btn) btn.classList.remove("active")
-        }
-
-        document.getElementById("btn-font-up").addEventListener("click", function () { changeFontSize(1) })
-        document.getElementById("btn-font-down").addEventListener("click", function () { changeFontSize(-1) })
-        document.getElementById("btn-font-serif").addEventListener("click", toggleSerif)
-        document.getElementById("btn-reset").addEventListener("click", resetReaderSettings)
-
-        applyReaderSettings()
-
-        window.addEventListener("scroll", updateProgress, {passive: true})
-
-        updateWordCount()
-        updateProgress()
-        loadToc()
-        initTheme()
-        hljs.highlightAll()
-    })()
-</script>
+<script>hljs.highlightAll();</script>
 </body>
 </html>

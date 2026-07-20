@@ -2,145 +2,53 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
-    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="{{site.subtitle}}">
-    <meta name="build-time" content="{{build.time}}">
-    <meta name="build-type" content="{{build.build-type}}">
-    <meta name="cmake-version" content="{{build.cmake-version}}">
-    <meta name="cxx-standard" content="{{build.cxx-standard}}">
-    <title id="page-title">{{site.title}} - {{site.subtitle}}</title>
-    <link id="favicon" rel="icon" href="/favicon.ico">
+    <meta name="description" content="{{ site.subtitle }}">
+    <meta name="build-time" content="{{ build.time }}">
+    <meta name="build-type" content="{{ build.build_type }}">
+    <meta name="cmake-version" content="{{ build.cmake_version }}">
+    <meta name="cxx-standard" content="{{ build.cxx_standard }}">
+    <title>{{ site.title }} - {{ site.subtitle }}</title>
+    <link rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <style id="terminal-style">
-        :root {
-            --bg: #0a0a08;
-            --card-bg: #0f0f0c;
-            --text: #33ff33;
-            --text-secondary: #22aa22;
-            --text-dim: #116611;
-            --accent: #66ff66;
-            --accent-glow: #88ff88;
-            --accent-dim: #228822;
-            --border: #1a331a;
-            --divider: #1a331a;
-            --code-bg: #080808;
-            --nav-hover-bg: #141412;
-            --bezel: #1a1a1a;
-            --bezel-dark: #0d0d0d;
-            --green: #33ff33;
-            --yellow: #cccc44;
-            --pink: #cc6688;
-            --cyan: #44aacc;
-        }
+    <link rel="stylesheet" href="/css/terminal-inja.css">
+    <style>
+        body { font-size: 1.8rem; }
 
         @keyframes bootWarmupFlash {
-            0% {
-                opacity: 0;
-            }
-            10% {
-                opacity: 0.9;
-            }
-            20% {
-                opacity: 0;
-            }
-            30% {
-                opacity: 0.6;
-            }
-            45% {
-                opacity: 0.15;
-            }
-            60% {
-                opacity: 0.35;
-            }
-            80% {
-                opacity: 0.8;
-            }
-            100% {
-                opacity: 0;
-            }
+            0% { opacity: 0; }
+            10% { opacity: 0.9; }
+            20% { opacity: 0; }
+            30% { opacity: 0.6; }
+            45% { opacity: 0.15; }
+            60% { opacity: 0.35; }
+            80% { opacity: 0.8; }
+            100% { opacity: 0; }
         }
 
         @keyframes bootBeamSweep {
-            0% {
-                top: -5%;
-                opacity: 0.8;
-            }
-            30% {
-                top: 30%;
-                opacity: 1;
-            }
-            60% {
-                top: 70%;
-                opacity: 0.7;
-            }
-            100% {
-                top: 105%;
-                opacity: 0;
-            }
+            0% { top: -5%; opacity: 0.8; }
+            30% { top: 30%; opacity: 1; }
+            60% { top: 70%; opacity: 0.7; }
+            100% { top: 105%; opacity: 0; }
         }
 
         @keyframes bootFadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         @keyframes bootCursorBlink {
-            0%, 40% {
-                opacity: 1;
-            }
-            50%, 90% {
-                opacity: 0;
-            }
-            100% {
-                opacity: 1;
-            }
+            0%, 40% { opacity: 1; }
+            50%, 90% { opacity: 0; }
+            100% { opacity: 1; }
         }
 
-        html {
-            overflow: hidden;
-            height: 100%;
+        @keyframes bootDismiss {
+            0%, 70% { opacity: 1; }
+            100% { opacity: 0; }
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family:
-                    'VT323',
-                    'Courier New',
-                    'NSimSun',
-                    'GB18030 Bitmap',
-                    'Unifont',
-                    'WenQuanYi Bitmap Song',
-                    '文泉驿点阵宋体',
-                    'SimSun',
-                    '宋体',
-                    'Noto Serif CJK SC',
-                    'AR PL UMing CN',
-                    'Noto Sans SC',
-                    serif,
-                    monospace;
-            font-size: 1.5rem;
-            background: #000;
-            color: var(--text);
-            line-height: 1.4;
-            overflow: hidden !important;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        body.keyboard-mode * { cursor: none !important; }
-        body.keyboard-mode { user-select: none !important; }
 
         .boot-screen {
             position: fixed;
@@ -151,12 +59,8 @@
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            transition: opacity 0.5s steps(5);
-        }
-
-        .boot-screen.fade-out {
-            opacity: 0;
             pointer-events: none;
+            animation: bootDismiss 0.4s steps(3) 2.6s forwards;
         }
 
         .boot-warmup-flash {
@@ -173,7 +77,7 @@
             right: 0;
             height: 2px;
             background: #33ff33;
-            box-shadow: 0 0 12px #33ff33, 0 0 40px #66ff66, 0 0 80px rgba(51, 255, 51, 0.4);
+            box-shadow: 0 0 12px #33ff33, 0 0 40px #66ff66, 0 0 80px rgba(51,255,51,0.4);
             animation: bootBeamSweep 0.5s steps(8) 0.25s forwards;
             opacity: 0;
         }
@@ -207,188 +111,6 @@
             animation: bootCursorBlink 0.8s steps(1) 0.9s forwards;
         }
 
-        body.boot-active {
-            pointer-events: none;
-        }
-
-        .terminal {
-            width: 100vw;
-            height: 100vh;
-            background: var(--bezel);
-            position: relative;
-            padding: 2.5vh 3vw 3.5vh;
-            display: flex;
-            flex-direction: column;
-            border-radius: 0;
-            box-shadow: inset 0 0 3px rgba(255, 255, 255, 0.04),
-            inset 0 0 100px rgba(0, 0, 0, 0.4),
-            0 0 0 1.5px #444,
-            0 0 0 3px var(--bezel-dark),
-            0 0 0 5px #222,
-            0 0 0 6px var(--bezel-dark);
-        }
-
-        .terminal-vent {
-            position: absolute;
-            top: 1vh;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 3px;
-        }
-
-        .terminal-vent-line {
-            width: 2px;
-            height: 7px;
-            background: #0a0a0a;
-            border-radius: 1px;
-        }
-
-        .terminal-label {
-            position: absolute;
-            bottom: 0.6vh;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'VT323', monospace;
-            font-size: 0.85rem;
-            color: #111;
-            letter-spacing: 0.3em;
-        }
-
-        .terminal-corner {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: #111;
-            border-radius: 1px;
-        }
-
-        .terminal-corner.tl {
-            top: 0.8vh;
-            left: 1.5vw;
-        }
-
-        .terminal-corner.tr {
-            top: 0.8vh;
-            right: 1.5vw;
-        }
-
-        .terminal-corner.bl {
-            bottom: 1vh;
-            left: 1.5vw;
-        }
-
-        .terminal-corner.br {
-            bottom: 1vh;
-            right: 1.5vw;
-        }
-
-        .terminal-led {
-            position: absolute;
-            bottom: 0.8vh;
-            right: 3.5vw;
-            width: 5px;
-            height: 5px;
-            background: var(--green);
-            border-radius: 50%;
-            box-shadow: 0 0 4px var(--green), 0 0 10px var(--green);
-        }
-
-        .terminal-led.off {
-            background: #111;
-            box-shadow: none;
-        }
-
-        .terminal-badge {
-            position: absolute;
-            bottom: 0.7vh;
-            left: 3.5vw;
-            font-family: 'VT323', monospace;
-            font-size: 0.7rem;
-            color: #111;
-            letter-spacing: 0.15em;
-        }
-
-        .screen {
-            background: var(--bg);
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            border-radius: 30px;
-            border: 3px solid #090909;
-            box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.9),
-            inset 0 0 40px rgba(51, 255, 51, 0.02),
-            inset 0 0 3px rgba(0, 0, 0, 0.5),
-            0 0 0 2px #0d0d0d,
-            0 0 0 5px #111,
-            0 2px 2px rgba(0, 0, 0, 0.5) inset;
-        }
-
-        .crt-distort {
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            border-radius: inherit;
-            background: radial-gradient(ellipse at 50% 50%,
-            transparent 30%,
-            rgba(0, 0, 0, 0.08) 60%,
-            rgba(0, 0, 0, 0.3) 85%,
-            rgba(0, 0, 0, 0.75) 100%
-            );
-        }
-
-        .screen-vignette {
-            position: absolute;
-            inset: 0;
-            z-index: 2;
-            pointer-events: none;
-            background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.5) 80%, rgba(0, 0, 0, 0.8) 100%);
-            border-radius: inherit;
-        }
-
-        .screen-glare {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 30%;
-            z-index: 2;
-            pointer-events: none;
-            background: linear-gradient(to bottom,
-            rgba(51, 255, 51, 0.025) 0%,
-            rgba(51, 255, 51, 0.01) 30%,
-            transparent 100%);
-            border-radius: 30px 30px 0 0;
-        }
-
-        .screen-scanlines {
-            position: absolute;
-            inset: 0;
-            z-index: 3;
-            pointer-events: none;
-            background: repeating-linear-gradient(
-                    0deg,
-                    transparent,
-                    transparent 2px,
-                    rgba(0, 0, 0, 0.25) 2px,
-                    rgba(0, 0, 0, 0.25) 4px
-            );
-            border-radius: inherit;
-        }
-
-        .screen-phosphor {
-            position: absolute;
-            inset: 0;
-            z-index: 2;
-            pointer-events: none;
-            border-radius: inherit;
-            background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.15) 85%, rgba(0, 0, 0, 0.4) 100%);
-        }
-        }
-
         .screen-content {
             position: relative;
             z-index: 5;
@@ -400,33 +122,14 @@
             overflow: hidden;
         }
 
-        .term-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.2rem 0.3rem;
-            margin-bottom: 0.8rem;
-            border-bottom: 1px solid var(--border);
-            font-family: 'VT323', monospace;
-            font-size: 1rem;
-            color: var(--text-dim);
-        }
-
-        .cover-header {
-            text-align: left;
+        .page-header {
             padding: 0.3rem 0 0.3rem;
-            margin-bottom: 0.8rem;
-            border-bottom: 1px solid var(--border);
         }
 
-        .cover-title {
-            font-size: 3rem;
-            color: var(--accent);
+        .page-title {
             letter-spacing: 0.08em;
             line-height: 1.6;
             margin-bottom: 0.3rem;
-            text-shadow: 0 0 30px var(--accent-dim);
-            image-rendering: pixelated;
         }
 
         .cover-subtitle {
@@ -441,172 +144,22 @@
             margin: 0.8rem 0;
             border: 1px solid var(--border);
             background: var(--card-bg);
-            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.4);
             text-indent: 2em;
-            text-shadow: 0 0 30px var(--accent-dim)
+            text-shadow: 0 0 30px var(--accent-dim);
         }
 
         .toc-header {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.55rem;
-            color: var(--accent);
+            font-family: 'VT323', monospace;
+            font-size: 1rem;
+            color: var(--text-dim);
             text-align: left;
             margin: 1.2rem 0 0.6rem;
-            letter-spacing: 0.2em;
-            text-shadow: 0 0 8px var(--accent);
         }
 
         .toc-header::before {
             content: '$ ';
             color: var(--text-dim);
-        }
-
-        .toc-loading {
-            text-align: left;
-            padding: 0.8rem 0;
-        }
-
-        .toc-loading-text {
-            font-family: 'VT323', monospace;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-            text-shadow: 0 0 6px var(--text-secondary);
-        }
-
-        .toc-loading-text::before {
-            content: '$ ';
-            color: var(--text-dim);
-        }
-
-        .toc-loading-dots {
-            display: inline-flex;
-            gap: 0.3rem;
-            margin: 0 0.3rem;
-            vertical-align: middle;
-        }
-
-        .toc-loading-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--text);
-            display: inline-block;
-            animation: dotBounce 0.6s infinite;
-            box-shadow: 0 0 4px var(--text);
-        }
-
-        .toc-loading-dot:nth-child(2) {
-            animation-delay: 0.15s;
-        }
-
-        .toc-loading-dot:nth-child(3) {
-            animation-delay: 0.3s;
-        }
-
-        @keyframes dotBounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-5px);
-            }
-        }
-
-        .toc-loading-bar {
-            width: 280px;
-            height: 6px;
-            margin: 0 0 0 0;
-            border: 1px solid var(--border);
-            background: #000;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .toc-loading-bar-fill {
-            height: 100%;
-            width: 0;
-            background: var(--text);
-            box-shadow: 0 0 8px var(--text), 0 0 16px var(--accent);
-            animation: barFill 2s steps(5) infinite;
-        }
-
-        @keyframes barFill {
-            0% {
-                width: 0;
-            }
-            40% {
-                width: 60%;
-            }
-            70% {
-                width: 70%;
-            }
-            100% {
-                width: 70%;
-            }
-        }
-
-        .toc-loading-blocks {
-            display: flex;
-            gap: 3px;
-            margin-top: 0.5rem;
-        }
-
-        .toc-loading-block {
-            width: 7px;
-            height: 7px;
-            background: var(--border);
-            animation: blockFlash 1.5s infinite;
-        }
-
-        .toc-loading-block:nth-child(1) {
-            animation-delay: 0s;
-        }
-
-        .toc-loading-block:nth-child(2) {
-            animation-delay: 0.18s;
-        }
-
-        .toc-loading-block:nth-child(3) {
-            animation-delay: 0.36s;
-        }
-
-        .toc-loading-block:nth-child(4) {
-            animation-delay: 0.54s;
-        }
-
-        .toc-loading-block:nth-child(5) {
-            animation-delay: 0.72s;
-        }
-
-        .toc-loading-block:nth-child(6) {
-            animation-delay: 0.9s;
-        }
-
-        .toc-loading-block:nth-child(7) {
-            animation-delay: 1.08s;
-        }
-
-        .toc-loading-block:nth-child(8) {
-            animation-delay: 1.26s;
-        }
-
-        @keyframes blockFlash {
-            0%, 60% {
-                background: var(--border);
-                box-shadow: none;
-            }
-            65% {
-                background: var(--text);
-                box-shadow: 0 0 4px var(--accent);
-            }
-            70%, 100% {
-                background: var(--border);
-                box-shadow: none;
-            }
-        }
-
-        body.toc-animating {
-            overflow: hidden;
-            height: 100vh;
         }
 
         .toc-list {
@@ -620,57 +173,24 @@
             position: relative;
         }
 
-        .toc-list::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .toc-list::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .toc-list::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 2px;
-        }
-
-        .toc-list.done .toc-item {
-            animation: tocFadeIn 0.3s steps(4) both;
-        }
-
-        @keyframes tocFadeIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            60% {
-                opacity: 0.5;
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
+        .toc-list::-webkit-scrollbar { width: 4px; }
+        .toc-list::-webkit-scrollbar-track { background: transparent; }
+        .toc-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
         .toc-item {
             display: flex;
             align-items: center;
             padding: 0.3rem 0.4rem;
             margin-bottom: 0.1rem;
-            border-bottom: 1px solid rgba(26, 51, 26, 0.5);
-            transition: background 0.12s, border-color 0.12s, padding-left 0.2s ease-out, box-shadow 0.15s;
-            cursor: pointer;
+            border-bottom: 1px solid rgba(26,51,26,0.5);
+            transition: background 0.12s, padding-left 0.2s ease-out;
         }
 
         .toc-item:hover {
-            background: rgba(51, 255, 51, 0.05);
+            background: rgba(51,255,51,0.05);
             border-bottom-color: var(--text-dim);
             padding-left: 0.8rem;
             box-shadow: inset 3px 0 0 var(--text-dim);
-        }
-
-        .toc-item:hover::before {
-            color: var(--accent);
-            text-shadow: 0 0 8px var(--accent);
         }
 
         .toc-item:hover .toc-link {
@@ -678,177 +198,29 @@
             text-shadow: 0 0 8px var(--accent), 0 0 16px var(--accent);
         }
 
-        .toc-item:hover .toc-num {
-            color: var(--text-secondary);
-            text-shadow: 0 0 4px var(--text-secondary);
-        }
-
         .toc-item:hover .toc-date {
             color: var(--text-secondary);
         }
 
-        .toc-item.selected {
-            background: rgba(51, 255, 51, 0.08);
-            border-bottom-color: var(--accent);
-            outline: 1px solid var(--accent-dim);
-        }
-
-        .toc-list.kb-active .toc-item:hover {
-            background: transparent;
-            border-bottom-color: rgba(26, 51, 26, 0.5);
-            padding-left: 0.4rem;
-            box-shadow: none;
-        }
-
-        .toc-list.kb-active .toc-item:hover::before {
-            color: var(--text-dim);
-            text-shadow: none;
-        }
-
-        .toc-list.kb-active .toc-item:hover .toc-link {
-            color: var(--text-secondary);
-            text-shadow: 0 0 3px rgba(34, 170, 34, 0.4);
-        }
-
-        .toc-list.kb-active .toc-item:hover .toc-num {
-            color: var(--text-dim);
-            text-shadow: none;
-        }
-
-        .toc-list.kb-active .toc-item:hover .toc-date {
-            color: var(--text-dim);
-        }
-
-        .toc-list.kb-active .toc-item.selected:hover {
-            background: rgba(51, 255, 51, 0.08);
-            border-bottom-color: var(--accent);
-            box-shadow: none;
-            outline: 1px solid var(--accent-dim);
-        }
-
-        .toc-list.kb-active .toc-item.selected:hover::before {
-            color: var(--text);
-            text-shadow: 0 0 6px var(--text);
-        }
-
-        .toc-list.kb-active .toc-item.selected:hover .toc-link {
-            color: var(--accent);
-            text-shadow: 0 0 8px var(--accent), 0 0 16px var(--accent);
-        }
-
-        body.keyboard-mode .toc-item:hover {
-            background: transparent;
-            border-bottom-color: rgba(26, 51, 26, 0.5);
-            padding-left: 0.4rem;
-            box-shadow: none;
-        }
-
-        body.keyboard-mode .toc-item:hover::before {
-            color: var(--text-dim);
-            text-shadow: none;
-        }
-
-        body.keyboard-mode .toc-item:hover .toc-link {
-            color: var(--text-secondary);
-            text-shadow: 0 0 3px rgba(34, 170, 34, 0.4);
-        }
-
-        body.keyboard-mode .toc-item:hover .toc-num {
-            color: var(--text-dim);
-            text-shadow: none;
-        }
-
-        body.keyboard-mode .toc-item:hover .toc-date {
-            color: var(--text-dim);
-        }
-
-        body.keyboard-mode .toc-item.selected:hover {
-            background: rgba(51, 255, 51, 0.08);
-            border-bottom-color: var(--accent);
-            box-shadow: none;
-            outline: 1px solid var(--accent-dim);
-        }
-
-        body.keyboard-mode .toc-item.selected:hover::before {
-            color: var(--text);
-            text-shadow: 0 0 6px var(--text);
-        }
-
-        body.keyboard-mode .toc-item.selected:hover .toc-link {
-            color: var(--accent);
-            text-shadow: 0 0 8px var(--accent), 0 0 16px var(--accent);
-        }
-
-        .toc-item.selected:hover {
-            background: rgba(51, 255, 51, 0.1);
-            border-bottom-color: var(--accent);
-            box-shadow: inset 3px 0 0 var(--accent);
-        }
-
-        .toc-item.selected:hover::before {
-            color: var(--accent-glow);
-            text-shadow: 0 0 12px var(--accent-glow);
-        }
-
-        .toc-item.selected:hover .toc-link {
-            color: var(--accent-glow);
-            text-shadow: 0 0 12px var(--accent-glow), 0 0 20px var(--accent-glow);
-        }
-
-        @media (max-width: 768px) {
-            .cover-title {
-                font-size: 1.5rem !important;
-            }
-
-            .toc-date {
-                font-size: 0.8rem !important;
-            }
-
-            .cover-description {
-                white-space: pre-line;
-                font-size: 0.8rem !important;
-            }
-
-            .toc-num {
-                min-width: 1rem !important;
-            }
-        }
-
-        @media screen and (min-width: 768px) {
-            .toc-item::before {
-                content: '&#9656;';
-                font-family: 'VT323', monospace;
-                color: var(--text-dim);
-                margin-right: 0.5rem;
-                flex-shrink: 0;
-                font-size: 0.8rem;
-            }
-        }
-
-        .toc-item.selected::before {
-            color: var(--text);
-            text-shadow: 0 0 6px var(--text);
-        }
-
-        .toc-num {
+        .toc-item::before {
+            content: '\25B6';
             font-family: 'VT323', monospace;
             color: var(--text-dim);
-            min-width: 2.5rem;
-            text-align: right;
-            margin-right: 0.6rem;
+            margin-right: 0.5rem;
             flex-shrink: 0;
+            font-size: 1rem;
+        }
+
+        .toc-item:hover::before {
+            color: var(--accent);
+            text-shadow: 0 0 8px var(--accent);
         }
 
         .toc-link {
             color: var(--text-secondary);
             text-decoration: none;
             flex: 1;
-            text-shadow: 0 0 3px rgba(34, 170, 34, 0.4);
-        }
-
-        .toc-item.selected .toc-link {
-            color: var(--accent);
-            text-shadow: 0 0 8px var(--accent), 0 0 16px var(--accent);
+            text-shadow: 0 0 3px rgba(34,170,34,0.4);
         }
 
         .toc-date {
@@ -863,515 +235,153 @@
             text-shadow: 0 0 6px var(--accent);
         }
 
-        .toc-dir .toc-link::after {
-            content: '/';
-            margin-left: 0.2rem;
-        }
+        .toc-dir .toc-link::after { content: '/'; margin-left: 0.2rem; }
 
         .toc-dir::before {
             color: var(--accent) !important;
             text-shadow: 0 0 6px var(--accent) !important;
         }
 
-        .toc-dir:hover {
-            border-bottom-color: var(--accent-dim) !important;
-        }
-
+        .toc-dir:hover { border-bottom-color: var(--accent-dim) !important; }
         .toc-dir:hover::before {
             color: var(--accent-glow) !important;
             text-shadow: 0 0 10px var(--accent-glow) !important;
         }
-
         .toc-dir:hover .toc-link {
             color: var(--accent-glow) !important;
             text-shadow: 0 0 10px var(--accent-glow), 0 0 20px var(--accent-glow) !important;
         }
 
-        .toc-back-root .toc-link {
-            color: var(--cyan);
-            text-shadow: 0 0 6px var(--cyan);
-        }
+        .toc-back-root .toc-link { color: #44aacc; text-shadow: 0 0 6px #44aacc; }
+        .toc-back-root::before { color: #44aacc !important; text-shadow: 0 0 6px #44aacc !important; }
+        .toc-back-root:hover { border-bottom-color: #44aacc !important; }
+        .toc-back-root:hover::before { color: #44aacc !important; text-shadow: 0 0 10px #44aacc !important; }
+        .toc-back-root:hover .toc-link { color: #44aacc !important; text-shadow: 0 0 10px #44aacc, 0 0 20px #44aacc !important; }
 
-        .toc-back-root::before {
-            color: var(--cyan) !important;
-            text-shadow: 0 0 6px var(--cyan) !important;
-        }
-
-        .toc-back-root:hover {
-            border-bottom-color: var(--cyan) !important;
-        }
-
-        .toc-back-root:hover::before {
-            color: var(--cyan) !important;
-            text-shadow: 0 0 10px var(--cyan) !important;
-        }
-
-        .toc-back-root:hover .toc-link {
-            color: var(--cyan) !important;
-            text-shadow: 0 0 10px var(--cyan), 0 0 20px var(--cyan) !important;
-        }
-
-        .toc-list.kb-active .toc-dir:hover {
-            background: transparent;
-            border-bottom-color: rgba(26, 51, 26, 0.5);
-            padding-left: 0.4rem;
-            box-shadow: none;
-        }
-
-        .toc-list.kb-active .toc-dir:hover::before {
-            color: var(--text-dim) !important;
-            text-shadow: none !important;
-        }
-
-        .toc-list.kb-active .toc-dir:hover .toc-link {
-            color: var(--text-secondary) !important;
-            text-shadow: 0 0 3px rgba(34, 170, 34, 0.4) !important;
-        }
-
-        body.keyboard-mode .toc-dir:hover {
-            background: transparent;
-            border-bottom-color: rgba(26, 51, 26, 0.5);
-            padding-left: 0.4rem;
-            box-shadow: none;
-        }
-
-        body.keyboard-mode .toc-dir:hover::before {
-            color: var(--text-dim) !important;
-            text-shadow: none !important;
-        }
-
-        body.keyboard-mode .toc-dir:hover .toc-link {
-            color: var(--text-secondary) !important;
-            text-shadow: 0 0 3px rgba(34, 170, 34, 0.4) !important;
-        }
-
-        .cover-footer {
-            color: var(--text-dim);
+        .page-footer {
             padding-top: 1.2rem;
-            text-shadow: 0 0 4px var(--text-dim);
         }
 
-        .cover-footer::before {
-            content: '# ';
-            color: var(--text-dim);
-        }
+        .page-footer::before { content: '# '; color: var(--text-dim); }
 
-        .cover-footer a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            text-shadow: 0 0 4px var(--text-secondary);
-        }
-
-        .cover-footer a:hover {
-            color: var(--accent);
-            text-shadow: 0 0 8px var(--accent);
-        }
-
-        .keyboard-hint {
-            position: absolute;
-            bottom: 0.3rem;
-            left: 0;
-            right: 0;
-            z-index: 6;
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            padding: 0.3rem 1rem;
-            font-family: 'VT323', monospace;
-            font-size: 1rem;
-            color: var(--text-dim);
-            pointer-events: none;
-        }
-
-        .keyboard-hint kbd {
-            font-family: 'VT323', monospace;
-            font-size: 1rem;
-            color: var(--accent);
-            text-shadow: 0 0 6px var(--accent);
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            padding: 0 0.3rem;
-            margin: 0 0.2rem;
-            border-radius: 2px;
-            display: inline-block;
-            min-width: 1.4rem;
-            text-align: center;
-        }
-
-        .theme-toggle {
-            position: absolute;
-            top: 1vh;
-            right: 4.5vw;
-            z-index: 10;
-            background: none;
-            border: none;
-            color: #222;
-            cursor: none;
-            font-family: 'VT323', monospace;
-            font-size: 0.8rem;
-            padding: 2px 4px;
-        }
+        .page-footer a { color: var(--text-secondary); text-decoration: none; text-shadow: 0 0 4px var(--text-secondary); }
+        .page-footer a:hover { color: var(--accent); text-shadow: 0 0 8px var(--accent); }
 
         @media (max-width: 768px) {
-            html {
-                overflow: auto;
-                height: auto;
-            }
-
-            body {
-                overflow: auto !important;
-                height: auto;
-                font-size: 1rem;
-            }
-
-            body.keyboard-mode {
-                overflow: auto !important;
-                height: auto;
-            }
-
-            .terminal {
-                height: auto;
-                min-height: 100vh;
-            }
-
-            .screen {
-                flex: none;
-                overflow: visible;
-                min-height: 100vh;
-            }
-
-            .screen-content {
-                flex: none;
-                overflow: visible;
-            }
-
-            .toc-list {
-                flex: none;
-                overflow-y: visible;
-                overscroll-behavior: auto;
-                min-height: auto;
-            }
-
-            .keyboard-hint {
-                display: none;
-            }
+            body { font-size: 1rem; }
+            .screen-content { flex: none; overflow: visible; }
+            .toc-list { flex: none; overflow-y: visible; overscroll-behavior: auto; min-height: auto; }
+            .page-title { font-size: 1.5rem !important; }
+            .cover-description { white-space: pre-line; }
         }
     </style>
 </head>
-<body class="keyboard-mode">
-<div id="boot-screen" class="boot-screen">
-    <div class="boot-warmup-flash"></div>
-    <div class="boot-beam"></div>
-    <div class="boot-content">
-        <div class="boot-lines">BOOTING...
-            TERMINAL v2.0.1
-            INIT SYSTEM...
+<body>
+    <div class="boot-screen">
+        <div class="boot-warmup-flash"></div>
+        <div class="boot-beam"></div>
+        <div class="boot-content">
+            <div class="boot-lines">BOOTING...
+TERMINAL v2.0.1
+INIT SYSTEM...
 
-            READY<span class="boot-cursor"></span></div>
-    </div>
-</div>
-
-<div class="terminal">
-    <div class="terminal-vent">
-        <span class="terminal-vent-line"></span>
-        <span class="terminal-vent-line"></span>
-        <span class="terminal-vent-line"></span>
-        <span class="terminal-vent-line"></span>
-        <span class="terminal-vent-line"></span>
-        <span class="terminal-vent-line"></span>
-        <span class="terminal-vent-line"></span>
-        <span class="terminal-vent-line"></span>
-        <span class="terminal-vent-line"></span>
-        <span class="terminal-vent-line"></span>
-    </div>
-    <div class="terminal-corner tl"></div>
-    <div class="terminal-corner tr"></div>
-    <div class="terminal-corner bl"></div>
-    <div class="terminal-corner br"></div>
-    <div class="terminal-badge">VT-100</div>
-    <div class="terminal-label">TTY1</div>
-    <div class="terminal-led" id="terminal-led"></div>
-    <button class="theme-toggle" id="theme-toggle" tabindex="-1" aria-label="切换主题">BRT</button>
-
-    <div class="screen" id="screen">
-        <div class="crt-distort"></div>
-        <div class="screen-phosphor"></div>
-        <div class="screen-vignette"></div>
-        <div class="screen-glare"></div>
-        <div class="screen-scanlines"></div>
-
-        <div class="screen-content" id="screen-content">
-            <div class="term-bar">
-                <span>[ {{site.title}}@host ~ ]</span>
-                <span>tty1</span>
-            </div>
-
-            <header class="cover-header">
-                <h1 class="cover-title" id="cover-title">{{site.title}}</h1>
-                <p class="cover-subtitle">{{site.subtitle}}</p>
-            </header>
-
-            <p class="cover-description" id="cover-description">{{site.description}}</p>
-
-            <div class="toc-header">cat ./toc</div>
-
-            <div id="toc-loading" class="toc-loading">
-                <div class="toc-loading-text">
-                    reading toc
-                    <span class="toc-loading-dots">
-                            <span class="toc-loading-dot"></span>
-                            <span class="toc-loading-dot"></span>
-                            <span class="toc-loading-dot"></span>
-                        </span>
-                </div>
-                <div class="toc-loading-bar">
-                    <div class="toc-loading-bar-fill"></div>
-                </div>
-                <div class="toc-loading-blocks">
-                    <span class="toc-loading-block"></span>
-                    <span class="toc-loading-block"></span>
-                    <span class="toc-loading-block"></span>
-                    <span class="toc-loading-block"></span>
-                    <span class="toc-loading-block"></span>
-                    <span class="toc-loading-block"></span>
-                    <span class="toc-loading-block"></span>
-                    <span class="toc-loading-block"></span>
-                </div>
-            </div>
-
-            <ul class="toc-list" id="toc-list" style="display:none"></ul>
-
-            <footer class="cover-footer">{{build.powered-by}}</footer>
-        </div>
-
-        <div class="keyboard-hint" id="keyboard-hint">
-            <span><kbd>&#8593;</kbd><kbd>&#8595;</kbd> 选择</span>
-            <span><kbd>Enter</kbd> 打开</span>
-            <span><kbd>B</kbd> 主题</span>
-            <span><kbd>M</kbd> 鼠标</span>
+READY<span class="boot-cursor"></span></div>
         </div>
     </div>
-</div>
 
-<script src="/js/camus-home-common.js"></script>
+    <div class="terminal">
+        <div class="terminal-vent">
+            <span class="terminal-vent-line"></span><span class="terminal-vent-line"></span>
+            <span class="terminal-vent-line"></span><span class="terminal-vent-line"></span>
+            <span class="terminal-vent-line"></span><span class="terminal-vent-line"></span>
+            <span class="terminal-vent-line"></span><span class="terminal-vent-line"></span>
+            <span class="terminal-vent-line"></span><span class="terminal-vent-line"></span>
+        </div>
+        <div class="terminal-corner tl"></div>
+        <div class="terminal-corner tr"></div>
+        <div class="terminal-corner bl"></div>
+        <div class="terminal-corner br"></div>
+        <div class="terminal-badge">VT-100</div>
+        <div class="terminal-label">TTY1</div>
+        <div class="terminal-led"></div>
+
+        <div class="screen">
+            <div class="crt-distort"></div>
+            <div class="screen-phosphor"></div>
+            <div class="screen-vignette"></div>
+            <div class="screen-glare"></div>
+            <div class="screen-scanlines"></div>
+
+            <div class="screen-content">
+                <div class="term-bar">
+                    <span>[ {{ site.title }}@host ~ ]</span>
+                    <span>tty1</span>
+                </div>
+
+                <header class="page-header">
+                    <h1 class="page-title">{% if current.path != "/" and current.title %}{{ current.title }}{% else %}{{ site.title }}{% endif %}</h1>
+                    {% if current.path != "/" and current.subtitle %}
+                    <p class="cover-subtitle">{{ current.subtitle }}</p>
+                    {% else %}
+                    <p class="cover-subtitle">{{ site.subtitle }}</p>
+                    {% endif %}
+                </header>
+
+                <p class="cover-description">
+                    {% if current.path != "/" and current.desc %}
+                    {{ current.desc }}
+                    {% else %}
+                    {{ default(site.desc, "") }}
+                    {% endif %}
+                </p>
+
+                <div class="toc-header">cat ./toc</div>
+
+                <ul class="toc-list">
+                    {% if current.path != "/" %}
+                    <li class="toc-item toc-back-root">
+                        <a class="toc-link" href="{{ parent.url }}">{{ parent.label }}</a>
+                    </li>
+                    {% endif %}
+                    {% for item in items %}
+                    {% if item.is_dir %}
+                    <li class="toc-item toc-dir">
+                        <a class="toc-link" href="{{ item.path }}">{{ item.title }}</a>
+                        <span class="toc-date">{{ format_datetime(item.write_time) }}</span>
+                    </li>
+                    {% else %}
+                    <li class="toc-item">
+                        {% if item.link_path != "" %}
+                        <a class="toc-link" href="{{ item.link_path }}">{{ item.title }}</a>
+                        {% else %}
+                        <a class="toc-link" href="{{ item.path }}">{{ item.title }}</a>
+                        {% endif %}
+                        <span class="toc-date">{{ format_datetime(item.write_time) }}</span>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+
+                <footer class="page-footer">{{ build.powered_by }}</footer>
+            </div>
+        </div>
+    </div>
 <script>
-    (function () {
-        var isFirstBoot = !sessionStorage.getItem("terminal-booted")
-        var bootScreen = document.getElementById("boot-screen")
+(function() {
+    var KEY = 'terminal-booted';
+    var WEEK = 7 * 24 * 60 * 60 * 1000;
+    var boot = document.querySelector('.boot-screen');
+    if (!boot) return;
 
-        if (isFirstBoot) {
-            sessionStorage.setItem("terminal-booted", "1")
-            document.body.classList.add("boot-active")
+    var last = localStorage.getItem(KEY);
+    if (last && (Date.now() - parseInt(last, 10)) < WEEK) {
+        boot.remove();
+        return;
+    }
 
-            setTimeout(function () {
-                bootScreen.classList.add("fade-out")
-                setTimeout(function () {
-                    bootScreen.remove()
-                    document.body.classList.remove("boot-active")
-                }, 500)
-            }, 1800)
-        } else {
-            bootScreen.remove()
-        }
-
-        var tocData = []
-        var selectedIndex = -1
-        var tocList = document.getElementById("toc-list")
-        var screenContent = document.getElementById("screen-content")
-
-        var preventWheel = function (e) {
-            e.preventDefault()
-        }
-
-        var isMouseEnabled = function () {
-            return !!localStorage.getItem("terminal-mouse-mode")
-        }
-
-        var enableMouse = function () {
-            document.body.classList.remove("keyboard-mode")
-            document.removeEventListener("wheel", preventWheel, { passive: false })
-            localStorage.setItem("terminal-mouse-mode", "1")
-        }
-
-        var disableMouse = function () {
-            document.body.classList.add("keyboard-mode")
-            document.addEventListener("wheel", preventWheel, { passive: false })
-            localStorage.removeItem("terminal-mouse-mode")
-        }
-
-        var isMobile = function () {
-            return window.innerWidth <= 768
-        }
-
-        if (isMobile()) {
-            enableMouse()
-        } else if (isMouseEnabled()) {
-            enableMouse()
-        } else {
-            disableMouse()
-        }
-
-        tocList.addEventListener("mousemove", function () {
-            tocList.classList.remove("kb-active")
-            var items = tocList.querySelectorAll(".toc-item")
-            if (selectedIndex >= 0 && items[selectedIndex]) {
-                items[selectedIndex].classList.remove("selected")
-            }
-            selectedIndex = -1
-        })
-
-        var selectItem = function (index) {
-            if (!tocData.length) return
-            var items = tocList.querySelectorAll(".toc-item")
-            if (selectedIndex >= 0 && items[selectedIndex]) {
-                items[selectedIndex].classList.remove("selected")
-            }
-            if (index < 0) index = 0
-            if (index >= tocData.length) index = tocData.length - 1
-            selectedIndex = index
-            var item = items[selectedIndex]
-            item.classList.add("selected")
-            var list = tocList
-            var itemTop = item.offsetTop
-            var scTop = list.scrollTop
-            var scH = list.clientHeight
-            var itemH = item.offsetHeight
-            if (itemTop < scTop) {
-                list.scrollTo({ top: itemTop - 8, behavior: "smooth" })
-            } else if (itemTop + itemH > scTop + scH) {
-                list.scrollTo({ top: itemTop + itemH - scH + 8, behavior: "smooth" })
-            }
-        }
-
-        document.addEventListener("keydown", function (e) {
-            if (!tocList.classList.contains("done")) return
-            tocList.classList.add("kb-active")
-
-            if (e.key === "ArrowDown" || e.key === "j") {
-                e.preventDefault()
-                selectItem(selectedIndex + 1)
-            } else if (e.key === "ArrowUp" || e.key === "k") {
-                e.preventDefault()
-                selectItem(selectedIndex - 1)
-            } else if (e.key === "Enter") {
-                e.preventDefault()
-                if (selectedIndex >= 0 && selectedIndex < tocData.length) {
-                    var url = tocData[selectedIndex].url
-                    if (url) window.location.href = url
-                }
-            } else if (e.key === "PageDown" || e.key === " ") {
-                e.preventDefault()
-                selectItem(selectedIndex + 10)
-            } else if (e.key === "PageUp") {
-                e.preventDefault()
-                selectItem(selectedIndex - 10)
-            } else if (e.key === "Home") {
-                e.preventDefault()
-                selectItem(0)
-            } else if (e.key === "End") {
-                e.preventDefault()
-                selectItem(tocData.length - 1)
-            } else if (e.key === "b" || e.key === "B") {
-                toggleTheme()
-            } else if (e.key === "m" || e.key === "M") {
-                if (isMouseEnabled()) {
-                    disableMouse()
-                } else {
-                    enableMouse()
-                }
-            }
-        })
-
-        HomeCommon.init({
-            encodeFn: encodeURIComponent,
-            animateCount: 20,
-            animStep: 0.035,
-            onRender: function(items) {
-                tocData = items;
-                document.body.classList.add('toc-animating');
-                document.getElementById('toc-loading').style.display = 'none';
-                tocList.style.display = '';
-                tocList.classList.add('done');
-                setTimeout(function() {
-                    document.body.classList.remove('toc-animating');
-                    selectItem(0);
-                }, 700);
-            }
-        });
-
-        var initTheme = function () {
-            var saved = localStorage.getItem("terminal-theme")
-            if (saved === "amber") {
-                applyAmberTheme()
-            }
-        }
-
-        var applyAmberTheme = function () {
-            var style = document.getElementById("terminal-style")
-            style.textContent = style.textContent.replace(/:root\s*\{[^}]*\}/, function () {
-                return ":root {" +
-                    "--bg: #0a0a08;" +
-                    "--card-bg: #0f0f0c;" +
-                    "--text: #ffb000;" +
-                    "--text-secondary: #cc8800;" +
-                    "--text-dim: #664400;" +
-                    "--accent: #ffcc44;" +
-                    "--accent-glow: #ffdd66;" +
-                    "--accent-dim: #996600;" +
-                    "--border: #332200;" +
-                    "--divider: #332200;" +
-                    "--code-bg: #080808;" +
-                    "--nav-hover-bg: #14120c;" +
-                    "--bezel: #1a1a1a;" +
-                    "--bezel-dark: #0d0d0d;" +
-                    "--green: #ffb000;" +
-                    "--yellow: #ccaa33;" +
-                    "--pink: #cc6688;" +
-                    "--cyan: #44aacc;" +
-                    "}"
-            })
-            document.getElementById("terminal-led").classList.remove("off")
-            localStorage.setItem("terminal-theme", "amber")
-        }
-
-        var applyGreenTheme = function () {
-            var style = document.getElementById("terminal-style")
-            style.textContent = style.textContent.replace(/:root\s*\{[^}]*\}/, function () {
-                return ":root {" +
-                    "--bg: #0a0a08;" +
-                    "--card-bg: #0f0f0c;" +
-                    "--text: #33ff33;" +
-                    "--text-secondary: #22aa22;" +
-                    "--text-dim: #116611;" +
-                    "--accent: #66ff66;" +
-                    "--accent-glow: #88ff88;" +
-                    "--accent-dim: #228822;" +
-                    "--border: #1a331a;" +
-                    "--divider: #1a331a;" +
-                    "--code-bg: #080808;" +
-                    "--nav-hover-bg: #141412;" +
-                    "--bezel: #1a1a1a;" +
-                    "--bezel-dark: #0d0d0d;" +
-                    "--green: #33ff33;" +
-                    "--yellow: #cccc44;" +
-                    "--pink: #cc6688;" +
-                    "--cyan: #44aacc;" +
-                    "}"
-            })
-            document.getElementById("terminal-led").classList.remove("off")
-            localStorage.setItem("terminal-theme", "green")
-        }
-
-        var toggleTheme = function () {
-            if (localStorage.getItem("terminal-theme") === "amber") {
-                applyGreenTheme()
-            } else {
-                applyAmberTheme()
-            }
-        }
-
-        initTheme()
-    })()
+    localStorage.setItem(KEY, String(Date.now()));
+    setTimeout(function() { boot.remove(); }, 3200);
+})();
 </script>
 </body>
 </html>

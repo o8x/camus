@@ -2,51 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
-    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="{{site.subtitle}}">
-    <meta name="build-time" content="{{build.time}}">
-    <meta name="build-type" content="{{build.build-type}}">
-    <meta name="cmake-version" content="{{build.cmake-version}}">
-    <meta name="cxx-standard" content="{{build.cxx-standard}}">
-    <title id="page-title">{{site.title}} - {{site.subtitle}}</title>
-    <link id="favicon" rel="icon" href="/favicon.ico">
-    <style>
-        .toc-item { padding: 0.3rem 0; }
-        .toc-num { margin-right: 0.5rem; color: #666; }
-        .toc-link { text-decoration: none; }
-        .toc-date { margin-left: 0.5rem; font-size: 0.85rem; color: #999; }
-        .toc-dir .toc-link { font-weight: bold; }
-        .toc-back-root .toc-link { font-weight: bold; }
-    </style>
+    <meta name="description" content="{{ site.subtitle }}">
+    <title>{% if current.path != "/" and current.title %}{{ current.title }} - {{ site.title }}{% else %}{{ site.title }} - {{ site.subtitle }}{% endif %}</title>
+    <link rel="icon" href="/favicon.ico">
 </head>
 <body>
-<table width="800" align="center" border="0" cellpadding="0" cellspacing="0"><tr><td>
 
-<center>
-    <h1 id="cover-title">{{site.title}}</h1>
-    <p><em>{{site.subtitle}}</em></p>
-</center>
+<table width="800" align="center" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td>
+            <center>
+                {% if current.path != "/" and current.title %}
+                <h1>{{ current.title }}</h1>
+                {% if current.subtitle %}<p><em>{{ current.subtitle }}</em></p>{% endif %}
+                {% else %}
+                <h1>{{ site.title }}</h1>
+                {% if site.subtitle %}<p><em>{{ site.subtitle }}</em></p>{% endif %}
+                {% endif %}
+            </center>
 
-<blockquote>
-    <p id="cover-description">{{site.description}}</p>
-</blockquote>
+            <blockquote>
+                {% if current.path != "/" and current.desc %}
+                <p>{{ current.desc }}</p>
+                {% else %}
+                <p>{{ default(site.desc, "") }}</p>
+                {% endif %}
+            </blockquote>
 
-<h3>&#9733; Index of Posts</h3>
+            <h3>&#9733; Index of Posts</h3>
 
-<ul id="toc-list">
-    <li><em>Loading...</em></li>
-</ul>
+            <ol>
+                {% if current.path != "/" %}
+                <li>
+                    <b><font color="#888888">../</font></b>
+                    <a href="{{ parent.url }}">{{ parent.label }}</a>
+                </li>
+                {% endif %}
+                {% for item in items %}
+                {% if item.is_dir %}
+                <li>
+                    <b>
+                        <a href="{{ item.path }}">{{ item.title }} /</a>
+                    </b>
+                    &nbsp;<font size="-1" color="#999999">{{ format_datetime(item.write_time) }}</font>
+                </li>
+                {% else %}
+                <li>
+                    {% if item.link_path != "" %}
+                    <a href="{{ item.link_path }}">{{ item.title }}</a>
+                    {% else %}
+                    <a href="{{ item.path }}">{{ item.title }}</a>
+                    {% endif %}
+                    &nbsp;<font size="-1" color="#999999">{{ format_datetime(item.write_time) }}</font>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ol>
 
-<center>{{build.powered-by}}</center>
-
-</td></tr></table>
-
-<script src="/js/camus-home-common.js"></script>
-<script>
-    HomeCommon.init({
-        encodeFn: encodeURIComponent
-    });
-</script>
+            <center><small>{{ build.powered_by }}</small></center>
+        </td>
+    </tr>
+</table>
 </body>
 </html>
