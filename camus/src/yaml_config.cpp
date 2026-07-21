@@ -145,7 +145,7 @@ namespace camus::config
 						camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
 					}
 
-					for (const auto &opt : it.second["options"]) {
+					for (const auto &opt : it.second["markdown_options"]) {
 						const auto name = opt.as<std::string>();
 						options.push_back(name);
 
