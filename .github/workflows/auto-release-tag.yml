@@ -10,6 +10,12 @@ on:
 
 permissions:
     contents: write
+    pages: write
+    id-token: write
+
+concurrency:
+    group: pages
+    cancel-in-progress: false
 
 jobs:
     build-ubuntu:
@@ -106,3 +112,38 @@ jobs:
                         packages/*.rpm
                         packages/*.deb
                         packages/*.exe
+
+    example:
+        runs-on: ubuntu-24.04
+        needs: [ build-ubuntu ]
+        container:
+            image: docker.io/ubuntu:24.04
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+
+            -   name: Get Camus
+                uses: actions/download-artifact@v4
+                with:
+                    path: packages
+                    merge-multiple: true
+
+            -   name: Build example
+                run: |
+                    apt install -y curl jq unzip libarchive-dev
+                    dpkg -i packages/camus-*.deb
+                    echo "POWERED_BY_EXTRA=<br/><a href='https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}'>${RUNNER_NAME}</a>" >> example/.env
+                    camus -iIw example
+                    camus -dw example
+
+            -   name: Setup Pages
+                uses: actions/configure-pages@v5
+
+            -   name: Upload artifact
+                uses: actions/upload-pages-artifact@v3
+                with:
+                    path: './example/html'
+
+            -   name: Deploy to GitHub Pages
+                id: deployment
+                uses: actions/deploy-pages@v5
