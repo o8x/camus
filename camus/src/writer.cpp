@@ -51,6 +51,8 @@ namespace camus
 				return;
 			}
 
+			// 设置前缀
+			node.path_prefix = conf_.camus().deploy.path_prefix;
 			// 对外目录默认和自身同级
 			node.property.external_path = node.path;
 			node.property.display_name = node.path.filename();
@@ -77,6 +79,9 @@ namespace camus
 			if (node.path.extension() != ".md") {
 				return;
 			}
+
+			// 设置前缀
+			node.path_prefix = conf_.camus().deploy.path_prefix;
 
 			// 文件的内容
 			std::map<std::string, std::string> params;
@@ -148,7 +153,7 @@ namespace camus
 			}
 
 			node.property.visibility = params["visibility"] == "hidden_in_toc" ? catalog::hidden_in_toc : catalog::open;
-			if (conf_.camus().filename_case == "uuid") {
+			if (conf_.camus().output.filename_case == "uuid") {
 				node.property.display_name = strings::uuid_v4();
 			} else {
 				node.property.display_name = params["display-name"];
@@ -185,7 +190,8 @@ namespace camus
 
 		run_only_live([&]() {
 			// 清理输出文件夹
-			filesystem::empty_path(conf_.camus().output_dir, true);
+			filesystem::empty_path(conf_.camus().output.dest_dir, true);
+			filesystem::empty_path(conf_.camus().dest_dir(), true);
 		});
 
 		// 扁平化所有文章，生成 nav
@@ -206,7 +212,7 @@ namespace camus
 		std::unordered_map<std::string, article_stats> stats{};
 
 		// 写入其他文件
-		const std::filesystem::path out_dir = std::filesystem::relative(conf_.camus().output_dir, cmd_.workdir);
+		const std::filesystem::path out_dir = std::filesystem::relative(conf_.camus().dest_dir(), cmd_.workdir);
 		for (int i = 0; i < articles.size(); ++i) {
 			catalog::catalog_node node = articles[i];
 
@@ -258,12 +264,14 @@ namespace camus
 			j["nav"]["prev_title"] = "";
 
 			if (i + 1 < articles.size()) {
-				j["nav"]["next_path"] = articles[i + 1].link_url();
+				j["nav"]["next_path"] =
+					filesystem::clean_path(articles[i + 1].link_url(), conf_.camus().deploy.path_prefix);
 				j["nav"]["next_title"] = articles[i + 1].property.display_name;
 			}
 
 			if (i > 0) {
-				j["nav"]["prev_path"] = articles[i - 1].link_url();
+				j["nav"]["prev_path"] =
+					filesystem::clean_path(articles[i - 1].link_url(), conf_.camus().deploy.path_prefix);
 				j["nav"]["prev_title"] = articles[i - 1].property.display_name;
 			}
 
@@ -277,7 +285,7 @@ namespace camus
 			assert(!node.contents.empty());
 
 			const std::string contents = strings::replace(
-				inja_.render(conf_.camus().theme[config::CAMUS_THEME_TYPE_PAGE], j),
+				inja_.render(conf_.camus().get_theme(config::CAMUS_THEME_TYPE_PAGE), j),
 				std::map<std::string, std::string>{
 					{" 00:00:00", ""},
 					{"<img ", R"(<img width="100%")"}, // 避免图片破坏 default 居中
@@ -312,8 +320,8 @@ namespace camus
 		nlohmann::json j = conf_.json();
 		j["stats"] = stats;
 
-		const std::string contents = inja_.render(conf_.camus().theme[config::CAMUS_THEME_TYPE_STATS], j);
-		filesystem::write_file(conf_.camus().output_dir / "stats.html", contents);
+		const std::string contents = inja_.render(conf_.camus().get_theme(config::CAMUS_THEME_TYPE_STATS), j);
+		filesystem::write_file(conf_.camus().dest_dir() / "stats.html", contents);
 
 		// 填充文件夹属性
 		catalog::traverse_catalog_tree(catalog_, [&](catalog::catalog_node &node, int) {
@@ -350,8 +358,8 @@ namespace camus
 
 		run_only_live([&]() {
 			filesystem::write_file(
-				filesystem::clean_path("friends.html", conf_.camus().output_dir),
-				inja_.render(conf_.camus().theme[config::CAMUS_THEME_TYPE_FRIENDS], json)
+				filesystem::clean_path("friends.html", conf_.camus().dest_dir()),
+				inja_.render(conf_.camus().get_theme(config::CAMUS_THEME_TYPE_FRIENDS), json)
 			);
 		});
 	}
@@ -361,11 +369,6 @@ namespace camus
 		if (cmd_.dryrun) {
 			return;
 		}
-
-		filesystem::write_file(
-			conf_.camus().output_dir / "index.html",
-			conf_.render_var(conf_.camus().theme[config::CAMUS_THEME_TYPE_HOME])
-		);
 
 		if (conf_.camus().render.html_engine == "default") {
 			struct dir_ctx {
@@ -430,17 +433,17 @@ namespace camus
 					filesystem::write_file(
 						filesystem::clean_path(
 							std::format("{}/index.html", dir_node->real_url().string()),
-							conf_.camus().output_dir
+							conf_.camus().dest_dir()
 						),
-						inja_.render(conf_.camus().theme[config::CAMUS_THEME_TYPE_HOME], toc_item)
+						inja_.render(conf_.camus().get_theme(config::CAMUS_THEME_TYPE_HOME), toc_item)
 					);
 				});
 			}
 
-			if (conf_.camus().render.meta) {
+			if (conf_.camus().output.meta) {
 				run_only_live([&]() {
 					filesystem::write_file(
-						filesystem::clean_path(std::format("meta.json"), conf_.camus().output_dir),
+						filesystem::clean_path(std::format("meta.json"), conf_.camus().dest_dir()),
 						toc_full.dump(4)
 					);
 				});
@@ -454,7 +457,7 @@ namespace camus
 
 	void writer::emit_sitemap()
 	{
-		if (!conf_.camus().sitemap) {
+		if (!conf_.camus().output.sitemap) {
 			return;
 		}
 
@@ -466,18 +469,18 @@ namespace camus
 
 			const std::string loc = std::format(
 				"<url><loc>{}</loc><lastmod>{}</lastmod></url>",
-				std::format("https://{}{}", conf_.camus().domain_name, node.link_url().string()),
+				std::format("{}{}", conf_.camus().deploy.full_prefix(), node.link_url().string()),
 				functions::format_time_t(node.property.write_time, "%Y-%m-%d")
 			);
 
 			items.push_back(loc);
 		});
 
-		logging::debug(std::format("make sitemap url=https://{}/sitemap.xml", conf_.camus().domain_name));
+		logging::debug(std::format("make sitemap url={}/sitemap.xml", conf_.camus().deploy.full_prefix()));
 
 		run_only_live([&]() {
 			filesystem::write_file(
-				conf_.camus().output_dir / "sitemap.xml",
+				conf_.camus().dest_dir() / "sitemap.xml",
 				std::format(
 					R"(<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{}</urlset>)",
 					strings::string_join(items, "\n\t")
@@ -506,14 +509,14 @@ namespace camus
 		// 自带的也要提升过去，并且禁止覆盖
 		std::filesystem::copy(
 			filesystem::clean_path(std::format("{}/assets", CAMUS_DIR), "./"),
-			conf_.camus().output_dir,
+			conf_.camus().dest_dir(),
 			std::filesystem::copy_options::recursive
 		);
 
 		// 默认会将资源文件都提升到输出文件夹中，同时覆盖自带的
 		std::filesystem::copy(
 			assets_dir,
-			conf_.camus().output_dir,
+			conf_.camus().dest_dir(),
 			std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
 		);
 
@@ -528,7 +531,7 @@ namespace camus
 			std::format(
 				"assets: promote copy {}/... to {}/ files={}",
 				std::filesystem::relative(assets_dir, cmd_.workdir).string(),
-				std::filesystem::relative(conf_.camus().output_dir, cmd_.workdir).string(),
+				std::filesystem::relative(conf_.camus().dest_dir(), cmd_.workdir).string(),
 				count
 			)
 		);
@@ -558,7 +561,7 @@ namespace camus
 		assert(!server_addr.empty());
 
 		std::thread server_thread([&]() {
-			watch_server_.set_mount_point("/", conf_.camus().output_dir);
+			watch_server_.set_mount_point("/", conf_.camus().dest_dir());
 			watch_server_.listen(server_addr, server_port);
 		});
 
@@ -680,7 +683,7 @@ namespace camus
 		emit_sitemap();
 		emit_assets();
 
-		logging::info("build complete articles={} output={}", catalog_.size(), conf_.camus().output_dir.string());
+		logging::info("build complete articles={} output={}", catalog_.size(), conf_.camus().dest_dir().string());
 		return 0;
 	}
 } // namespace camus

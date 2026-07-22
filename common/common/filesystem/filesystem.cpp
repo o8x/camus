@@ -130,7 +130,7 @@ namespace filesystem
 
 	std::string path_abs(const std::filesystem::path &path)
 	{
-		return std::filesystem::absolute(path).string();
+		return strings::replace(std::filesystem::absolute(path).string(), "//", "/");
 	}
 
 	void empty_path(const std::filesystem::path &path, const bool safe_check)

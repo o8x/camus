@@ -1,20 +1,22 @@
 camus:
     # 源文件夹
     source_dir: posts
-    # 输出文件夹
-    output_dir: html
     # asserts/* 原样复制到 output_dir/
     assets_dir: assets
-    # 自动生成 sitemap.xml
-    sitemap: true
-    # 加载 theme/name/*.html
-    theme: terminal
-    # 转换md的输出文件名：keep 不转换，uuid 自动转换为 /uuid.html
-    filename_case: keep
-    domain_name: stdout.com.cn
-    # 自定义 cmark-gfm 渲染选项
+    # 文件输出相关配置
+    output:
+        meta: true                              # 是否生成元信息 /meta.json，其内容会因构建类型不同而不同
+        sitemap: true                           # 自动生成 sitemap.xml
+        filename_case: keep                     # 转换md的输出文件名：keep 不转换，uuid 自动转换为 /uuid.html
+        dest_dir: html                   # html 输出文件夹
+    # 部署配置
+    deploy:
+        protocol: https://                        # 协议
+        domain_name: /stdout.com.cn/              # 域名
+        path_prefix: /camus                      # 路径前缀，实际访问路径为 https://stdout.com.cn/camus/xxx.html
+    # 页面渲染配置
     render:
-        meta: false                             # 是否生成元信息 /meta.json，其内容会因构建类型不同而不同
+        theme: terminal                         # 加载 theme/name/*.html
         html_engine: default                    # 静态渲染引擎，默认使用 inja 对模板进行渲染
         markdown_engine: cmark-gfm              # markdown 渲染引擎
         markdown_options:                       # markdown 引擎参数
