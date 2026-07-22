@@ -114,7 +114,7 @@ body {
 
 .cover-subtitle {
     font-family: 'Press Start 2P', monospace;
-    font-size: 0.8rem;
+    font-size: 1rem;
     color: var(--accent-glow);
     letter-spacing: 0.3em;
     margin-top: 0.5rem;
@@ -123,7 +123,7 @@ body {
 .cover-footer {
     text-align: center;
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 1rem;
     padding-top: 2rem;
     font-family: 'Courier New', 'Noto Sans SC', monospace;
 }
@@ -147,11 +147,11 @@ body {
         text-shadow: 1px 1px 0 var(--bg), 3px 3px 0 var(--accent);
     }
     .cover-subtitle {
-        font-size: 0.55rem;
+        font-size: 1rem;
         letter-spacing: 0.15em;
     }
     .cover-footer {
-        font-size: 0.7rem;
+        font-size: 1rem;
         padding-top: 1.5rem;
     }
 }
@@ -171,16 +171,16 @@ body {
             0 0 10px rgba(255, 107, 53, 0.3);
     }
     .cover-title {
-        font-size: 0.85rem;
+        font-size: 1rem;
         text-shadow: 1px 1px 0 var(--bg), 2px 2px 0 var(--accent);
         letter-spacing: 0.08em;
     }
     .cover-subtitle {
-        font-size: 0.4rem;
+        font-size: 1rem;
         letter-spacing: 0.1em;
     }
     .cover-footer {
-        font-size: 0.6rem;
+        font-size: 1rem;
         padding-top: 1rem;
     }
 }

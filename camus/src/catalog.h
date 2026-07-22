@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <iostream>
 #include <vector>
 
 #include "common/filesystem/filesystem.h"
@@ -42,6 +43,8 @@ namespace camus::catalog
 	struct catalog_node {
 		// 路径
 		std::filesystem::path path;
+		// 路径前缀，和主配置文件中 deploy.path_prefix 等同
+		std::filesystem::path path_prefix;
 		// 内容
 		std::vector<std::string> contents;
 		// 参数
@@ -65,7 +68,7 @@ namespace camus::catalog
 		{
 			json["title"] = data.property.display_name;
 			json["write_time"] = data.property.write_time;
-			json["path"] = data.real_url();
+			json["path"] = filesystem::clean_path(data.real_url(), data.path_prefix);
 			json["is_dir"] = data.is_directory();
 			json["link_path"] = "";
 
