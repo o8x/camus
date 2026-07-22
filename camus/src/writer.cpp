@@ -566,7 +566,7 @@ namespace camus
 		});
 
 		const std::filesystem::path watch_path = cmd_.workdir;
-		logging::info("watch directory: {}", watch_path.string());
+		logging::info("watch directory: {}", conf_.camus().dest_dir().string());
 		logging::info("watch server listen on http://{}:{}", server_addr, server_port);
 
 		while (true) {
