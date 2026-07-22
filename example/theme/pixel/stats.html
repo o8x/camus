@@ -305,7 +305,7 @@
             <h1 class="cover-title">Stats</h1>
         </header>
 
-        <!-- ── 概要卡片 ── -->
+        <!-- Summary Cards -->
         <div class="stats-summary">
             <div class="stats-card">
                 <span class="stats-card-value">{{ stats.all.articles }}</span>
@@ -325,7 +325,7 @@
             </div>
         </div>
 
-        <!-- ── 分年卡片 ── -->
+        <!-- Year Cards -->
         <div class="section-header">&#9654; Year overview &#9664;</div>
         <div class="year-grid">
             {% for year, data in stats %}
@@ -355,7 +355,7 @@
             {% endfor %}
         </div>
 
-        <!-- ── 词云（CSS tabs） ── -->
+        <!-- Tag Cloud -->
         <div class="section-header">&#9654; Tags &#9664;</div>
         <div class="tag-tabs">
             {% for year, data in stats %}
@@ -380,7 +380,7 @@
             {% endfor %}
         </div>
 
-        <!-- ── 柱状图：文章数 ── -->
+        <!-- Bar Chart: Articles -->
         <div class="section-header">&#9654; Articles &#9664;</div>
         <div class="bar-chart">
             {% for year, data in stats %}
@@ -396,7 +396,7 @@
             {% endfor %}
         </div>
 
-        <!-- ── 柱状图：字数 ── -->
+        <!-- Bar Chart: Words -->
         <div class="section-header">&#9654; Words &#9664;</div>
         <div class="bar-chart">
             {% for year, data in stats %}
@@ -412,7 +412,7 @@
             {% endfor %}
         </div>
 
-        <!-- ── 数据表格 ── -->
+        <!-- Data Table -->
         <div class="section-header">&#9654; Details &#9664;</div>
         <div class="stats-table-wrap">
             <table class="stats-table">
@@ -442,7 +442,7 @@
                 </tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td>合计</td>
+                        <td>Total</td>
                         <td class="num-cell">{{ stats.all.articles }}</td>
                         <td class="num-cell">{{ stats.all.words }}</td>
                         <td class="num-cell">{{ stats.all.read_mins }}</td>

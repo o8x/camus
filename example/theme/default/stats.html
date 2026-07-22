@@ -13,7 +13,7 @@
 
 <center><h1>Stats</h1></center>
 
-<!-- ── 概要 ── -->
+<!-- Summary -->
 <h3>Summary</h3>
 <table width="100%" border="1" cellpadding="6" cellspacing="0">
     <tr bgcolor="#f0f0f0">
@@ -28,7 +28,7 @@
     </tr>
 </table>
 
-<!-- ── 分年概况 ── -->
+<!-- By Year -->
 <h3>By Year</h3>
 <table width="100%" border="1" cellpadding="6" cellspacing="0">
     <tr bgcolor="#f0f0f0">
@@ -51,7 +51,7 @@
     {% endfor %}
 </table>
 
-<!-- ── 柱状图：文章数 ── -->
+<!-- Bar Chart: Articles -->
 <h3>Articles per Year</h3>
 <table width="100%" border="1" cellpadding="2" cellspacing="4">
     {% for year, data in stats %}
@@ -72,7 +72,7 @@
     {% endfor %}
 </table>
 
-<!-- ── 柱状图：字数 ── -->
+<!-- Bar Chart: Words -->
 <h3>Words per Year</h3>
 <table width="100%" border="1" cellpadding="2" cellspacing="4">
     {% for year, data in stats %}
@@ -93,7 +93,7 @@
     {% endfor %}
 </table>
 
-<!-- ── 标签 ── -->
+<!-- Tags -->
 <h3>Tags</h3>
 <p><b>ALL</b> ({{ length(stats.all.tags) }}): <font size="-1" color="#666666">{{ join(stats.all.tags, ", ") }}</font></p>
 {% for year, data in stats %}
@@ -102,7 +102,7 @@
 {% endif %}
 {% endfor %}
 
-<!-- ── 详细数据表格 ── -->
+<!-- Detailed Table -->
 <h3>Detailed Data</h3>
 <table width="100%" border="1" cellpadding="6" cellspacing="0">
     <tr bgcolor="#f0f0f0">
