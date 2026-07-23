@@ -35,7 +35,7 @@ namespace camus
 		void emit_friends();
 		void emit_toc();
 		void emit_sitemap();
-		void emit_assets() const;
+		void emit_assets();
 
 	  public:
 		explicit writer(const cmdline &cmd);

@@ -24,7 +24,7 @@ namespace filesystem
 	// 获取路径的绝对路径
 	std::string path_abs(const std::filesystem::path &path);
 	// 清空文件夹
-	void empty_path(const std::filesystem::path &path, const bool safe_check = false);
+	void empty_path(const std::filesystem::path &path, const bool safe_check = false, const bool auto_create = false);
 	// 判断两个路径是否指向相同的文件
 	bool path_equal(const std::filesystem::path &p1, const std::filesystem::path &p2, const bool clean_check = false);
 } // namespace filesystem

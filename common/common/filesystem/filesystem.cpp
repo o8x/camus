@@ -133,10 +133,13 @@ namespace filesystem
 		return strings::replace(std::filesystem::absolute(path).string(), "//", "/");
 	}
 
-	void empty_path(const std::filesystem::path &path, const bool safe_check)
+	void empty_path(const std::filesystem::path &path, const bool safe_check, const bool auto_create)
 	{
 		if (!std::filesystem::exists(path)) {
-			std::filesystem::create_directories(path);
+			if (auto_create) {
+				std::filesystem::create_directories(path);
+			}
+
 			return;
 		}
 
@@ -150,8 +153,9 @@ namespace filesystem
 			}
 		}
 
-		std::filesystem::remove_all(path);
-		std::filesystem::create_directories(path);
+		if (std::filesystem::remove_all(path); auto_create) {
+			std::filesystem::create_directories(path);
+		}
 	}
 
 	bool path_equal(const std::filesystem::path &p1, const std::filesystem::path &p2, const bool clean_check)

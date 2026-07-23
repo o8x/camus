@@ -489,7 +489,7 @@ namespace camus
 		});
 	}
 
-	void writer::emit_assets() const
+	void writer::emit_assets()
 	{
 		const std::string assets_dir = conf_.camus().assets_dir;
 		if (!std::filesystem::exists(assets_dir)) {
@@ -506,32 +506,49 @@ namespace camus
 			return;
 		}
 
-		// 自带的也要提升过去，并且禁止覆盖
+		// 资源文件夹拷贝到目标目录
+		const std::filesystem::path dest_dir = conf_.camus().dest_dir() / "assets";
 		std::filesystem::copy(
 			filesystem::clean_path(std::format("{}/assets", CAMUS_DIR), "./"),
-			conf_.camus().dest_dir(),
+			dest_dir,
 			std::filesystem::copy_options::recursive
 		);
 
-		// 默认会将资源文件都提升到输出文件夹中，同时覆盖自带的
 		std::filesystem::copy(
 			assets_dir,
+			dest_dir,
+			std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
+		);
+
+		// 替换资源文件中的模板
+		size_t count = 0;
+		const nlohmann::json json = conf_.json();
+		for (const auto &entry : std::filesystem::recursive_directory_iterator(dest_dir)) {
+			if (!entry.is_regular_file()) {
+				continue;
+			}
+
+			++count;
+			if (const std::filesystem::path ext = entry.path().extension();
+				ext == ".css" || ext == ".js" || ext == ".txt" || ext == ".json") {
+				filesystem::write_file(entry.path(), inja_.render(filesystem::read_file(entry.path()), json));
+			}
+		}
+
+		// 默认会将资源文件都提升到输出文件夹中，再删除原文件
+		std::filesystem::copy(
+			dest_dir,
 			conf_.camus().dest_dir(),
 			std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
 		);
 
-		size_t count = 0;
-		for (const auto &entry : std::filesystem::recursive_directory_iterator(assets_dir)) {
-			if (entry.is_regular_file()) {
-				++count;
-			}
-		}
+		filesystem::empty_path(dest_dir, true);
 
 		logging::debug(
 			std::format(
 				"assets: promote copy {}/... to {}/ files={}",
 				std::filesystem::relative(assets_dir, cmd_.workdir).string(),
-				std::filesystem::relative(conf_.camus().dest_dir(), cmd_.workdir).string(),
+				std::filesystem::relative(dest_dir, cmd_.workdir).string(),
 				count
 			)
 		);
@@ -551,6 +568,11 @@ namespace camus
 		inja_.add_callback("format_date", 1, [](const inja::Arguments &args) {
 			const int unix_ts = args.at(0)->get<int>();
 			return functions::format_time_t(unix_ts, "%Y-%m-%d");
+		});
+
+		inja_.add_callback("with_prefix", 1, [&](const inja::Arguments &args) {
+			const std::string name = args.at(0)->get<std::string>();
+			return filesystem::clean_path(name, conf_.camus().deploy.path_prefix);
 		});
 	}
 
