@@ -117,16 +117,20 @@ namespace camus
 			for (auto it = node.contents.begin(); it != node.contents.end();) {
 				if (*it == "--hidden-section-start") {
 					hidden_flag = true;
+					it = node.contents.erase(it);
+					continue;
+				}
+
+				if (*it == "--hidden-section-end") {
+					hidden_flag = false;
+					it = node.contents.erase(it);
+					continue;
 				}
 
 				if (hidden_flag) {
 					it = node.contents.erase(it);
 				} else {
 					++it;
-				}
-
-				if (*it == "--hidden-section-end") {
-					break;
 				}
 			}
 
