@@ -31,29 +31,62 @@ namespace camus
 		func();
 	}
 
-	struct article_stats {
-		uint16_t articles;
-		uint32_t words;
-		uint32_t read_mins;
-		time_t min_time;
-		time_t max_time;
-
-		std::set<std::string> tags;
-
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(article_stats, articles, words, read_mins, min_time, max_time, tags);
-	};
-
-	void writer::emit_article()
+	void writer::add_write(const std::filesystem::path &path, std::string_view content)
 	{
-		// 解析目录链接
+		if (cmd_.dryrun) {
+			return;
+		}
+
+		if (pending_writes_.contains(path)) {
+			logging::fatal("output file already queued dest={}", path.string());
+		}
+
+		pending_writes_[path] = content;
+	}
+
+	void writer::flush_writes()
+	{
+		for (const auto &[path, content] : pending_writes_) {
+			std::filesystem::create_directories(path.parent_path());
+			filesystem::write_file(path, content);
+		}
+
+		pending_writes_.clear();
+	}
+
+		void writer::emit_article()
+	{
+		resolve_directory_routes();
+		parse_article_frontmatter();
+		prepare_output_dir();
+
+		auto articles = collect_articles();
+		fill_article_nav(articles);
+
+		const std::filesystem::path out_dir = std::filesystem::relative(conf_.camus().dest_dir(), cmd_.workdir);
+		auto toc_items = build_toc_items();
+
+		article_stats all_stats{};
+		all_stats.min_time = std::numeric_limits<time_t>::max();
+		std::unordered_map<std::string, article_stats> stats;
+		stats["all"] = all_stats;
+
+		for (auto *article : articles) {
+			render_single_article(*article, toc_items, stats, out_dir);
+		}
+
+		render_stats_page(stats, toc_items);
+		finalize_directory_properties();
+	}
+
+	void writer::resolve_directory_routes()
+	{
 		catalog::traverse_catalog_tree(catalog_, [&](catalog::catalog_node &node, int) {
 			if (!node.is_directory()) {
 				return;
 			}
 
-			// 设置前缀
 			node.path_prefix = conf_.camus().deploy.path_prefix;
-			// 对外目录默认和自身同级
 			node.property.external_path = node.path;
 			node.property.display_name = node.path.filename();
 
@@ -62,38 +95,34 @@ namespace camus
 				node.property.subtitle = route->subtitle;
 				node.property.description = route->description;
 
-				// 替换公开路径
 				if (const std::filesystem::path tr_path = route->match_transfer(node.path); !tr_path.empty()) {
 					node.property.external_path = tr_path;
 				}
 			}
 
-			// 覆盖子级
 			for (auto &c : node.children) {
 				c.property.external_path = node.property.external_path;
 			}
 		});
+	}
 
-		// 解析文件
+	void writer::parse_article_frontmatter()
+	{
 		catalog::traverse_catalog_tree(catalog_, [&](catalog::catalog_node &node, int) {
 			if (node.path.extension() != ".md") {
 				return;
 			}
 
-			// 设置前缀
 			node.path_prefix = conf_.camus().deploy.path_prefix;
 
-			// 文件的内容
 			std::map<std::string, std::string> params;
 			for (int i = 0; i < node.contents.size(); ++i) {
 				const std::string line = strings::trim_space(node.contents[i]);
 				if (i > 1 && line == "---") {
-					// 去掉前面的行
 					node.contents.assign(node.contents.begin() + i, node.contents.end());
 					break;
 				}
 
-				// 第1行是 ---
 				if (i == 0) {
 					continue;
 				}
@@ -106,13 +135,11 @@ namespace camus
 				params.emplace(left, right);
 			}
 
-			// 忽略隐藏的文件
 			if (params["visibility"] == "hidden") {
 				node.property.visibility = catalog::hidden;
 				return;
 			}
 
-			// 删除隐藏内容
 			bool hidden_flag = false;
 			for (auto it = node.contents.begin(); it != node.contents.end();) {
 				if (*it == "--hidden-section-start") {
@@ -147,7 +174,6 @@ namespace camus
 			node.property.write_time = functions::datetime_to_unix(params["date"]);
 			if (node.property.write_time <= 0) {
 				node.property.write_time = 0;
-				// 取文件创建时间
 				struct stat fileStat{};
 				if (stat((conf_.camus().source_dir / node.path).c_str(), &fileStat) == 0) {
 					node.property.write_time = fileStat.st_mtime;
@@ -156,7 +182,9 @@ namespace camus
 				}
 			}
 
-			node.property.visibility = params["visibility"] == "hidden_in_toc" ? catalog::hidden_in_toc : catalog::open;
+			node.property.visibility =
+				params["visibility"] == "hidden_in_toc" ? catalog::hidden_in_toc : catalog::open;
+
 			if (conf_.camus().output.filename_case == "uuid") {
 				node.property.display_name = strings::uuid_v4();
 			} else {
@@ -177,7 +205,6 @@ namespace camus
 				}
 			);
 
-			// 所有的快捷路径都指向一个目录
 			if (const std::string alias = params["short-path"]; !alias.empty()) {
 				const uint64_t hash = strings::make_hash(node.path);
 
@@ -187,168 +214,202 @@ namespace camus
 					node.property.short_path = alias;
 				}
 			}
-
-			// 目前只支持 md 文件，都会自动编译 html，因此文件移动无意义
-			// node.property.external_path
 		});
+	}
 
+	void writer::prepare_output_dir() const
+	{
 		run_only_live([&]() {
-			// 清理输出文件夹
 			filesystem::empty_path(conf_.camus().output.dest_dir, true);
 			filesystem::empty_path(conf_.camus().dest_dir(), true);
 		});
+	}
 
-		// 扁平化所有文章，生成 nav
-		std::vector<catalog::catalog_node> articles;
-		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
-			if (node.path.extension() != ".md" || node.property.visibility == catalog::hidden) {
-				return;
+	std::vector<catalog::catalog_node *> writer::collect_articles()
+	{
+		std::vector<catalog::catalog_node *> articles;
+		catalog::traverse_catalog_tree(catalog_, [&](catalog::catalog_node &node, int) {
+			if (node.path.extension() == ".md" && node.property.visibility != catalog::hidden) {
+				articles.push_back(&node);
 			}
-
-			articles.push_back(node);
 		});
 
-		std::ranges::sort(articles, [](const catalog::catalog_node &a, const catalog::catalog_node &b) -> bool {
-			return a.property.write_time > b.property.write_time;
+		std::ranges::sort(articles, [](const catalog::catalog_node *a, const catalog::catalog_node *b) -> bool {
+			return a->property.write_time > b->property.write_time;
 		});
 
-		// 年度统计
-		std::unordered_map<std::string, article_stats> stats{};
-		stats["all"].min_time = std::numeric_limits<time_t>::max();
+		return articles;
+	}
 
-		// 写入其他文件
-		const std::filesystem::path out_dir = std::filesystem::relative(conf_.camus().dest_dir(), cmd_.workdir);
+	void writer::fill_article_nav(std::vector<catalog::catalog_node *> &articles) const
+	{
 		for (int i = 0; i < articles.size(); ++i) {
-			catalog::catalog_node node = articles[i];
-
-			if (node.link_url().empty()) {
-				logging::fatal(
-					"make article failed file={} name={} dest={}{}",
-					node.path.string(),
-					node.property.display_name,
-					out_dir.string(),
-					node.link_url().string()
-				);
-			}
-
-			std::string markdown = strings::string_join(node.contents, "\n");
-			for (const auto &[k, v] : conf_.camus().envs) {
-				markdown = strings::replace(markdown, "{{ env." + k + " }}", v);
-				markdown = strings::replace(markdown, "{{env." + k + "}}", v);
-			}
-
-			const size_t markdown_length = strings::estimate_effective_length(markdown);
-			const double read_mins = strings::estimate_reading_minutes(markdown);
-
-			stats["all"].max_time = std::max(stats["all"].max_time, node.property.write_time);
-			stats["all"].min_time = std::min(stats["all"].min_time, node.property.write_time);
-			stats["all"].articles++;
-			stats["all"].words += markdown_length;
-			stats["all"].read_mins += read_mins;
-			stats["all"].tags.insert(node.property.tags.begin(), node.property.tags.end());
-
-			if (uint16_t year = 1970 + node.property.write_time / (365 * 86400); year > 1996 && year < 2200) {
-				const std::string year_name = std::to_string(year);
-				if (stats[year_name].min_time == 0) {
-					stats[year_name].min_time = std::numeric_limits<time_t>::max();
-				}
-
-				if (node.property.write_time > 0) {
-					stats[year_name].max_time = std::max(stats[year_name].max_time, node.property.write_time);
-					stats[year_name].min_time = std::min(stats[year_name].min_time, node.property.write_time);
-				}
-
-				stats[year_name].articles++;
-				stats[year_name].words += markdown_length;
-				stats[year_name].read_mins += read_mins;
-				stats[year_name].tags.insert(node.property.tags.begin(), node.property.tags.end());
-			}
-
-			nlohmann::json j = conf_.json();
-			const std::string html = render::inja_render(
-				inja_,
-				render::render_markdown(
-					markdown.data(),
-					conf_.camus().render.markdown_engine,
-					conf_.camus().render.markdown_options
-				),
-				j
-			);
-
-			j["stats"]["word_count"] = markdown_length;
-			j["stats"]["read_min"] = read_mins;
-			j["page"]["title"] = node.property.display_name;
-			j["page"]["write_time"] = node.property.write_time;
-			j["page"]["description"] = "";
-			j["page"]["contents"] = html;
-
-			j["nav"]["next_path"] = "";
-			j["nav"]["next_title"] = "";
-			j["nav"]["prev_path"] = "";
-			j["nav"]["prev_title"] = "";
+			auto &node = *articles[i];
 
 			if (i + 1 < articles.size()) {
-				j["nav"]["next_path"] =
-					filesystem::clean_path(articles[i + 1].link_url(), conf_.camus().deploy.path_prefix);
-				j["nav"]["next_title"] = articles[i + 1].property.display_name;
+				node.render_data_.nav.next_path =
+					filesystem::clean_path(articles[i + 1]->link_url(), conf_.camus().deploy.path_prefix);
+				node.render_data_.nav.next_title = articles[i + 1]->property.display_name;
 			}
 
 			if (i > 0) {
-				j["nav"]["prev_path"] =
-					filesystem::clean_path(articles[i - 1].link_url(), conf_.camus().deploy.path_prefix);
-				j["nav"]["prev_title"] = articles[i - 1].property.display_name;
+				node.render_data_.nav.prev_path =
+					filesystem::clean_path(articles[i - 1]->link_url(), conf_.camus().deploy.path_prefix);
+				node.render_data_.nav.prev_title = articles[i - 1]->property.display_name;
 			}
+		}
+	}
 
-			logging::debug(
-				"make article words={} name={} dest={}{}",
-				markdown_length,
-				node.path.string(),
-				out_dir.string(),
-				node.link_url().string()
-			);
-			assert(!node.contents.empty());
-
-			const std::string contents = strings::replace(
-				render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_PAGE), j),
-				std::map<std::string, std::string>{
-					{" 00:00:00", ""},
-					{"<img ", R"(<img width="100%")"}, // 避免图片破坏 default 居中
-					{"<hr>", ""},
-					{"<hr/>", ""},
-					{"<hr />", ""},
-				},
-				true
-			);
-
-			// 转换文件和原始文件都写入本地
-			for (const auto &f : std::set{node.link_url(), node.real_url()}) {
-				const std::filesystem::path output_filename = out_dir / filesystem::clean_path(f, "./");
-
-				run_only_live([&] {
-					if (std::filesystem::exists(output_filename)) {
-						logging::fatal(
-							"article already exist name={} dest={}{}",
-							node.path.string(),
-							out_dir.string(),
-							f.string()
-						);
-					}
-
-					// 空转模式支持
-					std::filesystem::create_directories(output_filename.parent_path());
-					filesystem::write_file(output_filename, contents);
-				});
+	std::vector<nlohmann::json> writer::build_toc_items() const
+	{
+		std::vector<nlohmann::json> items;
+		for (const auto &child : catalog_.children) {
+			if (child.property.visibility != catalog::hidden) {
+				items.push_back(nlohmann::json(child));
 			}
 		}
 
+		std::ranges::sort(items, [](const nlohmann::json &a, const nlohmann::json &b) -> bool {
+			if (const bool a_dir = a.value("is_dir", false); a_dir != b.value("is_dir", false)) {
+				return a_dir;
+			}
+
+			return a.value("write_time", 0) > b.value("write_time", 0);
+		});
+
+		return items;
+	}
+
+	void writer::accumulate_article_stats(
+		const catalog::catalog_node &node,
+		const size_t word_count,
+		const double read_mins,
+		std::unordered_map<std::string, article_stats> &stats
+	)
+	{
+		auto &all = stats["all"];
+		all.max_time = std::max(all.max_time, node.property.write_time);
+		all.min_time = std::min(all.min_time, node.property.write_time);
+		all.articles++;
+		all.words += word_count;
+		all.read_mins += read_mins;
+		all.tags.insert(node.property.tags.begin(), node.property.tags.end());
+
+		if (uint16_t year = 1970 + node.property.write_time / (365 * 86400); year > 1996 && year < 2200) {
+			const std::string year_name = std::to_string(year);
+			auto &yr = stats[year_name];
+			if (yr.min_time == 0) {
+				yr.min_time = std::numeric_limits<time_t>::max();
+			}
+
+			if (node.property.write_time > 0) {
+				yr.max_time = std::max(yr.max_time, node.property.write_time);
+				yr.min_time = std::min(yr.min_time, node.property.write_time);
+			}
+
+			yr.articles++;
+			yr.words += word_count;
+			yr.read_mins += read_mins;
+			yr.tags.insert(node.property.tags.begin(), node.property.tags.end());
+		}
+	}
+
+	void writer::render_single_article(
+		catalog::catalog_node &node,
+		const std::vector<nlohmann::json> &toc_items,
+		std::unordered_map<std::string, article_stats> &stats,
+		const std::filesystem::path &out_dir
+	)
+	{
+		if (node.link_url().empty()) {
+			logging::fatal(
+				"make article failed file={} name={} dest={}{}",
+				node.path.string(),
+				node.property.display_name,
+				out_dir.string(),
+				node.link_url().string()
+			);
+		}
+
+		std::string markdown = strings::string_join(node.contents, "\n");
+		for (const auto &[k, v] : conf_.camus().envs) {
+			markdown = strings::replace(markdown, "{{ env." + k + " }}", v);
+			markdown = strings::replace(markdown, "{{env." + k + "}}", v);
+		}
+
+		const size_t word_count = strings::estimate_effective_length(markdown);
+		const double read_mins = strings::estimate_reading_minutes(markdown);
+
+		accumulate_article_stats(node, word_count, read_mins, stats);
+
+		const std::string html = render::inja_render(
+			inja_,
+			render::render_markdown(
+				markdown.data(),
+				conf_.camus().render.markdown_engine,
+				conf_.camus().render.markdown_options
+			),
+			conf_.json()
+		);
+
+		node.render_data_.stats.word_count = word_count;
+		node.render_data_.stats.read_min = read_mins;
+		node.render_data_.page.contents = html;
+
 		nlohmann::json j = conf_.json();
+		j.update(nlohmann::json(node));
+		j["toc"] = toc_items;
+
+		j["page"]["title"] = node.property.display_name;
+		j["page"]["write_time"] = node.property.write_time;
+		j["page"]["description"] = "";
+		j["page"]["contents"] = html;
+		j["stats"]["word_count"] = word_count;
+		j["stats"]["read_min"] = read_mins;
+		j["nav"] = node.render_data_.nav;
+
+		logging::debug(
+			"make article words={} name={} dest={}{}",
+			word_count,
+			node.path.string(),
+			out_dir.string(),
+			node.link_url().string()
+		);
+		assert(!node.contents.empty());
+
+		const std::string contents = strings::replace(
+			render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_PAGE), j),
+			std::map<std::string, std::string>{
+				{" 00:00:00", ""},
+				{"<img ", R"(<img width="100%")"},
+				{"<hr>", ""},
+				{"<hr/>", ""},
+				{"<hr />", ""},
+			},
+			true
+		);
+
+		for (const auto &f : std::set{node.link_url(), node.real_url()}) {
+			add_write(out_dir / filesystem::clean_path(f, "./"), contents);
+		}
+	}
+
+	void writer::render_stats_page(
+		const std::unordered_map<std::string, article_stats> &stats,
+		const std::vector<nlohmann::json> &toc_items
+	)
+	{
+		nlohmann::json j = conf_.json();
+		j["toc"] = toc_items;
 		j["stats"] = stats;
 
 		const std::string contents =
 			render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_STATS), j);
-		filesystem::write_file(conf_.camus().dest_dir() / "stats.html", contents);
+		add_write(conf_.camus().dest_dir() / "stats.html", contents);
+	}
 
-		// 填充文件夹属性
+	void writer::finalize_directory_properties()
+	{
 		catalog::traverse_catalog_tree(catalog_, [&](catalog::catalog_node &node, int) {
 			if (!node.is_directory()) {
 				return;
@@ -366,7 +427,6 @@ namespace camus
 				node.property.display_name.empty() ? conf_.camus().site.title : node.property.display_name;
 		});
 
-		// 删除无用的元素
 		catalog_.remove_children_if([](const catalog::catalog_node &a) -> bool {
 			if (a.is_directory()) {
 				return false;
@@ -378,15 +438,30 @@ namespace camus
 
 	void writer::emit_friends()
 	{
+		std::vector<nlohmann::json> toc_items;
+		for (const auto &child : catalog_.children) {
+			if (child.property.visibility == catalog::hidden) {
+				continue;
+			}
+			toc_items.push_back(nlohmann::json(child));
+		}
+
+		std::ranges::sort(toc_items, [](const nlohmann::json &a, const nlohmann::json &b) -> bool {
+			if (const bool a_dir = a.value("is_dir", false); a_dir != b.value("is_dir", false)) {
+				return a_dir;
+			}
+
+			return a.value("write_time", 0) > b.value("write_time", 0);
+		});
+
 		nlohmann::json json = conf_.json();
+		json["toc"] = toc_items;
 		json["friends"] = conf_.camus().friends;
 
-		run_only_live([&]() {
-			filesystem::write_file(
-				filesystem::clean_path("friends.html", conf_.camus().dest_dir()),
-				render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_FRIENDS), json)
-			);
-		});
+		add_write(
+			filesystem::clean_path("friends.html", conf_.camus().dest_dir()),
+			render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_FRIENDS), json)
+		);
 	}
 
 	void writer::emit_toc()
@@ -450,28 +525,23 @@ namespace camus
 				toc_item["items"] = items;
 				toc_item["current"] = *dir_node;
 
-				// 先写入目录再合并json
 				toc_full["catalog"].push_back(toc_item);
 				toc_item.update(conf_.json());
 
-				run_only_live([&]() {
-					filesystem::write_file(
-						filesystem::clean_path(
-							std::format("{}/index.html", dir_node->real_url().string()),
-							conf_.camus().dest_dir()
-						),
-						render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_HOME), toc_item)
-					);
-				});
+				add_write(
+					filesystem::clean_path(
+						std::format("{}/index.html", dir_node->real_url().string()),
+						conf_.camus().dest_dir()
+					),
+					render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_HOME), toc_item)
+				);
 			}
 
 			if (conf_.camus().output.meta) {
-				run_only_live([&]() {
-					filesystem::write_file(
-						filesystem::clean_path(std::format("meta.json"), conf_.camus().dest_dir()),
-						toc_full.dump(4)
-					);
-				});
+				add_write(
+					filesystem::clean_path("meta.json", conf_.camus().dest_dir()),
+					toc_full.dump(4)
+				);
 			}
 
 			return;
@@ -503,15 +573,13 @@ namespace camus
 
 		logging::debug(std::format("make sitemap url={}/sitemap.xml", conf_.camus().deploy.full_prefix()));
 
-		run_only_live([&]() {
-			filesystem::write_file(
-				conf_.camus().dest_dir() / "sitemap.xml",
-				std::format(
-					R"(<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{}</urlset>)",
-					strings::string_join(items, "\n\t")
-				)
-			);
-		});
+		add_write(
+			conf_.camus().dest_dir() / "sitemap.xml",
+			std::format(
+				R"(<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{}</urlset>)",
+				strings::string_join(items, "\n\t")
+			)
+		);
 	}
 
 	void writer::emit_assets()
@@ -524,6 +592,8 @@ namespace camus
 		if (cmd_.dryrun) {
 			return;
 		}
+
+		std::filesystem::create_directories(conf_.camus().dest_dir());
 
 		// 整体拷贝资源文件夹
 		if (std::filesystem::is_empty(assets_dir)) {
@@ -747,6 +817,8 @@ namespace camus
 		emit_friends();
 		emit_sitemap();
 		emit_assets();
+
+		flush_writes();
 
 		logging::info("build complete articles={} output={}", catalog_.size(), conf_.camus().dest_dir().string());
 		return 0;
