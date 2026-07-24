@@ -210,6 +210,7 @@ namespace camus
 
 		// 年度统计
 		std::unordered_map<std::string, article_stats> stats{};
+		stats["all"].min_time = std::numeric_limits<time_t>::max();
 
 		// 写入其他文件
 		const std::filesystem::path out_dir = std::filesystem::relative(conf_.camus().dest_dir(), cmd_.workdir);
@@ -236,7 +237,7 @@ namespace camus
 			const double read_mins = strings::estimate_reading_minutes(markdown);
 
 			stats["all"].max_time = std::max(stats["all"].max_time, node.property.write_time);
-			stats["all"].min_time = std::max(stats["all"].min_time, node.property.write_time);
+			stats["all"].min_time = std::min(stats["all"].min_time, node.property.write_time);
 			stats["all"].articles++;
 			stats["all"].words += markdown_length;
 			stats["all"].read_mins += read_mins;
@@ -244,8 +245,15 @@ namespace camus
 
 			if (uint16_t year = 1970 + node.property.write_time / (365 * 86400); year > 1996 && year < 2200) {
 				const std::string year_name = std::to_string(year);
-				stats[year_name].max_time = std::max(stats[year_name].max_time, node.property.write_time);
-				stats[year_name].min_time = std::max(stats[year_name].min_time, node.property.write_time);
+				if (stats[year_name].min_time == 0) {
+					stats[year_name].min_time = std::numeric_limits<time_t>::max();
+				}
+
+				if (node.property.write_time > 0) {
+					stats[year_name].max_time = std::max(stats[year_name].max_time, node.property.write_time);
+					stats[year_name].min_time = std::min(stats[year_name].min_time, node.property.write_time);
+				}
+
 				stats[year_name].articles++;
 				stats[year_name].words += markdown_length;
 				stats[year_name].read_mins += read_mins;
