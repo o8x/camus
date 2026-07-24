@@ -8,11 +8,11 @@
     <title>{{ page.title }} - {{ site.title }}</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <link rel="stylesheet" href="/css/pixel-inja.css">
+    <link rel="stylesheet" href="{{ with_prefix("/css/pixel-inja.css") }}">
+    <link rel="stylesheet" href="{{ with_prefix("/css/ark-pixel-font.css") }}">
     <style>
         .reading-container {
             max-width: 1200px;
@@ -30,8 +30,7 @@
         }
 
         .cover-title {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 2.2rem;
+            font-size: 3rem;
             color: var(--accent);
             letter-spacing: 0.15em;
             line-height: 2;
@@ -41,15 +40,14 @@
 
         .chapter-meta {
             margin-top: 1.2rem;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: var(--text-secondary);
         }
 
         .chapter-meta span { margin: 0 0.5rem; }
 
         .chapter-content {
-            font-size: 1rem;
+            font-size: 1.2rem;
             line-height: 2;
             text-align: justify;
             word-break: break-word;
@@ -59,19 +57,17 @@
 
         .chapter-content h1, .chapter-content h2, .chapter-content h3,
         .chapter-content h4, .chapter-content h5, .chapter-content h6 {
-            font-family: 'Press Start 2P', monospace;
             text-indent: 0;
             margin: 2.5rem 0 1rem;
             color: var(--accent);
             text-shadow: 2px 2px 0 var(--bg);
         }
 
-        .chapter-content h1 { font-size: 1.4rem; }
-        .chapter-content h2 { font-size: 1.2rem; }
-        .chapter-content h3 { font-size: 1rem; }
+        .chapter-content h1 { font-size: 1.85rem; }
+        .chapter-content h2 { font-size: 1.58rem; }
+        .chapter-content h3 { font-size: 1.32rem; }
 
         .chapter-content blockquote {
-            font-family: 'Press Start 2P', monospace;
             text-indent: 0;
             margin: 1.5rem 0;
             padding: 1rem 1.5rem;
@@ -89,8 +85,7 @@
         .chapter-content code:not(.hljs) {
             background: var(--code-bg);
             padding: 0.15em 0.4em;
-            font-size: 0.85em;
-            font-family: 'Courier New', monospace;
+            font-size: 1.02em;
             color: var(--green);
             border: 1px solid var(--border);
         }
@@ -99,7 +94,7 @@
             display: block;
             overflow-x: auto;
             padding: 1rem 1.5rem;
-            font-size: 1rem;
+            font-size: 1.2rem;
             line-height: 1.7;
             border: 2px solid var(--border);
             background: var(--code-bg);
@@ -117,7 +112,7 @@
 
         .chapter-content pre code.hljs {
             padding: 1.2rem 1.5rem;
-            font-size: 1rem;
+            font-size: 1.2rem;
             line-height: 1.7;
             background: transparent;
             border: none;
@@ -160,8 +155,7 @@
             padding: 0.6rem 1rem;
             border: 2px solid var(--border);
             background: var(--card-bg);
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             transition: all 0.1s;
             max-width: 45%;
             box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2), inset 2px 2px 0 rgba(255,255,255,0.05);
@@ -182,8 +176,7 @@
         .nav-link-placeholder { width: 45%; }
 
         .nav-link .nav-label {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: var(--text-secondary);
             display: block;
             line-height: 1.6;
@@ -194,14 +187,12 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            font-family: 'Courier New', 'Noto Sans SC', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
         }
 
         .nav-center {
             color: var(--text-secondary);
-            font-size: 1rem;
-            font-family: 'Press Start 2P', monospace;
+            font-size: 1.2rem;
         }
 
         .nav-center a { color: var(--accent); text-decoration: none; }
@@ -210,21 +201,45 @@
         .page-footer {
             text-align: center;
             color: var(--text-secondary);
-            font-family: 'Courier New', 'Noto Sans SC', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             padding: 0 0 4rem 0;
         }
 
         .page-footer a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
         .page-footer a:hover { color: var(--accent-glow); }
 
-        @media (max-width: 640px) {
-            .reading-container { padding: 0 1rem; }
-            .chapter-header { padding: 2.5rem 0 1.5rem; }
-            .chapter-content { font-size: 1rem; }
-            .chapter-nav { flex-direction: column; gap: 0.8rem; padding: 2rem 0; }
+        @media (max-width: 768px) {
+            .reading-container { padding: 0 1.2rem; }
+            .chapter-header { padding: 2rem 0 1.2rem; margin-bottom: 1.5rem; }
+            .cover-title { font-size: 2rem; text-shadow: 1px 1px 0 var(--bg), 2px 2px 0 var(--accent); }
+            .chapter-meta { font-size: 1.1rem; }
+            .chapter-content { font-size: 1.15rem; line-height: 1.8; }
+            .chapter-content h1 { font-size: 1.5rem; }
+            .chapter-content h2 { font-size: 1.3rem; }
+            .chapter-content h3 { font-size: 1.15rem; }
+            .chapter-content h1, .chapter-content h2, .chapter-content h3 { margin: 1.5rem 0 0.6rem; }
+            .chapter-content blockquote { margin: 1rem 0; padding: 0.8rem 1rem; }
+            .chapter-content pre { margin: 0.8rem 0; }
+            .chapter-nav { flex-direction: column; gap: 0.8rem; padding: 1.5rem 0; }
             .nav-link { max-width: 100%; width: 100%; justify-content: center; }
-            .nav-link-placeholder { width: 100%; }
+            .nav-link-placeholder { display: none; }
+        }
+
+        @media (max-width: 480px) {
+            .reading-container { padding: 0 0.8rem; }
+            .chapter-header { padding: 1.5rem 0 1rem; margin-bottom: 1rem; border-width: 2px; }
+            .cover-title { font-size: 1.5rem; letter-spacing: 0.06em; }
+            .chapter-meta { font-size: 1rem; margin-top: 0.6rem; }
+            .chapter-content { font-size: 1.1rem; line-height: 1.7; }
+            .chapter-content p { text-indent: 1.2em; margin-bottom: 0.6rem; }
+            .chapter-content h1 { font-size: 1.3rem; margin: 1.2rem 0 0.4rem; }
+            .chapter-content h2 { font-size: 1.15rem; }
+            .chapter-content h3 { font-size: 1.05rem; }
+            .chapter-content blockquote { padding: 0.6rem 0.8rem; border-width: 3px; }
+            .chapter-content pre code { font-size: 0.85rem; }
+            .chapter-content ul, .chapter-content ol { margin-left: 1rem; }
+            .chapter-nav { padding: 1rem 0; gap: 0.6rem; }
+            .nav-link { padding: 0.6rem 0.8rem; font-size: 0.95rem; }
         }
     </style>
 </head>
@@ -235,7 +250,7 @@
     <header class="chapter-header">
         <h1 class="cover-title">{{ page.title }}</h1>
         <div class="chapter-meta">
-            <span>{{ stats.word_count }} 字 · 约 {{ stats.read_min }} 分钟</span>
+            <span>{{ stats.word_count }} words · ~{{ stats.read_min }} min</span>
             <span>&#124;</span>
             <span>{{ format_datetime(page.write_time) }}</span>
         </div>
@@ -269,5 +284,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script>hljs.highlightAll();</script>
+<script src="{{ with_prefix("/js/ark-pixel-font.js") }}"></script>
 </body>
 </html>

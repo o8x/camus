@@ -18,10 +18,13 @@
     --cyan: #22d3ee;
 }
 
+
+
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    font-family: 'Courier New', 'Source Code Pro', 'Noto Sans SC', monospace;
+    font-family: 'Ark Pixel', 'Press Start 2P', 'Courier New', 'Source Code Pro', 'Noto Sans SC', monospace;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -29,9 +32,19 @@ body {
     image-rendering: pixelated;
 }
 
+/* Prevent overflow on mobile */
+img, video, iframe, table {
+    max-width: 100%;
+    height: auto;
+}
+pre {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 .site-stats-link {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 0.5rem;
+    font-size: 1rem;
     color: var(--accent);
     line-height: 1.5;
 }
@@ -72,10 +85,8 @@ body {
     text-align: center;
     margin-bottom: 1rem;
     color: var(--accent);
-    font-size: 0.5rem;
-    letter-spacing: 0.5rem;
-    font-family: 'Press Start 2P', monospace;
-    animation: blink 1.5s infinite;
+    font-size: 0.6rem;
+    letter-spacing: 0.5rem;    animation: blink 1.5s infinite;
 }
 
 @keyframes blink {
@@ -102,9 +113,7 @@ body {
         0 0 20px rgba(255, 107, 53, 0.3);
 }
 
-.cover-title {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 2.2rem;
+.cover-title {    font-size: 2.9rem;
     color: var(--accent);
     text-shadow: 2px 2px 0 var(--bg), 4px 4px 0 var(--accent);
     letter-spacing: 0.15em;
@@ -112,9 +121,7 @@ body {
     image-rendering: pixelated;
 }
 
-.cover-subtitle {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 1rem;
+.cover-subtitle {    font-size: 1.32rem;
     color: var(--accent-glow);
     letter-spacing: 0.3em;
     margin-top: 0.5rem;
@@ -123,64 +130,69 @@ body {
 .cover-footer {
     text-align: center;
     color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: 1.2rem;
     padding-top: 2rem;
-    font-family: 'Courier New', 'Noto Sans SC', monospace;
 }
 
 @media (max-width: 768px) {
     .pixel-deco {
-        font-size: 0.35rem;
-        letter-spacing: 0.3rem;
+        font-size: 0.42rem;
+        letter-spacing: 0.25rem;
     }
     .cover-header {
-        padding: 2rem 0;
-        margin-bottom: 1.5rem;
-        border-width: 3px;
-        box-shadow:
-            0 0 0 3px var(--bg),
-            0 0 0 6px var(--accent),
-            0 0 15px rgba(255, 107, 53, 0.3);
-    }
-    .cover-title {
-        font-size: 1.2rem;
-        text-shadow: 1px 1px 0 var(--bg), 3px 3px 0 var(--accent);
-    }
-    .cover-subtitle {
-        font-size: 1rem;
-        letter-spacing: 0.15em;
-    }
-    .cover-footer {
-        font-size: 1rem;
-        padding-top: 1.5rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .pixel-deco {
-        font-size: 0.25rem;
-        letter-spacing: 0.2rem;
-    }
-    .cover-header {
-        padding: 1.5rem 0;
-        margin-bottom: 1rem;
+        padding: 1.8rem 0;
+        margin-bottom: 1.2rem;
         border-width: 2px;
         box-shadow:
             0 0 0 2px var(--bg),
             0 0 0 4px var(--accent),
-            0 0 10px rgba(255, 107, 53, 0.3);
+            0 0 10px rgba(255, 107, 53, 0.25);
     }
     .cover-title {
-        font-size: 1rem;
+        font-size: 1.58rem;
         text-shadow: 1px 1px 0 var(--bg), 2px 2px 0 var(--accent);
-        letter-spacing: 0.08em;
+        line-height: 1.6;
     }
     .cover-subtitle {
-        font-size: 1rem;
-        letter-spacing: 0.1em;
+        font-size: 1.32rem;
+        letter-spacing: 0.12em;
     }
     .cover-footer {
-        font-size: 1rem;
-        padding-top: 1rem;
+        font-size: 1.2rem;
+        padding-top: 1.5rem;
     }
+    .pixel-stars { opacity: 0.5; }
+    .scanlines { background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 6px); }
+}
+
+@media (max-width: 480px) {
+    .pixel-deco {
+        font-size: 0.3rem;
+        letter-spacing: 0.15rem;
+    }
+    .cover-header {
+        padding: 1.2rem 0;
+        margin-bottom: 0.8rem;
+        border-width: 1px;
+        box-shadow:
+            0 0 0 1px var(--bg),
+            0 0 0 3px var(--accent),
+            0 0 6px rgba(255, 107, 53, 0.2);
+    }
+    .cover-title {
+        font-size: 1.32rem;
+        text-shadow: 1px 1px 0 var(--bg), 2px 2px 0 var(--accent);
+        letter-spacing: 0.06em;
+        line-height: 1.4;
+    }
+    .cover-subtitle {
+        font-size: 1.2rem;
+        letter-spacing: 0.08em;
+    }
+    .cover-footer {
+        font-size: 1.1rem;
+        padding-top: 0.8rem;
+    }
+    .pixel-stars { opacity: 0.3; }
+    .scanlines { background: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.03) 4px, rgba(0,0,0,0.03) 8px); }
 }

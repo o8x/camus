@@ -101,6 +101,8 @@ namespace camus::config
 		render_conf render;
 		// 友情链接
 		std::vector<friend_link_conf> friends;
+		// .env 的内容
+		std::map<std::string, std::string> envs;
 
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(camus_conf, source_dir, assets_dir, site, output, deploy, render, friends);
 

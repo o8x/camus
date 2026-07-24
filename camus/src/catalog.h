@@ -73,7 +73,7 @@ namespace camus::catalog
 			json["link_path"] = "";
 
 			if (!data.property.short_path.empty()) {
-				json["link_path"] = data.link_url();
+				json["link_path"] = filesystem::clean_path(data.link_url(), data.path_prefix);
 			}
 
 			if (data.is_directory()) {

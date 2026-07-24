@@ -131,7 +131,7 @@ jobs:
             -   name: Build Pages
                 run: |
                     apt update -y
-                    apt install -y curl jq unzip libarchive-dev
+                    apt install -y libarchive-dev
                     dpkg -i packages/camus-*.deb
                     echo "POWERED_BY_EXTRA=<br/><a href='https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}'>${RUNNER_NAME}</a>" >> example/.env
                     camus -iIw example

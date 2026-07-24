@@ -8,9 +8,9 @@
     <title>Stats - {{ site.title }}</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/pixel-inja.css">
+    <link rel="stylesheet" href="{{ with_prefix("/css/pixel-inja.css") }}">
+    <link rel="stylesheet" href="{{ with_prefix("/css/ark-pixel-font.css") }}">
     <style>
         .cover {
             max-width: 1200px;
@@ -21,8 +21,7 @@
         }
 
         .section-header {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1rem;
+            font-size: 1.32rem;
             color: var(--accent);
             text-align: center;
             margin: 3rem 0 1.5rem;
@@ -55,8 +54,7 @@
         }
 
         .stats-card-value {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1.3rem;
+            font-size: 1.56rem;
             color: var(--accent);
             text-shadow: 2px 2px 0 var(--bg);
             display: block;
@@ -65,8 +63,7 @@
         .stats-card-label {
             display: block;
             margin-top: 0.5rem;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: var(--text-secondary);
             letter-spacing: 0.2em;
         }
@@ -93,25 +90,22 @@
         }
 
         .year-card-year {
-            font-size: 1rem;
-            font-family: 'Press Start 2P', monospace;
+            font-size: 1.32rem;
             color: var(--accent);
             margin-bottom: 0.8rem;
             letter-spacing: 0.15em;
         }
 
         .year-card-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 1rem; }
-        .year-stat { font-size: 1rem; }
-        .year-stat-label { color: var(--text-secondary); font-size: 1rem; }
-        .year-stat-value { font-family: 'Press Start 2P', monospace; font-size: 1rem; color: var(--accent); }
+        .year-stat { font-size: 1.2rem; }
+        .year-stat-label { color: var(--text-secondary); font-size: 1.2rem; }
 
         .bar-chart { margin-bottom: 2rem; }
 
         .bar-row { display: flex; align-items: center; margin-bottom: 0.6rem; gap: 0.8rem; }
 
         .bar-label {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: var(--text-secondary);
             min-width: 4rem;
             text-align: right;
@@ -135,8 +129,6 @@
             transition: width 0.8s steps(20);
         }
 
-        .bar-value { font-family: 'Press Start 2P', monospace; font-size: 1rem; color: var(--accent); min-width: 2.5rem; flex-shrink: 0; }
-        .bar-sub { font-family: 'Press Start 2P', monospace; font-size: 1rem; color: var(--text-secondary); min-width: 3rem; flex-shrink: 0; }
 
         .tag-tabs { margin-bottom: 2rem; }
 
@@ -145,8 +137,7 @@
         .tag-tab-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3rem; margin-bottom: 1rem; }
 
         .tag-tab-btn {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: var(--text-secondary);
             padding: 0.5rem 0.8rem;
             border: 2px solid var(--border);
@@ -200,11 +191,10 @@
 
         .stats-table-wrap { overflow-x: auto; margin-bottom: 2rem; }
 
-        .stats-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+        .stats-table { width: 100%; border-collapse: collapse; font-size: 1.2rem; }
 
         .stats-table thead th {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: var(--accent);
             text-align: left;
             padding: 1rem 0.8rem;
@@ -217,8 +207,7 @@
         .stats-table tbody tr:hover td { background: var(--nav-hover-bg); }
 
         .stats-table .total-row td {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: var(--accent);
             border-top: 2px solid var(--accent);
             border-bottom: 2px solid var(--accent);
@@ -226,71 +215,70 @@
             background: rgba(255, 107, 53, 0.06);
         }
 
-        .stats-table .num-cell { text-align: right; font-family: 'Courier New', monospace; }
-        .stats-table .tag-cell { max-width: 300px; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); font-size: 1rem; }
-        .stats-table .date-cell { font-size: 1rem; color: var(--text-secondary); }
+        .stats-table .tag-cell { max-width: 300px; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); font-size: 1.2rem; }
+        .stats-table .date-cell { font-size: 1.2rem; color: var(--text-secondary); }
 
         @media (max-width: 768px) {
             .cover { padding: 2rem 1.2rem 4rem; }
-            .cover-title { font-size: 1rem; }
-            .section-header { font-size: 1rem; letter-spacing: 0.15em; margin: 2.2rem 0 1rem; }
-            .stats-summary { gap: 0.8rem; max-width: none; }
-            .stats-card { padding: 1rem 0.6rem; }
-            .stats-card-value { font-size: 1rem; }
-            .stats-card-label { font-size: 1rem; margin-top: 0.3rem; }
+            .cover-title { font-size: 1.32rem; }
+            .section-header { font-size: 1.32rem; letter-spacing: 0.12em; margin: 1.8rem 0 0.8rem; }
+            .stats-summary { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; max-width: none; }
+            .stats-card { padding: 0.8rem 0.5rem; }
+            .stats-card-value { font-size: 1.1rem; }
+            .stats-card-label { font-size: 1.1rem; margin-top: 0.2rem; }
             .year-grid { grid-template-columns: 1fr; gap: 0.7rem; }
-            .year-card { padding: 1rem 1.2rem; }
-            .year-card-year { font-size: 1rem; margin-bottom: 0.5rem; }
+            .year-card { padding: 0.9rem 1rem; }
+            .year-card-year { font-size: 1.2rem; margin-bottom: 0.4rem; }
             .year-card-stats { gap: 0.3rem 0.8rem; }
-            .year-stat-value { font-size: 1rem; }
-            .year-stat-label { font-size: 1rem; }
-            .bar-row { gap: 0.5rem; margin-bottom: 0.4rem; }
-            .bar-label { font-size: 1rem; min-width: 2.5rem; }
-            .bar-track { height: 14px; }
-            .bar-value { font-size: 1rem; min-width: 2rem; }
-            .tag-tab-nav { gap: 0.2rem; margin-bottom: 0.7rem; }
-            .tag-tab-btn { font-size: 1rem; padding: 0.4rem 0.6rem; }
-            .tag-cloud-pane { padding: 1.2rem 0.8rem; gap: 0.4rem 0.7rem; min-height: 80px; }
-            .tag-item { font-size: 1rem !important; }
+            .year-stat-value { font-size: 1.1rem; }
+            .year-stat-label { font-size: 1.1rem; }
+            .bar-row { gap: 0.4rem; margin-bottom: 0.3rem; }
+            .bar-label { font-size: 1.1rem; min-width: 2.2rem; }
+            .bar-track { height: 12px; }
+            .bar-value { font-size: 1.1rem; min-width: 1.8rem; }
+            .tag-tab-nav { gap: 0.2rem; margin-bottom: 0.6rem; }
+            .tag-tab-btn { font-size: 1.1rem; padding: 0.35rem 0.5rem; }
+            .tag-cloud-pane { padding: 1rem 0.6rem; gap: 0.3rem 0.6rem; min-height: 70px; }
+            .tag-item { font-size: 1.1rem !important; }
             .stats-table-wrap {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
                 border: 1px solid var(--border);
                 box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2);
             }
-            .stats-table { min-width: 500px; font-size: 1rem; }
-            .stats-table thead th { font-size: 1rem; padding: 0.6rem 0.5rem; }
-            .stats-table tbody td { padding: 0.5rem 0.5rem; font-size: 1rem; }
-            .stats-table .total-row td { font-size: 1rem; padding: 0.6rem 0.5rem; }
+            .stats-table { min-width: 480px; font-size: 1.1rem; }
+            .stats-table thead th { font-size: 1.1rem; padding: 0.5rem 0.4rem; }
+            .stats-table tbody td { padding: 0.4rem 0.4rem; font-size: 1.1rem; }
+            .stats-table .total-row td { font-size: 1.1rem; padding: 0.5rem 0.4rem; }
             .stats-table .date-cell { display: none; }
-            .stats-table .tag-cell { max-width: 140px; font-size: 1rem; }
-            .stats-table .num-cell { font-size: 1rem; }
+            .stats-table .tag-cell { max-width: 120px; font-size: 1.1rem; }
+            .stats-table .num-cell { font-size: 1.1rem; }
         }
 
         @media (max-width: 480px) {
-            .cover { padding: 1.2rem 0.8rem 3rem; }
-            .cover-title { font-size: 1rem; }
-            .section-header { font-size: 1rem; letter-spacing: 0.1em; margin: 1.8rem 0 0.8rem; }
-            .stats-summary { gap: 0.5rem; }
-            .stats-card { padding: 0.8rem 0.4rem; }
+            .cover { padding: 1rem 0.6rem 2.5rem; }
+            .cover-title { font-size: 1.2rem; }
+            .section-header { font-size: 1.2rem; letter-spacing: 0.08em; margin: 1.2rem 0 0.6rem; }
+            .stats-summary { grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+            .stats-card { padding: 0.6rem 0.3rem; }
             .stats-card-value { font-size: 1rem; }
-            .stats-card-label { font-size: 1rem; margin-top: 0.3rem; }
-            .year-card { padding: 0.8rem 1rem; }
-            .year-card-year { font-size: 1rem; }
+            .stats-card-label { font-size: 1rem; margin-top: 0.2rem; }
+            .year-card { padding: 0.7rem 0.8rem; }
+            .year-card-year { font-size: 1.1rem; }
             .year-stat-value { font-size: 1rem; }
             .year-stat-label { font-size: 1rem; }
-            .bar-row { gap: 0.3rem; margin-bottom: 0.3rem; }
-            .bar-label { font-size: 1rem; min-width: 2rem; }
-            .bar-track { height: 10px; border-width: 1px; }
-            .bar-value { font-size: 1rem; min-width: 1.5rem; }
-            .tag-tab-btn { font-size: 1rem; padding: 0.35rem 0.5rem; border-width: 1px; }
-            .tag-cloud-pane { padding: 1rem 0.6rem; gap: 0.3rem 0.5rem; min-height: 60px; }
+            .bar-row { gap: 0.25rem; margin-bottom: 0.25rem; }
+            .bar-label { font-size: 1rem; min-width: 1.8rem; }
+            .bar-track { height: 8px; border-width: 1px; }
+            .bar-value { font-size: 1rem; min-width: 1.3rem; }
+            .tag-tab-btn { font-size: 1rem; padding: 0.3rem 0.4rem; border-width: 1px; }
+            .tag-cloud-pane { padding: 0.8rem 0.5rem; gap: 0.25rem 0.4rem; min-height: 50px; }
             .tag-item { font-size: 1rem !important; }
-            .stats-table { min-width: 420px; font-size: 1rem; }
-            .stats-table thead th { font-size: 1rem; padding: 0.5rem 0.4rem; }
-            .stats-table tbody td { padding: 0.4rem 0.4rem; font-size: 1rem; }
-            .stats-table .total-row td { font-size: 1rem; padding: 0.5rem 0.4rem; }
-            .stats-table .tag-cell { max-width: 100px; font-size: 1rem; }
+            .stats-table { min-width: 380px; font-size: 1rem; }
+            .stats-table thead th { font-size: 1rem; padding: 0.4rem 0.3rem; }
+            .stats-table tbody td { padding: 0.3rem 0.3rem; font-size: 1rem; }
+            .stats-table .total-row td { font-size: 1rem; padding: 0.4rem 0.3rem; }
+            .stats-table .tag-cell { max-width: 80px; font-size: 1rem; }
             .stats-table .num-cell { font-size: 1rem; }
         }
     </style>
@@ -305,7 +293,7 @@
             <h1 class="cover-title">Stats</h1>
         </header>
 
-        <!-- ── 概要卡片 ── -->
+        <!-- Summary Cards -->
         <div class="stats-summary">
             <div class="stats-card">
                 <span class="stats-card-value">{{ stats.all.articles }}</span>
@@ -325,7 +313,7 @@
             </div>
         </div>
 
-        <!-- ── 分年卡片 ── -->
+        <!-- Year Cards -->
         <div class="section-header">&#9654; Year overview &#9664;</div>
         <div class="year-grid">
             {% for year, data in stats %}
@@ -355,7 +343,7 @@
             {% endfor %}
         </div>
 
-        <!-- ── 词云（CSS tabs） ── -->
+        <!-- Tag Cloud -->
         <div class="section-header">&#9654; Tags &#9664;</div>
         <div class="tag-tabs">
             {% for year, data in stats %}
@@ -374,13 +362,13 @@
             {% for year, data in stats %}
             <div class="tag-cloud-pane" data-year="{{ year }}">
                 {% for tag in data.tags %}
-                <span class="tag-item" style="font-size: {{ round(1.2 - loop.index1 * 0.03, 2) }}rem;">{{ tag }}</span>
+                <span class="tag-item" style="font-size: {{ round(1.44 - loop.index1 * 0.036, 2) }}rem;">{{ tag }}</span>
                 {% endfor %}
             </div>
             {% endfor %}
         </div>
 
-        <!-- ── 柱状图：文章数 ── -->
+        <!-- Bar Chart: Articles -->
         <div class="section-header">&#9654; Articles &#9664;</div>
         <div class="bar-chart">
             {% for year, data in stats %}
@@ -396,7 +384,7 @@
             {% endfor %}
         </div>
 
-        <!-- ── 柱状图：字数 ── -->
+        <!-- Bar Chart: Words -->
         <div class="section-header">&#9654; Words &#9664;</div>
         <div class="bar-chart">
             {% for year, data in stats %}
@@ -412,7 +400,7 @@
             {% endfor %}
         </div>
 
-        <!-- ── 数据表格 ── -->
+        <!-- Data Table -->
         <div class="section-header">&#9654; Details &#9664;</div>
         <div class="stats-table-wrap">
             <table class="stats-table">
@@ -442,7 +430,7 @@
                 </tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td>合计</td>
+                        <td>Total</td>
                         <td class="num-cell">{{ stats.all.articles }}</td>
                         <td class="num-cell">{{ stats.all.words }}</td>
                         <td class="num-cell">{{ stats.all.read_mins }}</td>
@@ -455,5 +443,6 @@
 
         <footer class="cover-footer">{{ build.powered_by }}</footer>
     </div>
+<script src="{{ with_prefix("/js/ark-pixel-font.js") }}"></script>
 </body>
 </html>

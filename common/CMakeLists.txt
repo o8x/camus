@@ -1,7 +1,7 @@
 file(GLOB SOURCES
         common/cmdline/*.h
-        common/markdown/*.h
-        common/markdown/*.cpp
+        common/render/*.h
+        common/render/*.cpp
         common/logging/*.h
         common/logging/*.cpp
         common/functions/*.h

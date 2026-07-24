@@ -63,14 +63,6 @@ After running `camus -i`, your working directory will contain:
 
 Template variables are replaced during rendering. Use `{{env.key}}` in your HTML templates:
 
-**Global Dictionary:**
-
-env keys starting with DICT_will be regarded as dictionaries
-
-1. Make case-insensitive global substitutions in the output and do not require {{ }} wrapping. For example,
-   `DICK_FOO=bar` means that foo Foo fOo in the output will be replaced with bar
-2. dictionary text supports the use of ECMA regular expressions
-
 ## Post Front Matter
 
 Each Markdown file starts with YAML front matter:

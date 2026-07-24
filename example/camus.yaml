@@ -13,7 +13,7 @@ camus:
     deploy:
         protocol: https://                        # 协议
         domain_name: /stdout.com.cn/              # 域名
-        path_prefix: /camus                      # 路径前缀，实际访问路径为 https://stdout.com.cn/camus/xxx.html
+        path_prefix: /camus                       # 路径前缀，实际访问路径为 https://stdout.com.cn/camus/xxx.html
     # 页面渲染配置
     render:
         theme: terminal                         # 加载 theme/name/*.html
@@ -40,6 +40,11 @@ friends:
         link_url: https://github.com/o8x/camus     # 跳转地址
         image_url: https://stdout.com.cn/logo.png  # 头像链接
         desc: What's past is prologue.             # 简短描述
+
+    -   title: 一言网
+        link_url: https://hitokoto.cn
+        image_url: https://i.loli.net/2020/02/07/kDIUWCQpKEdFTP8.png
+        desc: 一言网（hitokoto.cn）创立于 2016 年，隶属于萌创团队，目前网站主要提供一句话服务。
 
 # path 必填
 # title subtitle description 会自动继承根目录相同的属性

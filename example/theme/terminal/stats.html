@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content="{{ site.subtitle }}">
     <meta name="build-time" content="{{ build.time }}">
     <meta name="build-type" content="{{ build.build_type }}">
@@ -12,7 +14,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/terminal-inja.css">
+    <link rel="stylesheet" href="{{ with_prefix("/css/terminal-inja.css") }}">
+    <link rel="stylesheet" href="{{ with_prefix("/css/ark-pixel-font.css") }}">
     <style>
         body { font-size: 1.8rem; }
 
@@ -29,7 +32,7 @@
 
 
         .section-title {
-            font-family: 'VT323', monospace;
+
             color: var(--accent);
             margin: 1.5rem 0 0.6rem;
             text-shadow: 0 0 8px var(--accent);
@@ -53,7 +56,7 @@
         }
 
         .stat-value {
-            font-family: 'VT323', monospace;
+
             font-size: 2rem;
             color: var(--accent);
             text-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent-dim);
@@ -61,7 +64,7 @@
         }
 
         .stat-label {
-            font-family: 'VT323', monospace;
+
             color: var(--text-dim);
             margin-top: 0.2rem;
         }
@@ -78,7 +81,7 @@
         .bar-label {
             width: 3rem;
             text-align: right;
-            font-family: 'VT323', monospace;
+
             color: var(--text-dim);
             flex-shrink: 0;
         }
@@ -100,7 +103,7 @@
 
         .bar-value {
             width: 3rem;
-            font-family: 'VT323', monospace;
+
             color: var(--text-secondary);
             flex-shrink: 0;
         }
@@ -115,7 +118,7 @@
             text-align: left;
             padding: 0.4rem 0.6rem;
             border-bottom: 2px solid var(--border);
-            font-family: 'VT323', monospace;
+
             color: var(--accent);
             text-shadow: 0 0 6px var(--accent);
         }
@@ -130,7 +133,7 @@
 
         .data-table .num {
             text-align: right;
-            font-family: 'VT323', monospace;
+
         }
 
         .data-table .total-row td {
@@ -299,5 +302,6 @@
             </div>
         </div>
     </div>
+<script src="{{ with_prefix("/js/ark-pixel-font.js") }}"></script>
 </body>
 </html>
