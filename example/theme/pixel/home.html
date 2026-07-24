@@ -18,9 +18,9 @@
     </title>
     <link rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/pixel-inja.css">
+    <link rel="stylesheet" href="{{ with_prefix("/css/pixel-inja.css") }}">
+    <link rel="stylesheet" href="{{ with_prefix("/css/ark-pixel-font.css") }}">
     <style>
         .cover {
             max-width: 1350px;
@@ -34,8 +34,7 @@
             text-indent: 2em;
             text-align: center;
             color: var(--text-secondary);
-            font-family: 'Press Start 2P', 'Courier New', 'NSimSun', 'GB18030 Bitmap', 'Noto Sans SC', serif, monospace;
-            font-size: 0.85rem;
+            font-size: 1.32rem;
             line-height: 2;
             padding: 2rem 1.5rem;
             margin: 2rem auto;
@@ -52,15 +51,13 @@
             left: 1rem;
             background: var(--bg);
             padding: 0 0.5rem;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.4rem;
+            font-size: 0.48rem;
             color: var(--accent);
             letter-spacing: 0.3em;
         }
 
         .toc-header {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.9rem;
+            font-size: 1.19rem;
             color: var(--accent);
             text-align: center;
             margin: 2.5rem 0 1.5rem;
@@ -108,8 +105,7 @@
         .toc-item:nth-child(3n)::before   { background: var(--pink);   box-shadow: 0 0 6px var(--pink); }
 
         .toc-num {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.45rem;
+            font-size: 1rem;
             color: var(--text-secondary);
             min-width: 3rem;
             text-align: right;
@@ -117,14 +113,13 @@
             flex-shrink: 0;
         }
 
-        .toc-dir .toc-num       { color: var(--accent); font-size: 0.42rem; }
-        .toc-back-root .toc-num { color: var(--cyan);   font-size: 0.42rem; }
+        .toc-dir .toc-num       { color: var(--accent); font-size: 0.5rem; }
+        .toc-back-root .toc-num { color: var(--cyan);   font-size: 0.5rem; }
 
         .toc-link {
             color: var(--text);
             text-decoration: none;
-            font-family: 'Courier New', 'Noto Sans SC', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             flex: 1;
             transition: color 0.15s;
         }
@@ -132,16 +127,14 @@
         .toc-link:hover { color: var(--accent); }
 
         .toc-date {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.38rem;
+            font-size: 0.46rem;
             color: var(--text-secondary);
             margin-left: 1rem;
             flex-shrink: 0;
         }
 
         .toc-dir .toc-link {
-            font-family: 'Courier New', 'Noto Sans SC', monospace;
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: var(--accent);
             font-weight: bold;
             letter-spacing: 0.05em;
@@ -161,8 +154,7 @@
         }
 
         .toc-back-root .toc-link {
-            font-family: 'Courier New', 'Noto Sans SC', monospace;
-            font-size: 0.95rem;
+            font-size: 1.14rem;
             color: var(--accent);
             font-weight: bold;
         }
@@ -179,53 +171,54 @@
         }
 
         @media (max-width: 768px) {
-            .cover { padding: 2rem 1.2rem 4rem; }
+            .cover { padding: 1.8rem 1rem 3.5rem; }
             .cover-description {
-                font-size: 0.75rem;
+                font-size: 0.9rem;
                 line-height: 1.8;
-                padding: 1.5rem 1rem;
-                margin: 1.5rem auto;
+                padding: 1.2rem 0.8rem;
+                margin: 1.2rem auto;
+                text-indent: 1.5em;
             }
-            .cover-description::before { font-size: 0.3rem; top: -0.5rem; }
-            .toc-header { font-size: 0.6rem; letter-spacing: 0.15em; margin: 2rem 0 1rem; }
-            .toc-item { padding: 0.5rem 0.6rem; flex-wrap: wrap; }
-            .toc-item::before { width: 6px; height: 6px; margin-right: 0.7rem; }
+            .cover-description::before { font-size: 0.36rem; top: -0.4rem; }
+            .toc-header { font-size: 0.79rem; letter-spacing: 0.12em; margin: 1.5rem 0 0.8rem; }
+            .toc-item { padding: 0.6rem 0.5rem; flex-wrap: wrap; }
+            .toc-item::before { width: 6px; height: 6px; margin-right: 0.6rem; }
             .toc-dir::before { width: 8px !important; height: 8px !important; }
             .toc-back-root::before { width: 8px !important; height: 8px !important; }
-            .toc-num { font-size: 0.35rem; min-width: 2.5rem; margin-right: 0.7rem; }
-            .toc-dir .toc-num, .toc-back-root .toc-num { font-size: 0.32rem; }
-            .toc-link { font-size: 0.85rem; }
-            .toc-dir .toc-link { font-size: 0.85rem; }
-            .toc-back-root .toc-link { font-size: 0.8rem; }
-            .toc-date { font-size: 0.3rem; }
+            .toc-num { font-size: 0.42rem; min-width: 2.2rem; margin-right: 0.5rem; }
+            .toc-dir .toc-num, .toc-back-root .toc-num { font-size: 0.38rem; }
+            .toc-link { font-size: 1.02rem; }
+            .toc-dir .toc-link { font-size: 1.02rem; }
+            .toc-back-root .toc-link { font-size: 0.96rem; }
+            .toc-date { font-size: 0.36rem; }
         }
 
         @media (max-width: 480px) {
-            .cover { padding: 1.2rem 0.8rem 3rem; }
+            .cover { padding: 1rem 0.6rem 2.5rem; }
             .cover-description {
-                font-size: 0.62rem;
-                line-height: 1.7;
-                padding: 1rem 0.7rem;
-                margin: 1rem auto;
-                text-indent: 1.5em;
+                font-size: 0.74rem;
+                line-height: 1.6;
+                padding: 0.8rem 0.6rem;
+                margin: 0.8rem auto;
+                text-indent: 1.2em;
             }
-            .cover-description::before { font-size: 0.25rem; top: -0.4rem; left: 0.6rem; }
-            .toc-header { font-size: 0.45rem; letter-spacing: 0.1em; margin: 1.5rem 0 0.8rem; }
+            .cover-description::before { font-size: 0.3rem; top: -0.35rem; left: 0.4rem; }
+            .toc-header { font-size: 0.59rem; letter-spacing: 0.08em; margin: 1.2rem 0 0.6rem; }
             @keyframes tocFadeIn {
                 from { opacity: 0; transform: translateY(6px); }
                 50% { opacity: 0.5; }
                 to { opacity: 1; transform: translateY(0); }
             }
-            .toc-item { padding: 0.4rem 0.5rem; flex-wrap: wrap; animation-duration: 0.2s !important; }
-            .toc-item::before { width: 5px; height: 5px; margin-right: 0.5rem; }
+            .toc-item { padding: 0.5rem 0.4rem; flex-wrap: wrap; animation-duration: 0.2s !important; }
+            .toc-item::before { width: 5px; height: 5px; margin-right: 0.4rem; }
             .toc-dir::before { width: 7px !important; height: 7px !important; }
             .toc-back-root::before { width: 7px !important; height: 7px !important; }
-            .toc-num { font-size: 0.28rem; min-width: 2rem; margin-right: 0.5rem; }
-            .toc-dir .toc-num, .toc-back-root .toc-num { font-size: 0.26rem; }
-            .toc-link { font-size: 0.78rem; }
-            .toc-dir .toc-link { font-size: 0.78rem; }
-            .toc-back-root .toc-link { font-size: 0.72rem; }
-            .toc-date { font-size: 0.26rem; width: 100%; margin-left: 2.4rem; margin-top: 0.2rem; }
+            .toc-num { font-size: 0.34rem; min-width: 1.8rem; margin-right: 0.4rem; }
+            .toc-dir .toc-num, .toc-back-root .toc-num { font-size: 0.31rem; }
+            .toc-link { font-size: 0.9rem; }
+            .toc-dir .toc-link { font-size: 0.9rem; }
+            .toc-back-root .toc-link { font-size: 0.84rem; }
+            .toc-date { font-size: 0.28rem; width: 100%; margin-left: 2rem; margin-top: 0.15rem; }
         }
     </style>
 </head>
@@ -249,7 +242,7 @@
         {% if current.path != "/" and current.desc %}
         {{ current.desc }}
         {% else %}
-        {{ default(site.desc, "") }}
+        {{ default(site.description, "") }}
         {% endif %}
     </p>
 
@@ -288,5 +281,6 @@
 
     <footer class="cover-footer">{{ build.powered_by }}</footer>
 </div>
+<script src="{{ with_prefix("/js/ark-pixel-font.js") }}"></script>
 </body>
 </html>

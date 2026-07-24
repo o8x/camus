@@ -14,8 +14,8 @@
 #include "common/filesystem/filesystem.h"
 #include "common/functions/functions.h"
 #include "common/logging/logging.h"
-#include "common/markdown/markdown.h"
 #include "common/net/net.h"
+#include "common/render/render.h"
 #include "common/str/str.h"
 #include "inja/inja.hpp"
 #include "yaml_config.h"
@@ -226,14 +226,20 @@ namespace camus
 				);
 			}
 
-			const std::string markdown = strings::string_join(node.contents, "\n");
-			const size_t markdown_length = strings::get_unicode_length(markdown);
+			std::string markdown = strings::string_join(node.contents, "\n");
+			for (const auto &[k, v] : conf_.camus().envs) {
+				markdown = strings::replace(markdown, "{{ env." + k + " }}", v);
+				markdown = strings::replace(markdown, "{{env." + k + "}}", v);
+			}
+
+			const size_t markdown_length = strings::estimate_effective_length(markdown);
+			const double read_mins = strings::estimate_reading_minutes(markdown);
 
 			stats["all"].max_time = std::max(stats["all"].max_time, node.property.write_time);
 			stats["all"].min_time = std::max(stats["all"].min_time, node.property.write_time);
 			stats["all"].articles++;
 			stats["all"].words += markdown_length;
-			stats["all"].read_mins += markdown_length / 400;
+			stats["all"].read_mins += read_mins;
 			stats["all"].tags.insert(node.property.tags.begin(), node.property.tags.end());
 
 			if (uint16_t year = 1970 + node.property.write_time / (365 * 86400); year > 1996 && year < 2200) {
@@ -242,21 +248,27 @@ namespace camus
 				stats[year_name].min_time = std::max(stats[year_name].min_time, node.property.write_time);
 				stats[year_name].articles++;
 				stats[year_name].words += markdown_length;
-				stats[year_name].read_mins += markdown_length / 400;
+				stats[year_name].read_mins += read_mins;
 				stats[year_name].tags.insert(node.property.tags.begin(), node.property.tags.end());
 			}
 
 			nlohmann::json j = conf_.json();
+			const std::string html = render::inja_render(
+				inja_,
+				render::render_markdown(
+					markdown.data(),
+					conf_.camus().render.markdown_engine,
+					conf_.camus().render.markdown_options
+				),
+				j
+			);
+
 			j["stats"]["word_count"] = markdown_length;
-			j["stats"]["read_min"] = markdown_length / 400;
+			j["stats"]["read_min"] = read_mins;
 			j["page"]["title"] = node.property.display_name;
 			j["page"]["write_time"] = node.property.write_time;
 			j["page"]["description"] = "";
-			j["page"]["contents"] = markdown::render_markdown(
-				markdown.data(),
-				conf_.camus().render.markdown_engine,
-				conf_.camus().render.markdown_options
-			);
+			j["page"]["contents"] = html;
 
 			j["nav"]["next_path"] = "";
 			j["nav"]["next_title"] = "";
@@ -285,7 +297,7 @@ namespace camus
 			assert(!node.contents.empty());
 
 			const std::string contents = strings::replace(
-				inja_.render(conf_.camus().get_theme(config::CAMUS_THEME_TYPE_PAGE), j),
+				render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_PAGE), j),
 				std::map<std::string, std::string>{
 					{" 00:00:00", ""},
 					{"<img ", R"(<img width="100%")"}, // 避免图片破坏 default 居中
@@ -320,7 +332,8 @@ namespace camus
 		nlohmann::json j = conf_.json();
 		j["stats"] = stats;
 
-		const std::string contents = inja_.render(conf_.camus().get_theme(config::CAMUS_THEME_TYPE_STATS), j);
+		const std::string contents =
+			render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_STATS), j);
 		filesystem::write_file(conf_.camus().dest_dir() / "stats.html", contents);
 
 		// 填充文件夹属性
@@ -359,7 +372,7 @@ namespace camus
 		run_only_live([&]() {
 			filesystem::write_file(
 				filesystem::clean_path("friends.html", conf_.camus().dest_dir()),
-				inja_.render(conf_.camus().get_theme(config::CAMUS_THEME_TYPE_FRIENDS), json)
+				render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_FRIENDS), json)
 			);
 		});
 	}
@@ -435,7 +448,7 @@ namespace camus
 							std::format("{}/index.html", dir_node->real_url().string()),
 							conf_.camus().dest_dir()
 						),
-						inja_.render(conf_.camus().get_theme(config::CAMUS_THEME_TYPE_HOME), toc_item)
+						render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_HOME), toc_item)
 					);
 				});
 			}
@@ -531,7 +544,10 @@ namespace camus
 			++count;
 			if (const std::filesystem::path ext = entry.path().extension();
 				ext == ".css" || ext == ".js" || ext == ".txt" || ext == ".json") {
-				filesystem::write_file(entry.path(), inja_.render(filesystem::read_file(entry.path()), json));
+				filesystem::write_file(
+					entry.path(),
+					render::inja_render(inja_, filesystem::read_file(entry.path()), json)
+				);
 			}
 		}
 
@@ -573,6 +589,21 @@ namespace camus
 		inja_.add_callback("with_prefix", 1, [&](const inja::Arguments &args) {
 			const std::string name = args.at(0)->get<std::string>();
 			return filesystem::clean_path(name, conf_.camus().deploy.path_prefix);
+		});
+
+		inja_.add_callback("with_cdn", 1, [&](const inja::Arguments &args) {
+			const std::string name = args.at(0)->get<std::string>();
+
+			// 退化为 with_prefix
+			if (!conf_.camus().envs.contains("with_cdn")) {
+				return filesystem::clean_path(name, conf_.camus().deploy.path_prefix);
+			}
+
+			return std::format(
+				"{}/{}",
+				strings::trim_right(conf_.camus().envs.at("cdn_accelerate"), "/"),
+				strings::trim_left(filesystem::clean_path(name), "/")
+			);
 		});
 	}
 

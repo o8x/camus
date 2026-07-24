@@ -13,7 +13,7 @@ camus:
     deploy:
         protocol: https://                        # 协议
         domain_name: /stdout.com.cn/              # 域名
-        path_prefix: /camus                      # 路径前缀，实际访问路径为 https://stdout.com.cn/camus/xxx.html
+        path_prefix: /camus                       # 路径前缀，实际访问路径为 https://stdout.com.cn/camus/xxx.html
     # 页面渲染配置
     render:
         theme: terminal                         # 加载 theme/name/*.html

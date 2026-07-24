@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content="{{ page.description }}">
     <meta name="build-time" content="{{ build.time }}">
     <meta name="build-type" content="{{ build.build_type }}">
@@ -12,7 +14,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/terminal-inja.css">
+    <link rel="stylesheet" href="{{ with_prefix("/css/terminal-inja.css") }}">
+    <link rel="stylesheet" href="{{ with_prefix("/css/ark-pixel-font.css") }}">
     <style>
         body { font-size: 1.8rem; }
 
@@ -89,7 +92,7 @@
         }
 
         .boot-lines {
-            font-family: 'VT323', 'Courier New', monospace;
+            
             font-size: 2rem;
             color: var(--text);
             text-shadow: 0 0 8px var(--text), 0 0 20px var(--accent);
@@ -132,7 +135,7 @@
 
         .chapter-meta {
             margin-top: 1rem;
-            font-family: 'VT323', monospace;
+            
             color: var(--text-dim);
         }
 
@@ -230,7 +233,7 @@
             padding: 0.4rem 0.6rem;
             border: 1px solid var(--border);
             background: var(--card-bg);
-            font-family: 'VT323', monospace;
+            
             font-size: 1rem;
             max-width: 42%;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
@@ -250,7 +253,7 @@
         }
 
         .nav-link .nav-label {
-            font-family: 'VT323', monospace;
+            
             font-size: 1rem;
             color: var(--text-dim);
             display: block;
@@ -268,7 +271,7 @@
         .nav-center {
             color: var(--text-dim);
             font-size: 1rem;
-            font-family: 'VT323', monospace;
+            
         }
 
         .nav-center a { color: var(--text-secondary); text-decoration: none; text-shadow: 0 0 4px var(--text-secondary); }
@@ -281,12 +284,39 @@
         .page-footer a { color: var(--text-secondary); text-decoration: none; text-shadow: 0 0 4px var(--text-secondary); }
 
         @media (max-width: 768px) {
-            body { font-size: 1rem; }
-            .screen-content { flex: none; overflow: visible; overscroll-behavior: auto; }
-            .page-title { font-size: 1.2rem !important; }
-            .chapter-content h1 { font-size: 1.2rem !important; }
-            .chapter-content h2 { font-size: 1.1rem !important; }
-            .chapter-content h3 { font-size: 1rem !important; }
+            body { font-size: 1.6rem; }
+            .screen-content { flex: none; overflow: visible; overscroll-behavior: auto; padding: 1vh 2.5vw; }
+            .page-title { font-size: 1.8rem !important; }
+            .chapter-content h1 { font-size: 1.5rem !important; margin: 1.2rem 0 0.5rem; }
+            .chapter-content h2 { font-size: 1.3rem !important; margin: 1rem 0 0.4rem; }
+            .chapter-content h3 { font-size: 1.15rem !important; margin: 0.8rem 0 0.3rem; }
+            .chapter-content p { font-size: 0.95rem; }
+            .chapter-content blockquote { padding: 0.6rem 0.8rem; margin: 0.6rem 0; }
+            .chapter-content pre { margin: 0.6rem 0; }
+            .chapter-content pre code { padding: 0.6rem; font-size: 0.85rem; }
+            .chapter-content img { margin: 0.6rem auto; }
+            .chapter-nav { flex-direction: column; gap: 0.6rem; padding: 1rem 0; }
+            .nav-link { max-width: 100%; width: 100%; justify-content: center; font-size: 0.95rem; }
+            .nav-link .nav-label { font-size: 0.85rem; }
+            .nav-link .nav-title { font-size: 0.95rem; }
+            .nav-center { font-size: 0.9rem; }
+            .chapter-meta { margin-top: 0.5rem; font-size: 0.9rem; }
+            .page-footer { font-size: 0.9rem; }
+            .boot-lines { font-size: 1.2rem; }
+        }
+
+        @media (max-width: 480px) {
+            body { font-size: 1.5rem; }
+            .screen-content { padding: 0.8vh 3vw; }
+            .page-title { font-size: 1.5rem !important; }
+            .chapter-content h1 { font-size: 1.3rem !important; }
+            .chapter-content h2 { font-size: 1.15rem !important; }
+            .chapter-content h3 { font-size: 1.05rem !important; }
+            .chapter-content p { font-size: 0.9rem; }
+            .chapter-content ul, .chapter-content ol { margin-left: 0.8rem; }
+            .nav-link { padding: 0.5rem 0.8rem; font-size: 0.9rem; }
+            .nav-link .nav-title { font-size: 0.9rem; }
+            .boot-lines { font-size: 1rem; }
         }
     </style>
 </head>
@@ -392,5 +422,6 @@ READY<span class="boot-cursor"></span></div>
     setTimeout(function() { boot.remove(); }, 3200);
 })();
 </script>
+<script src="{{ with_prefix("/js/ark-pixel-font.js") }}"></script>
 </body>
 </html>

@@ -17,6 +17,10 @@ namespace strings
 	std::string uuid_v4();
 	// 清除两侧空格
 	std::string trim_space(const std::string &str);
+	// 从字符串中移除连续子串
+	std::string trim(const std::string &s, const std::string &remove);
+	std::string trim_left(const std::string &s, const std::string &remove);
+	std::string trim_right(const std::string &s, const std::string &remove);
 	// 拆分字符串
 	std::vector<std::string> split(const std::string_view &s, char delimiter);
 	std::vector<std::string> split(std::string_view s, std::string_view delimiter, size_t n = 0);
@@ -55,8 +59,12 @@ namespace strings
 	size_t get_display_width(const std::string &str);
 	// 左对齐填充到指定长度
 	std::string padding_left(const std::string &str, const size_t resize_width);
-	// 获取准确长度
-	size_t get_unicode_length(const std::string &str);
+	// 获取阅读的有效长度
+	uint16_t estimate_effective_length(const std::string &str);
+	// 获取阅读时间
+	uint16_t estimate_reading_minutes(const std::string &text);
+	// 按行号打印字符串
+	std::string mark_string(const std::string &text, const int target_line = 1, const int column = 0);
 
 	template <typename T> std::string dump_json(const T &t, const uint8_t indent = 4)
 	{

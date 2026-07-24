@@ -10,6 +10,7 @@
 #include "common/error/error.h"
 #include "common/filesystem/filesystem.h"
 #include "common/functions/functions.h"
+#include "common/render/render.h"
 #include "common/str/str.h"
 #include "inja/inja.hpp"
 #include "yaml-cpp/yaml.h"
@@ -32,13 +33,11 @@ namespace camus::config
 					continue;
 				}
 
-				// 全局词典
-				if (k.starts_with("DICT_")) {
-					public_config_["env"][std::format("dict.{}", strings::to_lower(strings::replace(k, "DICT_", "")))] =
-						strings::trim_space(kv[1]);
-				} else {
-					public_config_["env"][strings::to_lower(k)] = strings::trim_space(kv[1]);
-				}
+				const std::string key = strings::to_lower(k);
+				const std::string value = strings::trim_space(kv[1]);
+
+				public_config_["env"][key] = value;
+				camus_.envs[key] = value;
 			}
 		}
 
@@ -87,7 +86,7 @@ namespace camus::config
 </small>
 )";
 
-		public_config_["build"]["powered_by"] = inja::render(powered_by, json());
+		public_config_["build"]["powered_by"] = render::inja_render(powered_by, json());
 	}
 
 	yaml_config::yaml_config(const std::string &filename) : camus_({}), filename_(filename)
@@ -395,7 +394,7 @@ namespace camus::config
 
 	std::string yaml_config::render_var(const std::string &data) const
 	{
-		return inja::render(data, json());
+		return render::inja_render(data, json());
 	}
 
 	std::expected<route_conf, std::string> yaml_config::match_route(const std::filesystem::path &path) const

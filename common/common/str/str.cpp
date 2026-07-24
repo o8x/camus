@@ -102,6 +102,42 @@ namespace strings
 		return str.substr(first, last - first + 1);
 	}
 
+	std::string trim_left(const std::string &s, const std::string &remove)
+	{
+		if (remove.empty()) {
+			return s;
+		}
+
+		size_t pos = 0;
+		const size_t len = remove.size();
+		const size_t n = s.size();
+		while (pos + len <= n && s.compare(pos, len, remove) == 0) {
+			pos += len;
+		}
+
+		return s.substr(pos);
+	}
+
+	std::string trim_right(const std::string &s, const std::string &remove)
+	{
+		if (remove.empty()) {
+			return s;
+		}
+
+		const size_t len = remove.size();
+		size_t pos = s.size();
+		while (pos >= len && s.compare(pos - len, len, remove) == 0) {
+			pos -= len;
+		}
+
+		return s.substr(0, pos);
+	}
+
+	std::string trim(const std::string &s, const std::string &remove)
+	{
+		return trim_right(trim_left(s, remove), remove);
+	}
+
 	std::string replace(const std::string &str, const std::string &from, const std::string &to)
 	{
 		std::string data = str;
@@ -255,17 +291,117 @@ namespace strings
 		return str + std::string(resize_width - w, ' ');
 	}
 
-	size_t get_unicode_length(const std::string &str)
+	constexpr float_t READING_SPEED = 300.0;
+
+	uint16_t estimate_reading_minutes(const std::string &text)
 	{
-		size_t length = 0;
-		for (size_t i = 0; i < str.size(); ++i) {
-			unsigned char c = static_cast<unsigned char>(str[i]);
-			// UTF-8 多字节字符的首字节范围：0xC0 到 0xFD
-			if ((c & 0xC0) != 0x80) {
-				// 如果不是“后续字节”（以 10 开头），则代表一个新字符的开始
-				++length;
+		const size_t effective_len = estimate_effective_length(text);
+		return static_cast<float_t>(effective_len) / READING_SPEED * 10.0f / 10.0f;
+	}
+
+	uint16_t estimate_effective_length(const std::string &str)
+	{
+		size_t cjk_count = 0;	 // 中文字符（CJK 表意文字）数量
+		size_t letter_count = 0; // 英文字母数量 (a-z, A-Z)
+		size_t digit_count = 0;	 // 数字数量 (0-9)
+
+		for (size_t i = 0; i < str.size();) {
+			const auto c = static_cast<unsigned char>(str[i]);
+			uint32_t cp = 0;	 // 当前 Unicode 码点
+			size_t char_len = 0; // 当前字符的 UTF-8 字节数
+
+			// UTF-8 解码
+			if ((c & 0x80) == 0) { // 1 字节 ASCII (0xxxxxxx)
+				cp = c;
+				char_len = 1;
+			} else if ((c & 0xE0) == 0xC0) { // 2 字节 (110xxxxx)
+				cp = c & 0x1F;
+				char_len = 2;
+			} else if ((c & 0xF0) == 0xE0) { // 3 字节 (1110xxxx)
+				cp = c & 0x0F;
+				char_len = 3;
+			} else if ((c & 0xF8) == 0xF0) { // 4 字节 (11110xxx)
+				cp = c & 0x07;
+				char_len = 4;
+			} else {
+				// 非法 UTF-8 首字节，跳过
+				++i;
+				continue;
+			}
+
+			// 提取后续的 continuation bytes (10xxxxxx)
+			for (size_t j = 1; j < char_len; ++j) {
+				if (i + j >= str.size()) {
+					break;
+				}
+
+				if (const auto next = static_cast<unsigned char>(str[i + j]); (next & 0xC0) == 0x80) {
+					cp = cp << 6 | next & 0x3F;
+				} else {
+					// 序列不完整，回退并退出当前字符解析
+					break;
+				}
+			}
+
+			// ----- 按 Unicode 范围分类统计 -----
+			// 1. 中文（CJK 统一表意文字：基本区 4E00-9FFF，扩展A区 3400-4DBF）
+			if ((cp >= 0x4E00 && cp <= 0x9FFF) || (cp >= 0x3400 && cp <= 0x4DBF)) {
+				cjk_count++;
+			}
+			// 2. 英文字母 (A-Z / a-z)
+			else if ((cp >= 0x41 && cp <= 0x5A) || (cp >= 0x61 && cp <= 0x7A)) {
+				letter_count++;
+			}
+			// 3. 数字 (0-9)
+			else if (cp >= 0x30 && cp <= 0x39) {
+				digit_count++;
+			}
+			// 其他字符（标点、空格、emoji等）直接忽略，不影响有效长度
+
+			i += char_len; // 移动到下一个 UTF-8 字符
+		}
+
+		// ----- 加权公式 -----
+		// 有效长度 = 中文数 + ceil( (英文字母数 + 数字数) / 5.0 )
+		const double effective_length =
+			static_cast<double>(cjk_count) + static_cast<double>(letter_count + digit_count) / 5.0;
+
+		// 向上取整，保证最小单位为 1
+		return static_cast<uint16_t>(std::ceil(effective_length));
+	}
+
+	std::string mark_string(const std::string &text, const int target_line, const int column)
+	{
+		const std::vector<std::string> lines = split(text, '\n');
+		if (lines.empty()) {
+			return "";
+		}
+
+		std::stringstream ss;
+		// 前后三行打印
+		for (int i = std::max(target_line - 3, 0); i < std::min(target_line + 3, static_cast<int>(lines.size())); ++i) {
+			const int line = i + 1;
+			const std::string line_number = std::format("{:<4}", line);
+
+			if (line != target_line) {
+				ss << std::format("{}: {}", coloring_green(line_number), lines[i]) << std::endl;
+				continue;
+			}
+
+			// 修改颜色并输出内容
+			ss << std::format("{}: {}", coloring_red(line_number), lines[i]) << std::endl;
+
+			if constexpr (WORK_ON_DEBUG) {
+				// 行从0开始，行号的宽度是6
+				ss << " col: " << std::string(std::max(column - 1, 0), ' ') << coloring_bright_red("^") << std::endl;
+				ss << " hex: ";
+				for (const unsigned char c : lines[i]) {
+					ss << std::format("{:02x} ", c);
+				}
+				ss << std::endl;
 			}
 		}
-		return length;
+
+		return ss.str();
 	}
 } // namespace strings

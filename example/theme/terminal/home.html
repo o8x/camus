@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content="{{ site.subtitle }}">
     <meta name="build-time" content="{{ build.time }}">
     <meta name="build-type" content="{{ build.build_type }}">
@@ -12,7 +14,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/terminal-inja.css">
+    <link rel="stylesheet" href="{{ with_prefix("/css/terminal-inja.css") }}">
+    <link rel="stylesheet" href="{{ with_prefix("/css/ark-pixel-font.css") }}">
     <style>
         body { font-size: 1.8rem; }
 
@@ -89,7 +92,7 @@
         }
 
         .boot-lines {
-            font-family: 'VT323', 'Courier New', monospace;
+
             font-size: 2rem;
             color: var(--text);
             text-shadow: 0 0 8px var(--text), 0 0 20px var(--accent);
@@ -150,7 +153,7 @@
         }
 
         .toc-header {
-            font-family: 'VT323', monospace;
+
             font-size: 1rem;
             color: var(--text-dim);
             text-align: left;
@@ -204,7 +207,7 @@
 
         .toc-item::before {
             content: '\25B6';
-            font-family: 'VT323', monospace;
+
             color: var(--text-dim);
             margin-right: 0.5rem;
             flex-shrink: 0;
@@ -224,7 +227,7 @@
         }
 
         .toc-date {
-            font-family: 'VT323', monospace;
+
             color: var(--text-dim);
             margin-left: 0.6rem;
             flex-shrink: 0;
@@ -268,11 +271,30 @@
         .page-footer a:hover { color: var(--accent); text-shadow: 0 0 8px var(--accent); }
 
         @media (max-width: 768px) {
-            body { font-size: 1rem; }
-            .screen-content { flex: none; overflow: visible; }
+            body { font-size: 1.6rem; }
+            .screen-content { flex: none; overflow: visible; padding: 1vh 2.5vw; }
             .toc-list { flex: none; overflow-y: visible; overscroll-behavior: auto; min-height: auto; }
+            .page-title { font-size: 1.8rem !important; }
+            .cover-description { white-space: pre-line; padding: 0.6rem; margin: 0.5rem 0; font-size: 0.95rem; text-indent: 1.5em; }
+            .cover-subtitle { font-size: 1rem; }
+            .toc-header { font-size: 0.95rem; margin: 0.8rem 0 0.4rem; }
+            .toc-item { padding: 0.5rem 0.6rem; }
+            .toc-item:hover { padding-left: 0.6rem; }
+            .toc-date { font-size: 0.85rem; }
+            .boot-lines { font-size: 1.2rem; }
+        }
+
+        @media (max-width: 480px) {
+            body { font-size: 1.5rem; }
+            .screen-content { padding: 0.8vh 3vw; }
             .page-title { font-size: 1.5rem !important; }
-            .cover-description { white-space: pre-line; }
+            .cover-description { padding: 0.5rem; font-size: 0.9rem; text-indent: 1.2em; }
+            .cover-subtitle { font-size: 0.9rem; }
+            .toc-header { font-size: 0.9rem; }
+            .toc-item { padding: 0.6rem 0.5rem; }
+            .toc-link { font-size: 0.95rem; }
+            .toc-date { font-size: 0.8rem; margin-left: 0.3rem; }
+            .boot-lines { font-size: 1rem; }
         }
     </style>
 </head>
@@ -331,7 +353,7 @@ READY<span class="boot-cursor"></span></div>
                     {% if current.path != "/" and current.desc %}
                     {{ current.desc }}
                     {% else %}
-                    {{ default(site.desc, "") }}
+                    {{ default(site.description, "") }}
                     {% endif %}
                 </p>
 
@@ -383,5 +405,6 @@ READY<span class="boot-cursor"></span></div>
     setTimeout(function() { boot.remove(); }, 3200);
 })();
 </script>
+<script src="{{ with_prefix("/js/ark-pixel-font.js") }}"></script>
 </body>
 </html>

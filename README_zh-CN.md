@@ -63,13 +63,6 @@ camus -I                # 检查并显示当前配置
 
 渲染时模板变量会被替换。在 HTML 模板中使用 `{{env.key}}` 引用 
 
-**全局字典：**
-
-以 DICT_ 开头的 env key 会被视为字典
-
-1. 在输出中进行不区分大小写的全局替换且不需要 {{ }} 包裹，例如 `DICK_FOO=bar` 意味着输出内容中的 foo Foo fOo 会被替换为 bar
-2. 字典原文支持使用 ECMA 正则表达式
-
 ## 文章 Front Matter
 
 每篇 Markdown 文件头部使用 YAML front matter：
