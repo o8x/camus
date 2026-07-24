@@ -14,8 +14,6 @@ ifeq ($(UNAME_S), Linux)
 else ifeq ($(UNAME_S), Darwin)
 	@cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR="productbuild" -G Ninja -B $(BUILD_DIR) -S .
 	@cmake --build $(BUILD_DIR) --target all package
-	@cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR="DragNDrop" -G Ninja -B $(BUILD_DIR) -S .
-	@cmake --build $(BUILD_DIR) --target all package
 else
 	$(error Unsupported platform: $(UNAME_S))
 endif
