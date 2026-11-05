@@ -43,10 +43,11 @@ flowchart TD
 关键行为：
 
 - `.camus` 已存在且非空时：
-  - 无 `force`：读取 `.camus/.version`，若首行版本与当前 `PROJECT_VERSION`（11.1.0）不同则告警；随后**直接返回 0**，不做任何安装。
+  - 无 `force`：读取 `.camus/.version`，若首行版本与当前 `PROJECT_VERSION`（11.1.0）不同则告警；随后**创建 `<source_dir>/private` 并直接返回 0**，不做任何安装。
   - 有 `force`（或 Debug/RelWithDebInfo 构建）：整目录清空后重新解压；清空同样受「>200 文件需人工删除」保护（见 §6.1）。
 - `.camus` 不存在或为空：直接解压。
 - 解压失败：尝试删除 `.camus`（`std::filesystem::remove` 仅能删除空目录），返回 1。
+- 解压成功并复制完 `posts/camus.yaml/.env/.gitignore` 后，创建 `<source_dir>/private`，再继续构建。
 - `-i` 成功后**不会退出**，主程序继续构建（见 §2.4）。
 
 ## 8.3 安装产物
@@ -59,8 +60,11 @@ flowchart TD
 | `./camus.yaml` | `.camus/camus.yaml` | 仅当目标不存在时复制 |
 | `./.env` | `.camus/.env` | 仅当目标不存在时复制 |
 | `./.gitignore` | `.camus/.gitignore` | 仅当目标不存在时复制 |
+| `./<source_dir>/private/` | 安装时自动创建 | 源目录按 `src` → `posts` 探测；已存在时保留，不写入 `.gitignore` |
 
 注意：安装**不再生成 `./assets/`**。构建时自动使用 `.camus/assets`；若工作目录存在本地 `./assets`，则整体覆盖内嵌资源（见 §6.9）。
+
+`private` 子目录由 `ensure_private_directory()`（`main.cpp`）在安装成功或检测到已安装模板后创建，用于存放不参与构建的私有内容（扫描与路由规则见 §4.1、§4.3）。安装流程**不会**把 `private` 加入 `.gitignore`，因此它可以正常纳入版本管理。
 
 `force` 只影响 `.camus` 目录的重装；工作目录下的 `posts/camus.yaml/.env/.gitignore` 即使 force 也**不会覆盖**已有文件。
 

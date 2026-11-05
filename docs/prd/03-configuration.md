@@ -98,6 +98,7 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 | `transfers[].target` | 是 | 目标输出路径（作为该目录的外部路径） |
 
 - 根路由 `path: "/"` 决定 `camus.site`；根路由的 `transfers` 无效。
+- `path` 中若包含名为 `private` 的路径段（常量 `CAMUS_PRIVATE_DIR`），该条路由在解析阶段被忽略并打印 WARN，不能作为目录页使用。
 - 若不存在 `path: "/"`，`camus.site` 默认 `{path: "/", title: "A mysterious site"}`。
 - 所有路由的空 `title/subtitle/description` 最终继承 `camus.site`。
 - 路由匹配使用 `filesystem::path_equal(..., clean_check=true)`（`yaml_config.cpp:408`），即按清理后的路径比较。

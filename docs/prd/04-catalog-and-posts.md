@@ -7,6 +7,7 @@
 `build_catalog_tree(path, relative_path)`（`catalog.cpp:8`）从源目录 `source_dir` 递归扫描（源目录固定按 `src` → `posts` 探测，见 §3.2）：
 
 - 根节点 `path` 归一为 `/`；子节点 `path` 为相对源目录的路径。
+- **`private` 目录跳过**：任意层级中名为 `private` 的目录（常量 `CAMUS_PRIVATE_DIR`，定义于 `config.h.in`）不读取、不生成，也不进入目录树；用于存放不参与构建的本地私有内容。
 - 普通文件：读入全部内容并按 `\n` 拆分为 `contents`（`read_file(..., true)`，整体两端空白会被裁剪）。
 - 目录：仅当「有子节点」或「目录非空」时加入（空目录被忽略）。
 - 符号链接：`logging::fatal("catalog does not support symlinks ...")`。
@@ -47,6 +48,8 @@
 1. 目录默认：`path_prefix = deploy.path_prefix`，`external_path = node.path`，`display_name = 目录名`。
 2. 若命中 `catalog` 路由（`match_route`），用路由的 `title/subtitle/description` 覆盖；若 `match_transfer` 命中搬运，则覆盖 `external_path`。
 3. 把当前目录的 `external_path` 写给其**直接子节点**。
+
+> `catalog` 路由的 `path` 中只要包含名为 `private` 的路径段，该路由会在配置解析阶段被忽略并打印 WARN（`yaml_config.cpp`），因此 `private` 不能作为目录页路由使用。
 
 因此文件节点的 `external_path` 来自其父目录；目录的最终输出前缀由路由/搬运决定。
 

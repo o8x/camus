@@ -10,6 +10,16 @@
 #include "common/functions/functions.h"
 #include "writer.h"
 
+static void
+ensure_private_directory()
+{
+	const std::filesystem::path source_dir =
+		std::filesystem::is_directory("src") ? "src" : std::filesystem::is_directory("posts") ? "posts" : "src";
+	const std::filesystem::path private_dir = source_dir / CAMUS_PRIVATE_DIR;
+	std::filesystem::create_directories(private_dir);
+	logging::debug("ensure private directory path={}", filesystem::path_abs(private_dir));
+}
+
 static int
 install_template(const std::filesystem::path &exec_name, const bool force, const std::filesystem::path &root_dir)
 {
@@ -30,6 +40,7 @@ install_template(const std::filesystem::path &exec_name, const bool force, const
 				);
 			}
 
+			ensure_private_directory();
 			return 0;
 		}
 
@@ -76,6 +87,8 @@ install_template(const std::filesystem::path &exec_name, const bool force, const
 				std::filesystem::copy(dest_dir / name, name, std::filesystem::copy_options::recursive);
 			}
 		}
+
+		ensure_private_directory();
 	} else {
 		std::filesystem::remove(dest_dir);
 	}

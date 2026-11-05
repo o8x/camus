@@ -17,6 +17,20 @@
 
 namespace camus::config
 {
+	namespace
+	{
+		bool path_contains_private(const std::filesystem::path &path)
+		{
+			for (const auto &part : path) {
+				if (part.filename() == CAMUS_PRIVATE_DIR) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+	} // namespace
+
 	void yaml_config::supplement_other_vars()
 	{
 		const std::filesystem::path basedir = std::filesystem::current_path();
@@ -293,6 +307,11 @@ namespace camus::config
 					c.subtitle,
 					c.description
 				);
+				continue;
+			}
+
+			if (path_contains_private(c.path)) {
+				logging::warn("ignore catalog using private directory path={}", c.path);
 				continue;
 			}
 

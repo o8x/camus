@@ -17,3 +17,4 @@
 
 #define CAMUS_DIR ".camus"
 #define CAMUS_CONF_NAME "camus.yaml"
+#define CAMUS_PRIVATE_DIR "private"

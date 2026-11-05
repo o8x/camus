@@ -1,5 +1,7 @@
 #include "catalog.h"
 
+#include <build/build.h>
+
 #include "common/str/str.h"
 #include "yaml_config.h"
 
@@ -23,6 +25,11 @@ namespace camus::catalog
 
 		for (const auto &entry : std::filesystem::directory_iterator(path)) {
 			if (std::filesystem::is_directory(entry.path())) {
+				if (entry.path().filename() == CAMUS_PRIVATE_DIR) {
+					logging::debug("skip private directory name={}", filesystem::path_abs(entry.path()));
+					continue;
+				}
+
 				// 如果有子节点或目录中包含文件，则添加
 				if (catalog_node child = build_catalog_tree(entry.path(), root);
 					!child.children.empty() || !filesystem::path_empty(entry.path())) {

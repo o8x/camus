@@ -37,7 +37,7 @@
 
 - 收集 `common/common/*` 源文件与 `cpp-httplib`。
 - `pkg_check_modules(ARCHIVE REQUIRED libarchive)`；macOS 下将 Homebrew 的 libarchive pkgconfig 路径加入 `PKG_CONFIG_PATH`。
-- 生成 `build/build.h`（由 `config.h.in` 配置），包含版本、CMake 版本、构建时间、构建类型、C++ 标准、Git 信息与 `CAMUS_DIR=".camus"`、`CAMUS_CONF_NAME="camus.yaml"`。
+- 生成 `build/build.h`（由 `config.h.in` 配置），包含版本、CMake 版本、构建时间、构建类型、C++ 标准、Git 信息与 `CAMUS_DIR=".camus"`、`CAMUS_CONF_NAME="camus.yaml"`、`CAMUS_PRIVATE_DIR="private"`。
 
 ## 9.3 Makefile 目标
 
