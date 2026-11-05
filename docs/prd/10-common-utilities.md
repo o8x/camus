@@ -115,7 +115,7 @@
 | `CAMUS_DATA_DIR_MACOS` | `Library/Application Support/Camus` | macOS 用户数据目录（相对 `$HOME`） |
 | `CAMUS_DATA_DIR_LINUX` | `/var/lib/camus` | Linux 数据目录 |
 | `CAMUS_CONF_NAME` | `camus.yaml` | 主配置文件名 |
-| `CAMUS_CATALOG_NAME` | `catalog.yaml` | 目录路由与搬运配置文件名 |
+| `CAMUS_CATALOG_NAME` | `catalog.yaml` | 目录路由与搬运配置文件名（位于源目录，扫描时跳过） |
 | `CAMUS_PRIVATE_DIR` | `private` | 不参与扫描的私有目录名 |
 | `CAMUS_PDF_THEME_DIR` | `theme/pdf` | PDF 模板与样式目录 |
 | `CAMUS_PDF_TEMPLATE_NAME` | `page.html` | PDF 中间 HTML 模板文件名 |

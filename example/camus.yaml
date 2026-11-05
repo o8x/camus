@@ -41,4 +41,4 @@ friends:
         image_url: https://i.loli.net/2020/02/07/kDIUWCQpKEdFTP8.png
         desc: 一言网（hitokoto.cn）创立于 2016 年，隶属于萌创团队，目前网站主要提供一句话服务。
 
-# 目录路由与文件搬运规则见同目录下的 catalog.yaml
+# 目录路由与文件搬运规则见源目录（posts/ 或 src/）下的 catalog.yaml

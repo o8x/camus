@@ -16,7 +16,7 @@ camus [选项] [--workdir <目录>]
 |---|---|---|---|---|
 | `-h` | `--help` | 无 | 打印帮助并退出（注意退出码为 1） | `main.cpp:90` |
 | `-v` | `--version` | 无 | 打印版本、构建信息与 git hash 后退出 0 | `main.cpp:91` |
-| `-i` | `--install` | 无 | 从平台数据目录安装 `camus.yaml`、`catalog.yaml`、`posts`、`.gitignore` 到工作目录（已存在的不覆盖），随后继续构建 | `main.cpp` |
+| `-i` | `--install` | 无 | 从平台数据目录安装 `camus.yaml`、`posts`（含 `catalog.yaml`）、`.gitignore` 到工作目录（已存在的不覆盖），随后继续构建 | `main.cpp` |
 | `-c` | `--copy` | 无 | 把平台数据目录的完整资源复制到 `<workdir>/.camus`，随后继续构建 | `main.cpp` |
 | `-f` | `--force` | 无 | `--copy` 时覆盖已有 `.camus` | `main.cpp` |
 | `-d` | `--debug` | 无 | 开启调试日志 | `main.cpp:11` |
@@ -64,8 +64,8 @@ flowchart TD
 要点：
 
 - `-i` / `-c` 不会在安装/复制后退出：成功后继续执行构建。
-- `-i` 只补齐工作目录根部的 `posts`、`camus.yaml`、`catalog.yaml`、`.gitignore`，同名路径已存在则保持不动。
-- `-c` 把完整资源（`theme/`、`assets/`、`posts/`、`camus.yaml`、`catalog.yaml`、`.gitignore`）复制到 `.camus`，并补齐工作目录根部缺失的示例文件。
+- `-i` 只补齐工作目录根部的 `posts`（含 `posts/catalog.yaml`）、`camus.yaml`、`.gitignore`，同名路径已存在则保持不动。
+- `-c` 把完整资源（`theme/`、`assets/`、`posts/`（含 `catalog.yaml`）、`camus.yaml`、`.gitignore`）复制到 `.camus`，并补齐工作目录根部缺失的示例文件。
 - `-f` 仅在 `-c` 时生效：先清空 `<workdir>/.camus`（受 §6.1 文件数保护）再重新复制，工作目录已有文件不会被覆盖。
 - `-I` 在构建前执行，`inspect()` 内部把 dryrun 置为 true，因此不会写文件。
 - `-W` 时即使首次 `build()` 返回非 0，也会进入 `watch()` 循环继续等待变化。

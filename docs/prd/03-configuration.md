@@ -1,13 +1,13 @@
 # 3. 配置系统
 
-配置实现：`camus/src/yaml_config.h`、`camus/src/yaml_config.cpp`。主配置文件名固定为 `camus.yaml`（`config.h.in` 的 `CAMUS_CONF_NAME`），目录路由与搬运规则放在同目录下的 `catalog.yaml`（`CAMUS_CATALOG_NAME`），默认主题/资源从平台数据目录读取（见 §8）。
+配置实现：`camus/src/yaml_config.h`、`camus/src/yaml_config.cpp`。主配置文件名固定为 `camus.yaml`（`config.h.in` 的 `CAMUS_CONF_NAME`），目录路由与搬运规则放在源目录下的 `catalog.yaml`（`CAMUS_CATALOG_NAME`），默认主题/资源从平台数据目录读取（见 §8）。
 
 ## 3.1 配置文件与位置
 
 | 文件/目录 | 位置 | 作用 | 是否持久 |
 |---|---|---|---|
 | `camus.yaml` | 运行时当前工作目录 | 主配置 | 是 |
-| `catalog.yaml` | 与 `camus.yaml` 同目录 | 目录路由与文件搬运规则 | 是 |
+| `catalog.yaml` | 源目录（`src/` 或 `posts/`） | 目录路由与文件搬运规则 | 是 |
 | `theme/{name}/*.html` | 工作目录 | 本地主题覆盖 | 是 |
 | `theme/pdf/{page.html,style.css,fonts.css,fonts/}` | 工作目录 | 本地 PDF 模板/样式/字体覆盖 | 是 |
 | `.camus/` | 工作目录 | `-c` 复制的本地主题、PDF 模板、资源与示例模板 | 是 |
@@ -20,7 +20,7 @@
 ## 3.2 解析总则
 
 - 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`theme`、`pdf_engine`、`pdf_options`、`markdown_options`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。不再接受 `render` 嵌套段；出现时打印 WARN 并忽略其内容。
-- `catalog.yaml` 必须存在且根节点为序列，否则 `panic("catalog file not found ...")` / `panic("parse catalog config failed")`。
+- `catalog.yaml` 必须存在于源目录（`src/` 或 `posts/`）且根节点为序列，否则 `panic("catalog file not found ...")` / `panic("parse catalog config failed")`。为兼容旧版，源目录缺失时会回退到 `camus.yaml` 同目录的 `catalog.yaml` 并打印 WARN。
 - 字符串值会做 `trim_space`；`catalog.yaml` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
 - 源目录、资源目录与输出目录不再可配置：
   - 源目录固定按 `src` → `posts` 顺序探测，存在即使用，否则回退 `src`（随后若不存在则报错）；
@@ -99,7 +99,7 @@ Markdown 引擎固定为 `cmark-gfm`，顶层 `markdown_options` 始终按本表
 
 ## 3.5 `catalog.yaml`（路由与搬运）
 
-`catalog.yaml` 与 `camus.yaml` 同目录，根节点为序列，每项生成一个 `route_conf`（`route_conf` 序列化字段：`path`、`title`、`subtitle`、`description`、`transfers`）。`catalog.yaml` 缺失或非序列会导致解析失败。
+`catalog.yaml` 位于源目录（`src/` 或 `posts/`），根节点为序列，每项生成一个 `route_conf`（`route_conf` 序列化字段：`path`、`title`、`subtitle`、`description`、`transfers`）。`catalog.yaml` 缺失或非序列会导致解析失败。
 
 | 字段 | 必填 | 说明 |
 |---|---|---|

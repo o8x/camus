@@ -30,8 +30,8 @@
 │   ├── css/style.css          # 公共样式入口，默认空文件
 │   └── js/onload.js           # 公共脚本入口，默认空文件
 ├── posts/                     # 示例文章
+│   └── catalog.yaml           # 示例目录路由与搬运规则
 ├── camus.yaml                 # 示例配置
-├── catalog.yaml               # 示例目录路由与搬运规则
 └── .gitignore                 # 示例忽略规则
 ```
 
@@ -41,20 +41,20 @@
 
 `install_templates()` 从 `paths::find("camus.yaml")` 所在的数据目录，把以下内容复制到工作目录根部（已存在的同名路径跳过）：
 
-- `posts/`
+- `posts/`（含 `posts/catalog.yaml`）
 - `camus.yaml`
-- `catalog.yaml`
 - `.gitignore`
 
 ```mermaid
 flowchart TD
     A[查找数据目录 camus.yaml] -->|未找到| X[报错, 返回 1]
-    A -->|找到| B[逐个检查 posts/camus.yaml/catalog.yaml/.gitignore]
+    A -->|找到| B[逐个检查 posts/camus.yaml/.gitignore]
     B --> C{工作目录已存在?}
     C -->|是| S[跳过该项]
     C -->|否| D[复制到工作目录]
-    S --> OK[返回 0, 继续构建]
-    D --> OK
+    S --> L[旧数据目录根部 catalog.yaml 复制到 posts/catalog.yaml]
+    D --> L
+    L --> OK[返回 0, 继续构建]
 ```
 
 - 不会创建或修改 `.camus`。
@@ -71,7 +71,7 @@ flowchart TD
     B -->|否| D[创建 .camus 并复制全部文件]
     B -->|是且无 -f| W[WARN 已复制, 可继续构建]
     B -->|是且有 -f| C[empty_path .camus 后复制]
-    D --> S[补齐工作目录 posts/camus.yaml/catalog.yaml/.gitignore]
+    D --> S[补齐工作目录 posts/camus.yaml/.gitignore]
     C --> S
     W --> S
     S --> OK[返回 0, 继续构建]
@@ -79,7 +79,8 @@ flowchart TD
 
 - `.camus` 已存在且非空、未指定 `-f`：打印 WARN，仅补齐工作目录根部示例文件，不覆盖 `.camus`。
 - `-f`：先删除 `.camus`（受 §6.1 的 >200 文件保护），再复制。
-- 复制完成后，对 `posts`、`camus.yaml`、`catalog.yaml`、`.gitignore`：仅当工作目录根部不存在同名路径时才从 `.camus` 复制。
+- 复制完成后，对 `posts`、`camus.yaml`、`.gitignore`：仅当工作目录根部不存在同名路径时才从 `.camus` 复制。
+- 旧版数据目录的根部 `catalog.yaml` 会作为兼容路径安装到 `<workdir>/posts/catalog.yaml`（目标已存在时跳过）。
 - 复制结果持久于磁盘；`-c` 成功后不会退出，主程序继续构建（见 §2.4）。
 
 ## 8.3 资源查找顺序
@@ -108,7 +109,7 @@ PDF 模板、样式与字体（`writer.cpp` 的 `read_pdf_theme_file()` / `copy_
 
 ## 8.4 安装位置（CPack）
 
-`camus/CMakeLists.txt` 安装 `example/` 下的 `theme/`、`assets/`、`posts/`、`camus.yaml`、`catalog.yaml` 与 `.gitignore`：
+`camus/CMakeLists.txt` 安装 `example/` 下的 `theme/`、`assets/`、`posts/`（含 `posts/catalog.yaml`）、`camus.yaml` 与 `.gitignore`：
 
 | 平台 / 生成器 | 资源安装目标 |
 |---|---|

@@ -45,6 +45,11 @@ namespace camus::catalog
 					node.children.push_back(child);
 				}
 			} else if (std::filesystem::is_regular_file(entry.path())) {
+				if (entry.path().filename() == CAMUS_CATALOG_NAME) {
+					logging::debug("skip catalog config name={}", filesystem::path_abs(entry.path()));
+					continue;
+				}
+
 				catalog_node file_node;
 				file_node.path = std::filesystem::relative(entry.path(), root);
 				const std::filesystem::path filepath =

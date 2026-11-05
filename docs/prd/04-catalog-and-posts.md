@@ -8,7 +8,7 @@
 
 - 根节点 `path` 归一为 `/`；子节点 `path` 为相对源目录的路径。
 - **`private` 目录跳过**：任意层级中名为 `private` 的目录（常量 `CAMUS_PRIVATE_DIR`，定义于 `config.h.in`）不读取、不生成，也不进入目录树；用于存放不参与构建的本地私有内容。
-- 普通文件：读入全部内容并按 `\n` 拆分为 `contents`（`read_file(..., true)`，整体两端空白会被裁剪）。
+- 普通文件：读入全部内容并按 `\n` 拆分为 `contents`（`read_file(..., true)`，整体两端空白会被裁剪）。源目录中的 `catalog.yaml`（`CAMUS_CATALOG_NAME`）是配置文件，扫描时直接跳过，不进入目录树。
 - 目录：仅当「有子节点」或「目录非空」时加入（空目录被忽略）；加入的目录节点 `directory = true`。
 - 符号链接：**先于**目录/文件判断检测（`entry.is_symlink()`），任意符号链接都会触发 `logging::fatal("catalog does not support symlinks ...")`，不会跟随链接进入源目录之外或造成循环。
 - 其它类型（设备、管道等）：`logging::fatal("catalog does not support file ...")`。

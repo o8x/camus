@@ -35,7 +35,7 @@ Or create a new site in an empty directory:
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # install example camus.yaml, catalog.yaml, posts and .gitignore
+/path/to/camus -i      # install example camus.yaml, posts (with catalog.yaml) and .gitignore
 /path/to/camus         # build
 ```
 
@@ -50,7 +50,7 @@ mkdir my-site && cd my-site
 | `camus -W` | Watch for changes and serve locally |
 | `camus -D` | Dry run: parse and render without writing files |
 | `camus -I` | Inspect the parsed configuration and catalog tree |
-| `camus -i` | Install example `camus.yaml`, `catalog.yaml`, `posts` and `.gitignore` |
+| `camus -i` | Install example `camus.yaml`, `posts` (with `catalog.yaml`) and `.gitignore` |
 | `camus -c` | Copy the complete bundled resources into `./.camus` |
 | `camus -c -f` | Force re-copy `./.camus` |
 
@@ -59,7 +59,7 @@ mkdir my-site && cd my-site
 A site uses two files:
 
 - `camus.yaml` — site, output, rendering and friends configuration
-- `catalog.yaml` — directory routes and file transfer rules
+- `catalog.yaml` — directory routes and file transfer rules (inside `src/` or `posts/`)
 
 ### `camus.yaml`
 
@@ -93,7 +93,9 @@ friends:
 
 ### `catalog.yaml`
 
-`catalog.yaml` is a YAML sequence. Each item describes a directory route:
+Place `catalog.yaml` in the source directory (`src/` or `posts/`).
+
+`catalog.yaml` lives in the source directory (`src/` or `posts/`) and is a YAML sequence. Each item describes a directory route:
 
 ```yaml
 - path: /                     # required; route to the source directory

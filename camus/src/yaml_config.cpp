@@ -319,7 +319,20 @@ namespace camus::config
 		camus_.render.theme[CAMUS_THEME_TYPE_STATS] = read_theme(camus_.render.theme_name, "stats");
 		camus_.render.theme[CAMUS_THEME_TYPE_FRIENDS] = read_theme(camus_.render.theme_name, "friends");
 
-		const std::filesystem::path catalog_file = std::filesystem::path(filename_).parent_path() / CAMUS_CATALOG_NAME;
+		std::filesystem::path catalog_file = camus_.source_dir / CAMUS_CATALOG_NAME;
+		if (!std::filesystem::exists(catalog_file)) {
+			// 兼容旧版：catalog.yaml 曾与 camus.yaml 放在同一目录
+			const std::filesystem::path legacy_catalog =
+				std::filesystem::path(filename_).parent_path() / CAMUS_CATALOG_NAME;
+			if (std::filesystem::exists(legacy_catalog)) {
+				logging::warn(
+					"load legacy catalog beside config, move it to source dir path={}",
+					legacy_catalog.string()
+				);
+				catalog_file = legacy_catalog;
+			}
+		}
+
 		if (!std::filesystem::exists(catalog_file)) {
 			error::panic("catalog file not found name={}", catalog_file.string());
 		}

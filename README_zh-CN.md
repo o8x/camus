@@ -35,7 +35,7 @@ cd example
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # 安装示例 camus.yaml、catalog.yaml、posts 与 .gitignore
+/path/to/camus -i      # 安装示例 camus.yaml、posts（含 catalog.yaml）与 .gitignore
 /path/to/camus         # 构建
 ```
 
@@ -50,7 +50,7 @@ mkdir my-site && cd my-site
 | `camus -W` | 监听文件变化并启动本地服务 |
 | `camus -D` | 干跑：解析与渲染，但不写文件 |
 | `camus -I` | 打印解析后的配置与目录树 |
-| `camus -i` | 安装示例 `camus.yaml`、`catalog.yaml`、`posts`、`.gitignore` |
+| `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `catalog.yaml`）与 `.gitignore` |
 | `camus -c` | 把完整内置资源复制到 `./.camus` |
 | `camus -c -f` | 强制重装 `./.camus` |
 
@@ -59,7 +59,7 @@ mkdir my-site && cd my-site
 站点由两个文件驱动：
 
 - `camus.yaml`：站点、输出、渲染与友链配置
-- `catalog.yaml`：目录路由与文件搬运规则
+- `catalog.yaml`：目录路由与文件搬运规则（位于 `src/` 或 `posts/` 中）
 
 ### `camus.yaml`
 
@@ -93,7 +93,9 @@ friends:
 
 ### `catalog.yaml`
 
-`catalog.yaml` 是一个 YAML 序列，每一项描述一个目录路由：
+把 `catalog.yaml` 放在源目录（`src/` 或 `posts/`）中。
+
+`catalog.yaml` 位于源目录中，是一个 YAML 序列，每一项描述一个目录路由：
 
 ```yaml
 - path: /                     # 必填；指定源目录
