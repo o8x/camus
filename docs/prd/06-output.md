@@ -182,9 +182,9 @@ flowchart TD
     B -->|找到| C[按目录树先序收集 visibility != hidden 的 .md]
     C --> D[合并为单个 Markdown]
     D --> E[写 dist/pdf/index.md]
-    E --> F[逐篇 cmark-gfm 渲染为 HTML, 每篇包在带锚点的 section 中]
-    F --> G[生成封面页 / 扉页 / 目录页 HTML]
-    G --> H[写入 dist/pdf/index.html（内联打印样式）]
+    E --> F[逐篇 cmark-gfm 渲染为 HTML, 组装 pdf.toc / pdf.articles / 封面等数据]
+    F --> G[读取 theme/pdf/page.html 与 style.css, 用 inja 渲染完整文档]
+    G --> H[写 dist/pdf/index.html（模板内联 style.css）]
     H --> I[调用浏览器 --headless --print-to-pdf=<解析后的输出路径>]
     I --> J{退出码为 0 且 PDF 非空?}
     J -->|否| W2[WARN 并跳过]
@@ -192,18 +192,19 @@ flowchart TD
 ```
 
 - 合并文档以 `# {site.title}` 开头，每篇文章为 `## {display_name}` + 正文，文章间用 `---` 分隔。
-- PDF 正文前依次生成三个独立页面，各自通过 `page-break-after: always` 强制分页：
+- PDF 中间 HTML 由 `theme/pdf/page.html`（inja）渲染，打印样式来自 `theme/pdf/style.css`；两者均可被工作目录 `theme/pdf/`、`.camus/theme/pdf/` 或平台数据目录覆盖（详见 §5.10）。
+- 默认模板在正文前依次输出三个独立页面，各自通过 `page-break-after: always` 强制分页：
 
-  | 页面 | 内容 | 代码位置 |
+  | 页面 | 模板数据 | 说明 |
   |---|---|---|
-  | 封面页 | 站点标题（为空时回退 `Camus`）、`site.subtitle`、`site.description`、生成日期（`%Y-%m-%d`） | `emit_pdf()` |
-  | 扉页 | 站点标题、副标题、文章数、生成日期、站点域名（`public_url.domain_name`）、程序版本（`PROJECT_VERSION`） | `emit_pdf()` |
-  | 目录页 | 标题「目录」+ 按先序排列的文章序号、显示名、标签，条目链接到 `#pdf-article-{n}` | `emit_pdf()` |
+  | 封面页 | `pdf.cover` | 站点标题（为空时回退 `Camus`）、`site.subtitle`、`site.description`、生成日期（`%Y-%m-%d`） |
+  | 扉页 | `pdf.title_page`、`pdf.meta` | 站点标题、副标题、文章数、生成日期、站点域名（`public_url.domain_name`）、程序版本（`PROJECT_VERSION`） |
+  | 目录页 | `pdf.toc` | 标题「目录」+ 按先序排列的文章序号、显示名、标签，条目链接到 `#pdf-article-{n}` |
 
-- 每篇文章渲染为 `<section id="pdf-article-{n}" class="pdf-article">`，并以 `page-break-before: always` 从新页开始；正文首段（`# site.title` + `site.description`）作为引导页单独占一页。
-- 所有插入 HTML 的站点字段均做 HTML 转义（`html_escape`）。
+- 默认模板为每篇文章输出 `<section id="pdf-article-{n}" class="pdf-article">`，并以 `page-break-before: always` 从新页开始；引导页 `pdf.intro`（`# site.title` + `site.description`）单独占一页。
+- 程序写入模板的站点字段（标题、副标题、描述、域名、目录标题/标签）均做 HTML 转义（`html_escape`）；文章正文与引导页为已渲染 HTML，原样插入。
 - 文章正文使用 Front Matter 解析后的内容；`hidden` 文章不参与，`hidden_in_toc` 参与。
 - PDF 输出路径默认 `dist/pdf/index.pdf`；`--print-to-pdf` 中可用 `{{dest_dir}}` 占位符自定义（占位符代表 `dist/pdf`），如 `--print-to-pdf={{dest_dir}}/docs/book.pdf`（相对路径按 `dist/pdf` 解析）。
 - PDF 中间产物 `index.md`、`index.html` 与最终 `index.pdf` 均位于 `dist/pdf`，与 HTML 站点目录分离。
-- PDF 生成失败只告警，不影响 HTML 站点构建结果与退出码。
+- 浏览器缺失、命令失败或未产出 PDF 只告警，不影响 HTML 站点构建结果与退出码；`theme/pdf` 模板/样式缺失属配置错误，会以致命错误退出（退出码 127）。
 - `dryrun` 下整个阶段跳过。

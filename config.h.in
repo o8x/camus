@@ -21,3 +21,6 @@
 #define CAMUS_CONF_NAME "camus.yaml"
 #define CAMUS_CATALOG_NAME "catalog.yaml"
 #define CAMUS_PRIVATE_DIR "private"
+#define CAMUS_PDF_THEME_DIR "theme/pdf"
+#define CAMUS_PDF_TEMPLATE_NAME "page.html"
+#define CAMUS_PDF_STYLE_NAME "style.css"

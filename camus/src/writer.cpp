@@ -154,60 +154,17 @@ namespace
 		return out;
 	}
 
-	constexpr std::string_view pdf_html_style = R"(
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-@page { size: A4; margin: 20mm 18mm; }
-html { font-size: 16px; }
-body {
-    font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
-    color: #262626;
-    line-height: 1.7;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-}
-main { max-width: 100%; }
-h1, h2, h3, h4, h5, h6 { color: #161616; line-height: 1.35; margin: 1.6em 0 0.6em; page-break-after: avoid; }
-h1 { font-size: 1.75rem; }
-h2 { font-size: 1.4rem; }
-h3 { font-size: 1.15rem; }
-p { margin: 0.7em 0; }
-a { color: #0f62fe; text-decoration: none; }
-blockquote { margin: 1em 0; padding: 0.6em 1em; border-left: 3px solid #c6c6c6; background: #f4f4f4; color: #525252; }
-ul, ol { margin: 0.7em 0 0.7em 1.5em; }
-li { margin: 0.25em 0; }
-code { font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace; font-size: 0.88em; background: #f4f4f4; padding: 0.1em 0.3em; }
-pre { margin: 1em 0; padding: 1em; background: #262626; color: #f4f4f4; overflow-x: auto; page-break-inside: avoid; }
-pre code { background: transparent; color: inherit; padding: 0; }
-img { max-width: 100%; height: auto; }
-table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9rem; page-break-inside: avoid; }
-th, td { padding: 0.4em 0.6em; border-bottom: 1px solid #e0e0e0; text-align: left; }
-th { background: #f4f4f4; font-weight: 600; }
-hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.5em 0; }
-.pdf-cover, .pdf-title-page, .pdf-toc { page-break-after: always; break-after: page; }
-.pdf-cover { display: flex; flex-direction: column; justify-content: center; min-height: 235mm; text-align: center; }
-.pdf-cover__eyebrow { font-size: 0.85rem; letter-spacing: 0.35em; text-transform: uppercase; color: #8d8d8d; margin-bottom: 2.2em; }
-.pdf-cover__title { font-size: 2.8rem; line-height: 1.25; margin: 0 0 0.5em; }
-.pdf-cover__subtitle { font-size: 1.2rem; color: #525252; margin: 0 auto 1.6em; max-width: 80%; }
-.pdf-cover__desc { font-size: 0.95rem; color: #6f6f6f; margin: 0 auto; max-width: 72%; }
-.pdf-cover__meta { margin-top: 3em; font-size: 0.9rem; color: #8d8d8d; letter-spacing: 0.12em; }
-.pdf-title-page { display: flex; flex-direction: column; justify-content: center; min-height: 235mm; }
-.pdf-title-page__inner { margin: 0 auto; max-width: 78%; }
-.pdf-title-page__title { font-size: 2.2rem; margin: 0 0 0.4em; }
-.pdf-title-page__subtitle { font-size: 1.05rem; color: #525252; margin: 0 0 2em; }
-.pdf-title-page__rule { border: none; border-top: 2px solid #161616; width: 4.5em; margin: 0 0 2em; }
-.pdf-meta { display: grid; grid-template-columns: auto 1fr; gap: 0.55em 1.6em; font-size: 0.92rem; }
-.pdf-meta dt { color: #8d8d8d; }
-.pdf-meta dd { color: #262626; }
-.pdf-toc__heading { font-size: 1.9rem; margin: 0 0 1.4em; padding-bottom: 0.4em; border-bottom: 2px solid #161616; }
-.pdf-toc__list { list-style: none; margin: 0; padding: 0; }
-.pdf-toc__item { margin: 0; padding: 0; border-bottom: 1px dotted #d0d0d0; }
-.pdf-toc__link { display: flex; align-items: baseline; gap: 1em; padding: 0.55em 0; color: #262626; }
-.pdf-toc__num { flex: none; width: 2.4em; color: #8d8d8d; font-variant-numeric: tabular-nums; }
-.pdf-toc__title { flex: 1; }
-.pdf-toc__tags { flex: none; color: #8d8d8d; font-size: 0.82rem; }
-.pdf-intro { page-break-after: always; break-after: page; }
-.pdf-article { page-break-before: always; break-before: page; }
-)";
+	std::string read_pdf_theme_file(const std::string &name)
+	{
+		const std::filesystem::path relative = std::filesystem::path(CAMUS_PDF_THEME_DIR) / name;
+		const std::filesystem::path path = camus::paths::find_local_or_resource(relative);
+		if (path.empty()) {
+			logging::fatal("read pdf theme content failed name={}", relative.string());
+		}
+
+		logging::debug("load pdf theme content name={}", relative.string());
+		return filesystem::read_file(path);
+	}
 } // namespace
 
 namespace camus
@@ -928,17 +885,41 @@ namespace camus
 		const std::string generated_at = functions::format_time_t(std::time(nullptr), "%Y-%m-%d");
 		const std::string domain = html_escape(conf_.camus().public_url.domain_name);
 
-		std::string markdown = std::format("# {}\n\n{}\n", site_title, conf_.camus().site.description);
-		std::string toc_items;
-		std::string body;
+		const std::string template_source = read_pdf_theme_file(CAMUS_PDF_TEMPLATE_NAME);
+		const std::string style_source = read_pdf_theme_file(CAMUS_PDF_STYLE_NAME);
 
-		body += "<section class=\"pdf-intro\">\n";
-		body += render::render_markdown(
+		nlohmann::json view = conf_.json();
+		std::string markdown = std::format("# {}\n\n{}\n", site_title, conf_.camus().site.description);
+
+		nlohmann::json pdf;
+		pdf["lang"] = site_title.empty() ? "en" : "zh-CN";
+		pdf["title"] = cover_title;
+		pdf["style"] = render::inja_render(inja_, style_source, view);
+		pdf["intro"] = render::render_markdown(
 			markdown.c_str(),
 			conf_.camus().render.markdown_engine,
 			conf_.camus().render.markdown_options
 		);
-		body += "\n</section>\n";
+		pdf["cover"] = {
+			{"eyebrow", "Camus"},
+			{"title", cover_title},
+			{"subtitle", cover_subtitle},
+			{"description", cover_desc},
+			{"meta", generated_at},
+		};
+		pdf["title_page"] = {
+			{"title", cover_title},
+			{"subtitle", cover_subtitle},
+		};
+		pdf["meta"] = {
+			{"article_count", articles.size()},
+			{"generated_at", generated_at},
+			{"domain", domain},
+			{"version", PROJECT_VERSION},
+		};
+
+		nlohmann::json toc_items = nlohmann::json::array();
+		nlohmann::json article_items = nlohmann::json::array();
 
 		int index = 0;
 		for (const auto &article : articles) {
@@ -956,51 +937,38 @@ namespace camus
 				tags += html_escape(tag);
 			}
 
-			toc_items += std::format(
-				"<li class=\"pdf-toc__item\"><a class=\"pdf-toc__link\" href=\"#pdf-article-{}\">"
-				"<span class=\"pdf-toc__num\">{:02}</span><span class=\"pdf-toc__title\">{}</span>"
-				"<span class=\"pdf-toc__tags\">{}</span></a></li>\n",
-				index,
-				index,
-				html_escape(label),
-				tags
+			const std::string anchor = std::format("pdf-article-{}", index);
+			const std::string number = std::format("{:02}", index);
+
+			toc_items.push_back(
+				{
+					{"anchor", anchor},
+					{"index", index},
+					{"number", number},
+					{"title", html_escape(label)},
+					{"tags", tags},
+				}
 			);
 
 			const std::string article_markdown = std::format("## {}\n\n{}", label, article.markdown);
-			body += std::format(
-				"<section id=\"pdf-article-{}\" class=\"pdf-article\">\n{}\n</section>\n",
-				index,
-				render::render_markdown(
-					article_markdown.c_str(),
-					conf_.camus().render.markdown_engine,
-					conf_.camus().render.markdown_options
-				)
+			article_items.push_back(
+				{
+					{"anchor", anchor},
+					{"index", index},
+					{"number", number},
+					{"title", html_escape(label)},
+					{"tags", tags},
+					{"content", render::render_markdown(
+						 article_markdown.c_str(),
+						 conf_.camus().render.markdown_engine,
+						 conf_.camus().render.markdown_options
+					 )},
+				}
 			);
 		}
 
-		const std::string front = std::format(
-			"<section class=\"pdf-cover\">\n<div class=\"pdf-cover__eyebrow\">Camus</div>\n"
-			"<h1 class=\"pdf-cover__title\">{}</h1>\n<p class=\"pdf-cover__subtitle\">{}</p>\n"
-			"<p class=\"pdf-cover__desc\">{}</p>\n<div class=\"pdf-cover__meta\">{}</div>\n</section>\n"
-			"<section class=\"pdf-title-page\">\n<div class=\"pdf-title-page__inner\">\n"
-			"<h1 class=\"pdf-title-page__title\">{}</h1>\n<p class=\"pdf-title-page__subtitle\">{}</p>\n"
-			"<hr class=\"pdf-title-page__rule\">\n<dl class=\"pdf-meta\">\n"
-			"<dt>文章数</dt><dd>{}</dd>\n<dt>生成日期</dt><dd>{}</dd>\n"
-			"<dt>站点</dt><dd>{}</dd>\n<dt>版本</dt><dd>v{}</dd>\n</dl>\n</div>\n</section>\n"
-			"<section class=\"pdf-toc\">\n<h2 class=\"pdf-toc__heading\">目录</h2>\n"
-			"<ol class=\"pdf-toc__list\">\n{}</ol>\n</section>\n",
-			cover_title,
-			cover_subtitle,
-			cover_desc,
-			generated_at,
-			cover_title,
-			cover_subtitle,
-			articles.size(),
-			generated_at,
-			domain,
-			PROJECT_VERSION,
-			toc_items
-		);
+		pdf["toc"] = std::move(toc_items);
+		pdf["articles"] = std::move(article_items);
 
 		const std::filesystem::path pdf_dir = conf_.camus().pdf_dir();
 		const std::filesystem::path markdown_path = pdf_dir / "index.md";
@@ -1010,15 +978,9 @@ namespace camus
 		std::filesystem::create_directories(pdf_dir);
 		filesystem::write_file(markdown_path, markdown);
 
-		const std::string html = std::format(
-			"<!DOCTYPE html>\n<html lang=\"{}\">\n<head>\n<meta charset=\"utf-8\">\n"
-			"<title>{}</title>\n<style>{}</style>\n</head>\n<body>\n{}\n<main>\n{}\n</main>\n</body>\n</html>\n",
-			site_title.empty() ? "en" : "zh-CN",
-			cover_title,
-			pdf_html_style,
-			front,
-			body
-		);
+		view["pdf"] = std::move(pdf);
+
+		const std::string html = render::inja_render(inja_, template_source, view);
 
 		filesystem::write_file(html_path, html);
 

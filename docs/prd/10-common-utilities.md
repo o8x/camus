@@ -86,6 +86,7 @@
 | `path local_data_dir()` | 返回工作目录 `.camus`（`CAMUS_LOCAL_DATA_DIR`） |
 | `path find(relative_path)` | 在候选数据目录下查找相对路径，返回第一个存在的路径；找不到返回空路径 |
 | `path find_resource(relative_path)` | 先查 `.camus/relative`，再调用 `find`；找不到返回空路径 |
+| `path find_local_or_resource(relative_path)` | 先查工作目录下的相对路径（显式本地覆盖），再调用 `find_resource`；找不到返回空路径 |
 | `path source_data_dir()` | 返回第一个同时包含 `theme/` 与 `assets/` 的数据目录，供 `-i` 使用 |
 | `path default_assets_dir()` | 优先 `.camus/assets`，其次第一个存在且非空的数据目录 `assets/`；找不到返回空路径 |
 
@@ -115,3 +116,7 @@
 | `CAMUS_DATA_DIR_LINUX` | `/var/lib/camus` | Linux 数据目录 |
 | `CAMUS_CONF_NAME` | `camus.yaml` | 主配置文件名 |
 | `CAMUS_CATALOG_NAME` | `catalog.yaml` | 目录路由与搬运配置文件名 |
+| `CAMUS_PRIVATE_DIR` | `private` | 不参与扫描的私有目录名 |
+| `CAMUS_PDF_THEME_DIR` | `theme/pdf` | PDF 模板与样式目录 |
+| `CAMUS_PDF_TEMPLATE_NAME` | `page.html` | PDF 中间 HTML 模板文件名 |
+| `CAMUS_PDF_STYLE_NAME` | `style.css` | PDF 打印样式文件名 |

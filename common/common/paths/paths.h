@@ -16,6 +16,8 @@ namespace camus::paths
 	[[nodiscard]] std::filesystem::path find(const std::filesystem::path &relative_path);
 	// 资源查找：优先工作目录 .camus，其次平台数据目录；找不到返回空路径
 	[[nodiscard]] std::filesystem::path find_resource(const std::filesystem::path &relative_path);
+	// 本地覆盖查找：优先工作目录下的相对路径，其次按 find_resource 查找；找不到返回空路径
+	[[nodiscard]] std::filesystem::path find_local_or_resource(const std::filesystem::path &relative_path);
 	// --install 的资源来源：第一个包含 theme 与 assets 的数据目录；找不到返回空路径
 	[[nodiscard]] std::filesystem::path source_data_dir();
 	// 默认静态资源目录：优先 .camus/assets，其次数据目录 assets；找不到返回空路径

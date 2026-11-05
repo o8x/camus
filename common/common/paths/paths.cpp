@@ -55,6 +55,16 @@ namespace camus::paths
 		return find(relative_path);
 	}
 
+	std::filesystem::path find_local_or_resource(const std::filesystem::path &relative_path)
+	{
+		std::error_code ec;
+		if (std::filesystem::exists(relative_path, ec) && !ec) {
+			return relative_path;
+		}
+
+		return find_resource(relative_path);
+	}
+
 	std::filesystem::path source_data_dir()
 	{
 		for (const auto &root : data_dirs()) {
