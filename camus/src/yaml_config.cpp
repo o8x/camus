@@ -10,6 +10,7 @@
 #include "common/error/error.h"
 #include "common/filesystem/filesystem.h"
 #include "common/functions/functions.h"
+#include "common/paths/paths.h"
 #include "common/render/render.h"
 #include "common/str/str.h"
 #include "inja/inja.hpp"
@@ -237,20 +238,21 @@ namespace camus::config
 		}
 
 		if (!camus_.assets_dir.empty() && !std::filesystem::exists(camus_.assets_dir)) {
-			logging::warn("assets dir not exists, fallback to embedded assets name={}", camus_.assets_dir.string());
+			logging::warn("assets dir not exists, fallback to default assets name={}", camus_.assets_dir.string());
 			camus_.assets_dir.clear();
 		}
 
 		const auto read_theme = [](const std::string &name, const std::string &type) -> std::string {
-			std::string home_file = std::format("{}/theme/{}/{}.html", CAMUS_DIR, name, type);
-
-			// 检查是否存在覆盖主题
+			// 本地 theme/ 覆盖优先，其次读取平台数据目录中的默认主题
+			std::filesystem::path home_file;
 			if (const std::string replace_theme = std::format("theme/{}/{}.html", name, type);
 				std::filesystem::exists(replace_theme)) {
 				home_file = replace_theme;
+			} else {
+				home_file = paths::find(std::filesystem::path("theme") / name / std::format("{}.html", type));
 			}
 
-			if (!std::filesystem::exists(home_file)) {
+			if (home_file.empty() || !std::filesystem::exists(home_file)) {
 				logging::fatal("read theme content failed name={}/{}", name, type);
 			}
 

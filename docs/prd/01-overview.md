@@ -4,13 +4,13 @@
 
 Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章与主题模板，生成静态 HTML 站点。核心特性：
 
-- 单文件自包含：示例站点模板嵌入二进制，可用 `-i` 一键初始化。
+- 外部资源安装：主题、默认静态资源与示例模板由安装包放到平台数据目录，运行期从该目录读取。
 - Markdown（cmark-gfm）渲染，支持 Front Matter 与隐藏片段。
-- 多主题：内嵌 `default`、`document`、`pixel`、`terminal` 等主题，本地可覆盖或自定义。
+- 多主题：数据目录内置 `default`、`document`、`pixel`、`terminal` 等主题，本地 `theme/` 可覆盖或自定义。
 - 目录树与目录索引页、统计页、友链页、`sitemap.xml`、`meta.json` 生成。
 - 可选 PDF 输出：把全部可见文章合并为单个 Markdown，经 cmark-gfm 转 HTML 后调用 Chrome/Edge 无头模式打印为 PDF。
 - `-W` 监听模式：轮询文件变化并自动重建，同时提供本地 HTTP 服务。
-- `private` 目录：源目录下任意名为 `private` 的子目录不参与扫描与生成，也不能作为目录页路由；`-i` 安装时自动创建且不被 `.gitignore` 忽略。
+- `private` 目录：源目录下任意名为 `private` 的子目录不参与扫描与生成，也不能作为目录页路由。
 
 当前版本：**11.1.0**（来源：`CMakeLists.txt` 的 `project(... VERSION 11.1.0)`）。
 
@@ -24,23 +24,27 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 | inja | HTML 模板渲染 | `third-party/inja` |
 | nlohmann/json | JSON 数据模型与输出 | `third-party/nlohmann_json` |
 | cpp-httplib | 监听模式本地 HTTP 服务 | `third-party/cpp-httplib` |
-| libarchive | 解压内嵌的模板压缩包 | 系统依赖，`pkg_check_modules(ARCHIVE ...)` |
-| CPack | 生成 deb/pkg 等安装包 | `camus/CMakeLists.txt` |
+| CPack | 生成 deb/pkg 等安装包，并安装主题/资源/示例模板 | `camus/CMakeLists.txt` |
 | Chrome / Edge（可选） | 无头模式把中间 HTML 打印为 PDF | 系统已安装的浏览器，按 `render.pdf_engine` 解析 |
 
 依赖全部以 Git submodule 形式存在（`.gitmodules`），构建时需 `git submodule update --init --recursive`。
 
-## 1.3 二进制结构与自解压
+## 1.3 资源数据目录
 
-构建后处理脚本 `hack/post_build.sh` 会把 `example/`（排除 `html` 与 `.camus`）打包为 tar.gz 追加到可执行文件末尾，再追加 8 字节元信息：
+运行期资源目录（`common/common/paths/paths.cpp`）：
 
-```
-| 程序本体 | tar.gz 模板 | skip (4B) | count (4B) |
-```
+| 平台 | 默认数据目录 | 说明 |
+|---|---|---|
+| macOS | `~/Library/Application Support/Camus` | `$HOME` 缺失时回退 `/Library/Application Support/Camus` |
+| macOS（回退） | `/Library/Application Support/Camus` | 安装到系统域（如 `installer -target /`）时的位置 |
+| Linux | `/var/lib/camus` | 由 deb 安装包写入 |
 
-- `skip`：程序本体字节数（大端），即压缩包起始偏移。
-- `count`：压缩包字节数（大端）。
-- 运行时 `-i` 读取末尾 8 字节定位并解压（详见 §8）。
+目录内容为 `theme/`、`assets/`、`posts/` 与 `camus.yaml` 示例模板。查找规则：
+
+- 主题：工作目录 `theme/{name}/{type}.html` 优先，其次数据目录同名文件。
+- 静态资源：工作目录 `./assets` 优先，缺失或为空时使用数据目录 `assets/`。
+
+构建不再向可执行文件追加模板，也不再提供 `-i`/`-f` 选项（详见 §8）。
 
 ## 1.4 构建流水线
 
@@ -73,13 +77,13 @@ flowchart TD
 | source_dir | Markdown 源目录；固定按 `src` → `posts` 探测，不存在则回退 `src` |
 | dest_dir | HTML 输出目录，固定 `./dist/html` |
 | pdf_dir | PDF 输出目录，固定 `./dist/pdf` |
-| assets_dir | 本地静态资源目录，固定 `./assets`；缺省时使用 `.camus/assets`，内容会被提升到输出根目录 |
+| assets_dir | 本地静态资源目录，固定 `./assets`；缺省时使用数据目录的 `assets/`，内容会被提升到输出根目录 |
 | catalog | 运行期内存中的目录树 `catalog_node` |
 | route | `camus.yaml` 中 `catalog` 段的目录配置，可设置标题/副标题/描述/搬运 |
 | transfer | 路由内的文件搬运映射，把源目录内容映射到另一输出路径 |
 | short-path | 文章短链接标识，输出到 `/s/{short_path}.html` |
 | hidden | 文章可见性：不渲染、不进入输出目录树 |
-| private | 源目录下任意层级名为 `private` 的子目录；不扫描、不生成、不可作为目录页路由，`-i` 时自动创建 |
+| private | 源目录下任意层级名为 `private` 的子目录；不扫描、不生成、不可作为目录页路由 |
 | 隐藏片段 | Markdown 中 `--hidden-section-start` 与 `--hidden-section-end` 之间不渲染的内容 |
 
 ## 1.6 版本信息

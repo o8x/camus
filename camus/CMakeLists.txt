@@ -11,13 +11,6 @@ add_executable(Camus main.cpp)
 target_link_libraries(Camus PRIVATE camus)
 set_target_properties(Camus PROPERTIES OUTPUT_NAME "camus" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-add_custom_command(TARGET Camus POST_BUILD
-        COMMAND ${CMAKE_SOURCE_DIR}/hack/post_build.sh "${CMAKE_SOURCE_DIR}"
-        COMMENT "Appending example to executable..."
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-        VERBATIM
-)
-
 set(DEFAULT_SITE "site")
 
 file(WRITE ${CMAKE_BINARY_DIR}/default-site.txt "${DEFAULT_SITE}")
@@ -46,6 +39,10 @@ set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-v${CPACK_PACKAGE_VERSION}_${H
 string(TOLOWER ${CPACK_PACKAGE_FILE_NAME} CPACK_PACKAGE_FILE_NAME)
 
 if (APPLE)
+    # macOS 默认安装到用户目录 ~/Library/Application Support/Camus；
+    # 选择系统域（如 installer -target /）时落到 /Library/Application Support/Camus，运行期作为回退路径。
+    set(CAMUS_RESOURCE_DIR "Library/Application Support/Camus")
+
     if (CPACK_GENERATOR MATCHES "DragNDrop")
         set_target_properties(Camus PROPERTIES
                 MACOSX_BUNDLE_BUNDLE_VERSION ${CMAKE_PROJECT_VERSION}
@@ -54,6 +51,10 @@ if (APPLE)
         )
 
         install(TARGETS Camus BUNDLE DESTINATION ".")
+        install(DIRECTORY "${CMAKE_SOURCE_DIR}/example/theme" "${CMAKE_SOURCE_DIR}/example/assets"
+                "${CMAKE_SOURCE_DIR}/example/posts"
+                DESTINATION "${CAMUS_RESOURCE_DIR}")
+        install(FILES "${CMAKE_SOURCE_DIR}/example/camus.yaml" DESTINATION "${CAMUS_RESOURCE_DIR}")
     elseif (CPACK_GENERATOR MATCHES "productbuild")
         # pkgutil --pkgs
         # pkgutil --pkg-info cn.com.stdout.Camus.Runtime
@@ -61,19 +62,36 @@ if (APPLE)
         # rm -f /usr/local/bin/Camus
         # pkgutil --forget cn.com.stdout.Camus.Runtime
         install(TARGETS Camus DESTINATION "./usr/local/bin" COMPONENT Runtime)
+        install(DIRECTORY "${CMAKE_SOURCE_DIR}/example/theme" "${CMAKE_SOURCE_DIR}/example/assets"
+                "${CMAKE_SOURCE_DIR}/example/posts"
+                DESTINATION "${CAMUS_RESOURCE_DIR}" COMPONENT Resources)
+        install(FILES "${CMAKE_SOURCE_DIR}/example/camus.yaml"
+                DESTINATION "${CAMUS_RESOURCE_DIR}" COMPONENT Resources)
 
-        set(CPACK_COMPONENTS_ALL Runtime)
+        set(CPACK_COMPONENTS_ALL Runtime Resources)
         set(CPACK_COMPONENT_RUNTIME_DISPLAY_NAME "${CMAKE_PROJECT_NAME}")
         set(CPACK_COMPONENT_RUNTIME_DESCRIPTION "${CMAKE_PROJECT_NAME} executable")
+        set(CPACK_COMPONENT_RESOURCES_DISPLAY_NAME "${CMAKE_PROJECT_NAME} resources")
+        set(CPACK_COMPONENT_RESOURCES_DESCRIPTION "${CMAKE_PROJECT_NAME} themes, assets and example template")
         set(CPACK_MONOLITHIC_INSTALL OFF)
         set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
         set(CPACK_PRODUCTBUILD_IDENTIFIER "cn.com.stdout.Camus")
+        set(CPACK_PRODUCTBUILD_DOMAINS ON)
+        set(CPACK_PRODUCTBUILD_DOMAINS_USER ON)
+        set(CPACK_PRODUCTBUILD_DOMAINS_ROOT ON)
     endif ()
 elseif (UNIX)
+    set(CAMUS_RESOURCE_DIR "var/lib/camus")
+
     install(TARGETS Camus DESTINATION ./usr/local/bin)
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/example/theme" "${CMAKE_SOURCE_DIR}/example/assets"
+            "${CMAKE_SOURCE_DIR}/example/posts"
+            DESTINATION "${CAMUS_RESOURCE_DIR}")
+    install(FILES "${CMAKE_SOURCE_DIR}/example/camus.yaml" DESTINATION "${CAMUS_RESOURCE_DIR}")
 
     set(CPACK_GENERATOR "DEB")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "https://github.com/o8x")
+    set(CPACK_MONOLITHIC_INSTALL ON)
 endif ()
 
 include(GNUInstallDirs)

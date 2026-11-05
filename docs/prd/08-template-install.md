@@ -1,109 +1,64 @@
-# 8. 模板安装与自解压
+# 8. 资源安装与数据目录
 
-实现：`install_template()`（`camus/main.cpp:13`）、`extract::extract_tgz()`（`common/common/extract/extract.h`）、`hack/post_build.sh`。
+实现：`common/common/paths/paths.h`、`common/common/paths/paths.cpp`、`camus/src/yaml_config.cpp`、`camus/src/writer.cpp`、`camus/CMakeLists.txt`。
 
-## 8.1 内嵌模板格式
+> 旧版的「单文件自包含」已整体移除：可执行文件不再追加示例压缩包，也不再提供 `-i/--install` 与 `-f/--force`，`common/common/extract`（libarchive）与 `hack/post_build.sh` 均已删除。
 
-构建后处理脚本把示例站点追加到可执行文件末尾：
+## 8.1 数据目录
 
-```text
-| 程序本体 (skip 字节) | gzip 压缩的 tar 包 (count 字节) | skip:4B | count:4B |
-```
+运行期资源根目录由 `camus::paths` 解析（`paths.cpp`）：
 
-- 打包源：`example/`，排除 `html` 与 `.camus`。
-- 尾部 8 字节为两个**大端** `uint32`：`skip`（程序本体长度，即压缩包偏移）、`count`（压缩包长度）。
-- 脚本在 macOS 上使用 `COPYFILE_DISABLE=1` 与 `--no-xattrs` 避免扩展属性。
-- 脚本最后打印手动解包命令：`dd if=camus bs=1 skip=<skip> count=<count> | tar xzf -`。
-
-## 8.2 安装流程
-
-`main` 中 `-i/--install` 时调用 `install_template(self_path, WORK_ON_DEBUG || force, workdir)`：
-
-```mermaid
-flowchart TD
-    A[create_directories workdir/.camus] --> B[chdir workdir]
-    B --> C{.camus 存在且非空?}
-    C -->|否| G[读取自身二进制尾部元信息]
-    C -->|是| D{force?}
-    D -->|否| E{版本不一致?}
-    E -->|是| W[WARN 版本不一致]
-    E -->|否| R0[返回 0, 不安装]
-    W --> R0
-    D -->|是| F[empty_path .camus safe_check]
-    F --> G
-    G --> H[seek 到 skip, 读取 count 字节]
-    H --> I[extract_tgz 到 .camus]
-    I -->|失败| X[尝试删除 .camus, 返回 1]
-    I -->|成功| J[INFO 安装成功]
-    J --> K[写入 .camus/.version]
-    K --> L[对 posts/camus.yaml/.gitignore: 仅当目标不存在时从 .camus 复制]
-    L --> M[返回 0]
-```
-
-关键行为：
-
-- `.camus` 已存在且非空时：
-  - 无 `force`：读取 `.camus/.version`，若首行版本与当前 `PROJECT_VERSION`（11.1.0）不同则告警；随后**创建 `<source_dir>/private` 并直接返回 0**，不做任何安装。
-  - 有 `force`（或 Debug/RelWithDebInfo 构建）：整目录清空后重新解压；清空同样受「>200 文件需人工删除」保护（见 §6.1）。
-- `.camus` 不存在或为空：直接解压。
-- 解压失败：尝试删除 `.camus`（`std::filesystem::remove` 仅能删除空目录），返回 1。
-- 解压成功并复制完 `posts/camus.yaml/.gitignore` 后，创建 `<source_dir>/private`，再继续构建。
-- `-i` 成功后**不会退出**，主程序继续构建（见 §2.4）。
-
-## 8.3 安装产物
-
-| 路径 | 来源 | 覆盖规则 |
+| 平台 | 默认数据目录 | 回退 |
 |---|---|---|
-| `.camus/` | 内嵌 tar.gz 全量解压 | force 时先清空；否则存在即跳过安装 |
-| `.camus/.version` | 安装后写入 | 固定写入 `版本号\nUTC 时间` |
-| `./posts/` | `.camus/posts` | 仅当目标不存在时复制 |
-| `./camus.yaml` | `.camus/camus.yaml` | 仅当目标不存在时复制 |
-| `./.gitignore` | `.camus/.gitignore` | 仅当目标不存在时复制 |
-| `./<source_dir>/private/` | 安装时自动创建 | 源目录按 `src` → `posts` 探测；已存在时保留，不写入 `.gitignore` |
+| macOS | `~/Library/Application Support/Camus`（`$HOME` 存在时） | `/Library/Application Support/Camus` |
+| Linux | `/var/lib/camus` | 无 |
 
-注意：安装**不再生成 `./assets/`**。构建时自动使用 `.camus/assets`；若工作目录存在本地 `./assets`，则整体覆盖内嵌资源（见 §6.9）。
+- 常量来源：`config.h.in` 的 `CAMUS_DATA_DIR_MACOS`（`Library/Application Support/Camus`）与 `CAMUS_DATA_DIR_LINUX`（`/var/lib/camus`）。
+- `data_dirs()` 返回按优先级排列的候选目录；`find(relative)` 返回第一个存在的候选路径。
+- 数据目录只读即可：构建过程不会向其写入。
 
-`private` 子目录由 `ensure_private_directory()`（`main.cpp`）在安装成功或检测到已安装模板后创建，用于存放不参与构建的私有内容（扫描与路由规则见 §4.1、§4.3）。安装流程**不会**把 `private` 加入 `.gitignore`，因此它可以正常纳入版本管理。
-
-`force` 只影响 `.camus` 目录的重装；工作目录下的 `posts/camus.yaml/.gitignore` 即使 force 也**不会覆盖**已有文件。
-
-## 8.4 `.version` 文件
-
-格式（`main.cpp:70-73`）：
+目录内容（由安装包写入）：
 
 ```text
-11.1.0
-2026-11-05 05:00:00
+<数据目录>/
+├── theme/{default,document,pixel,terminal}/{home,page,stats,friends}.html
+├── assets/                    # 默认静态资源（css/js/fonts/robots.txt 等）
+├── posts/                     # 示例文章
+└── camus.yaml                 # 示例配置
 ```
 
-- 第一行为 `PROJECT_VERSION`。
-- 第二行为当前时间，使用 `functions::format_time_t(time(nullptr))`，即 **UTC** 的 `%Y-%m-%d %H:%M:%S`。
-- 用于下次无 force 安装时的版本一致性检查。
+## 8.2 主题查找顺序
 
-## 8.5 自解压读取细节
+`yaml_config.cpp` 的 `read_theme()`：
 
-`main.cpp:48-66`：
+1. 工作目录 `theme/{theme_name}/{type}.html` 存在则使用（本地覆盖）。
+2. 否则按 `paths::find("theme/{theme_name}/{type}.html")` 在数据目录候选中查找。
+3. 均不存在时 `logging::fatal("read theme content failed name=...")`，退出 127。
 
-1. `ifstream` 以二进制打开自身可执行文件。
-2. `seekg(-8, end)` 读取 `skip`、`count`，均做 `ntohl`。
-3. `seekg(skip, beg)`，读取 `count` 字节到缓冲区。
-4. `extract::extract_tgz` 使用 libarchive 按条目写入目标目录，保留时间戳（`ARCHIVE_EXTRACT_TIME`）。
+## 8.3 静态资源查找顺序
 
-持久性：安装结果持久于磁盘；重复执行 `-i` 在无 force 时会跳过。
+`writer::emit_assets()`：
 
-## 8.6 模板嵌入脚本
+1. 默认资源目录 `paths::default_assets_dir()`：第一个存在且非空的数据目录 `assets/`。
+2. 本地 `./assets`：存在且非空时整体覆盖默认资源。
+3. 两者都不可用时记录 debug 并跳过。
+4. 资源最终提升到输出根目录（详见 §6.9）。
 
-`camus/CMakeLists.txt` 在 `Camus` 目标 `POST_BUILD` 阶段以 `hack/post_build.sh "${CMAKE_SOURCE_DIR}"` 执行，工作目录为 `${CMAKE_BINARY_DIR}/bin`：
+## 8.4 安装位置（CPack）
 
-```bash
-CAMUS_SIZE=$(get_file_size camus)
-COPYFILE_DISABLE=1 tar -c -b 1 -f - --no-xattrs -C "$DATA_DIR/example" \
-  --exclude=html --exclude=.camus . | gzip -c >> camus
-TEMPLATE_SIZE=$(( $(get_file_size camus) - CAMUS_SIZE ))
-printf '%08x' "$CAMUS_SIZE" | xxd -r -p >> camus
-printf '%08x' "$TEMPLATE_SIZE" | xxd -r -p >> camus
-```
+`camus/CMakeLists.txt` 安装 `example/` 下的 `theme/`、`assets/`、`posts/` 与 `camus.yaml`：
 
-- 使用 `%08x`（大端 4 字节）写入两个长度，与运行期 `ntohl` 对应。
-- 依赖 `xxd`（CI 中显式安装）。
-- 该步骤使每次构建的可执行文件自带模板；修改 `example/` 后无需额外资源文件。
+| 平台 / 生成器 | 资源安装目标 |
+|---|---|
+| Linux（DEB） | `var/lib/camus`（最终 `/var/lib/camus`） |
+| macOS（productbuild，当前用户域） | `Library/Application Support/Camus` → `~/Library/Application Support/Camus` |
+| macOS（productbuild，系统域，如 `installer -target /`） | `Library/Application Support/Camus` → `/Library/Application Support/Camus` |
+
+- 可执行文件仍安装到 `/usr/local/bin/camus`。
+- macOS 通过 `CPACK_PRODUCTBUILD_DOMAINS` 同时启用用户域与系统域；用户域安装到 `~/Library/...`，系统域安装到 `/Library/...`，运行期按 §8.1 的顺序查找。
+
+## 8.5 持久性
+
+- 资源安装结果持久于数据目录；升级安装包会覆盖同名文件。
+- 工作目录的本地 `theme/` 与 `./assets` 不参与安装，始终优先于数据目录。
+- 不再有 `.camus/.version`、自解压逻辑或安装版本检查。

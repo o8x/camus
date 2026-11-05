@@ -15,8 +15,8 @@
 
 加载顺序（`yaml_config.cpp:244-264`）：
 
-1. 默认读取 `.camus/theme/{theme_name}/{type}.html`（`-i` 安装的内嵌主题）。
-2. 若本地存在 `theme/{theme_name}/{type}.html`，优先使用本地覆盖。
+1. 若本地存在 `theme/{theme_name}/{type}.html`，优先使用本地覆盖。
+2. 否则在平台数据目录中查找 `theme/{theme_name}/{type}.html`（macOS `~/Library/Application Support/Camus`，Linux `/var/lib/camus`）。
 3. 文件不存在时 `logging::fatal("read theme content failed ...")`，进程退出 127。
 
 `theme_name` 默认 `default`；示例站点使用 `terminal`。HTML 引擎固定为 `default`（inja），不再从配置读取，`theme_name` 也不会再拼接引擎子路径。
@@ -131,4 +131,4 @@ flowchart TD
 - 主题文件缺失：`logging::fatal` 退出 127。
 - 文章 `link_url` 为空：`logging::fatal("make article failed ...")`。
 
-持久性：渲染结果仅写入输出目录，可随时重建；无运行期缓存（除 `.camus` 主题文件与内存队列）。
+持久性：渲染结果仅写入输出目录，可随时重建；无运行期缓存（除数据目录中的主题文件与内存队列）。

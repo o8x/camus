@@ -77,14 +77,17 @@
 - 创建 UDP socket，向 DNS 服务器地址 `connect`（不发送数据），通过 `getsockname` 取本机 IPv4。
 - 任一步失败返回空串。用于监听模式绑定本机出口地址。
 
-## 10.6 解压 `extract`（`common/common/extract/extract.h`）
+## 10.6 平台路径 `paths`（`common/common/paths/paths.h`）
 
-`bool extract_tgz(const std::vector<char>& archive_data, const std::filesystem::path& destination_dir)`：
+| 签名 | 行为 |
+|---|---|
+| `path data_dir()` | macOS 返回 `$HOME/Library/Application Support/Camus`（`$HOME` 缺失时回退 `/Library/Application Support/Camus`）；Linux 返回 `/var/lib/camus` |
+| `std::vector<path> data_dirs()` | 按优先级返回候选数据目录；macOS 追加系统级 `/Library/Application Support/Camus` |
+| `path find(relative_path)` | 在候选数据目录下查找相对路径，返回第一个存在的路径；找不到返回空路径 |
+| `path default_assets_dir()` | 返回第一个存在且非空的数据目录 `assets/`；找不到返回空路径 |
 
-- 使用 libarchive 支持所有格式/过滤器，按内存数据解压。
-- 每个条目路径改为 `destination_dir / 原路径`，写入磁盘并保留时间戳。
-- 成功（`ARCHIVE_OK`/`ARCHIVE_EOF`）返回 true，否则 false。
-- 供 `-i` 解压内嵌模板使用（§8）。
+- 常量来源：`config.h.in` 的 `CAMUS_DATA_DIR_MACOS` 与 `CAMUS_DATA_DIR_LINUX`。
+- 供主题查找（§5.1、§8.2）与静态资源输出（§6.9、§8.3）使用；只读，不写入数据目录。
 
 ## 10.7 命令行 `cmdline`（`common/common/cmdline/cmdline.h`）
 
@@ -104,5 +107,6 @@
 | `CXX_STANDARD` | `23` | C++ 标准 |
 | `GIT_FOUND`/`GIT_BRANCH`/`GIT_COMMIT_HASH` | Git 信息 | 版本输出与模板变量 |
 | `GIT_REPO` | `https://github.com/o8x/camus` | 仓库地址 |
-| `CAMUS_DIR` | `.camus` | 模板缓存目录名 |
+| `CAMUS_DATA_DIR_MACOS` | `Library/Application Support/Camus` | macOS 用户数据目录（相对 `$HOME`） |
+| `CAMUS_DATA_DIR_LINUX` | `/var/lib/camus` | Linux 数据目录 |
 | `CAMUS_CONF_NAME` | `camus.yaml` | 主配置文件名 |

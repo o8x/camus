@@ -1,6 +1,6 @@
 # 3. 配置系统
 
-配置实现：`camus/src/yaml_config.h`、`camus/src/yaml_config.cpp`。主配置文件名固定为 `camus.yaml`（`config.h.in` 的 `CAMUS_CONF_NAME`），模板缓存目录固定为 `.camus`（`CAMUS_DIR`）。
+配置实现：`camus/src/yaml_config.h`、`camus/src/yaml_config.cpp`。主配置文件名固定为 `camus.yaml`（`config.h.in` 的 `CAMUS_CONF_NAME`），默认主题/资源从平台数据目录读取（见 §8）。
 
 ## 3.1 配置文件与位置
 
@@ -8,7 +8,7 @@
 |---|---|---|---|
 | `camus.yaml` | 运行时当前工作目录 | 主配置 | 是 |
 | `theme/{name}/*.html` | 工作目录 | 本地主题覆盖 | 是 |
-| `.camus/` | 工作目录 | 内嵌主题与默认资源缓存（`-i` 生成） | 是 |
+| `<数据目录>/` | macOS `~/Library/Application Support/Camus`；Linux `/var/lib/camus` | 默认主题、静态资源与示例模板（由安装包写入） | 是 |
 
 - `build()` 先 `reload()` 再 `chdir(workdir)`（`writer.cpp:806-808`），因此**构建时**配置从 `-w` 指定的工作目录读取。
 - `inspect()` 在 `chdir` 之前执行（`main.cpp:135-140`），因此 **`-I` 从进程原始当前目录读取 `camus.yaml`**，与 `-w` 无关。
@@ -21,7 +21,7 @@
 - 字符串值会做 `trim_space`；`catalog` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
 - 源目录、资源目录与输出目录不再可配置：
   - 源目录固定按 `src` → `posts` 顺序探测，存在即使用，否则回退 `src`（随后若不存在则报错）；
-  - 本地资源目录固定为 `./assets`，不存在时回退内嵌 `.camus/assets`；
+  - 本地资源目录固定为 `./assets`，不存在时回退数据目录的 `assets/`；
   - HTML 输出固定为 `./dist/html`，PDF 输出固定为 `./dist/pdf`。
 - `render.html_engine` 固定为 `default`，`render.markdown_engine` 固定为 `cmark-gfm`，均不从配置读取。
 - 路径在解析后转为绝对路径供内部使用；模板 JSON 中保留解析后的值（见 §3.7）。

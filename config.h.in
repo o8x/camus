@@ -15,6 +15,7 @@
 #define GIT_REPO "https://github.com/o8x/camus"
 #define GIT_COMMIT_HASH "@GIT_COMMIT_LONG@"
 
-#define CAMUS_DIR ".camus"
+#define CAMUS_DATA_DIR_MACOS "Library/Application Support/Camus"
+#define CAMUS_DATA_DIR_LINUX "/var/lib/camus"
 #define CAMUS_CONF_NAME "camus.yaml"
 #define CAMUS_PRIVATE_DIR "private"

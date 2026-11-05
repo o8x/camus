@@ -30,7 +30,7 @@ jobs:
             -   name: Install dependencies
                 run: |
                     apt update -y
-                    apt install -y git ninja-build make cmake pkg-config xxd gcc g++ mold dpkg-dev libarchive-dev
+                    apt install -y git ninja-build make cmake pkg-config gcc g++ mold dpkg-dev
 
             -   uses: actions/checkout@v4
 
@@ -45,8 +45,7 @@ jobs:
                 run: |
                     dpkg -i *.deb
                     camus -v
-                    camus -iIw /tmp/site
-                    camus -idw /tmp/site
+                    camus -dw "$GITHUB_WORKSPACE/example"
 
             -   name: Upload
                 uses: actions/upload-artifact@v4
@@ -61,7 +60,7 @@ jobs:
             -   name: Install dependencies
                 run: |
                     brew update
-                    brew install git make cmake pkg-config ninja llvm@21 libarchive
+                    brew install git make cmake pkg-config ninja llvm@21
 
             -   name: Checkout
                 uses: actions/checkout@v4
@@ -77,8 +76,7 @@ jobs:
                 run: |
                     sudo installer -pkg *.pkg -target /
                     camus -v
-                    camus -iIw /tmp/site
-                    camus -idw /tmp/site
+                    camus -dw "$GITHUB_WORKSPACE/example"
 
             -   name: Upload artifact
                 uses: actions/upload-artifact@v4
@@ -131,9 +129,7 @@ jobs:
             -   name: Build Pages
                 run: |
                     apt update -y
-                    apt install -y libarchive-dev
                     dpkg -i packages/camus-*.deb
-                    camus -iIw example
                     camus -dw example
 
             -   name: Setup Pages

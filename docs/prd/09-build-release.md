@@ -10,8 +10,6 @@
 | Ninja | Makefile 与 CI 使用的生成器 |
 | GCC / Clang（C++23） | 根 CMake 将 `CMAKE_C_COMPILER`/`CMAKE_CXX_COMPILER` 固定为 `/usr/bin/gcc`、`/usr/bin/g++` |
 | Git | 读取分支与提交 hash；拉取 submodule |
-| pkg-config + libarchive | `common` 链接 `libarchive` |
-| `xxd` | `post_build.sh` 写入长度字段；CI 显式安装 |
 | mold | Linux Release 链接器（`-fuse-ld=mold`） |
 
 依赖来源：`third-party/` 下 yaml-cpp、cmark-gfm、nlohmann_json、inja、cpp-httplib。
@@ -29,15 +27,14 @@
 `camus/CMakeLists.txt`：
 
 - 静态库 `camus`（`src/*`）+ 可执行文件 `Camus`，输出名为 `camus`，目录 `${CMAKE_BINARY_DIR}/bin`。
-- `POST_BUILD` 调用 `hack/post_build.sh "${CMAKE_SOURCE_DIR}"` 嵌入模板（见 §8.6）。
+- 安装 `example/` 的 `theme/`、`assets/`、`posts/` 与 `camus.yaml` 到平台数据目录（Linux `var/lib/camus`，macOS `Library/Application Support/Camus`，见 §8.4）。
 - 注册 CTest `build-test-site`：在源码根目录执行 `${CMAKE_BINARY_DIR}/bin/camus -d site`，超时 10 秒。
 - CPack 配置见 §9.5。
 
 `common/CMakeLists.txt`：
 
-- 收集 `common/common/*` 源文件与 `cpp-httplib`。
-- `pkg_check_modules(ARCHIVE REQUIRED libarchive)`；macOS 下将 Homebrew 的 libarchive pkgconfig 路径加入 `PKG_CONFIG_PATH`。
-- 生成 `build/build.h`（由 `config.h.in` 配置），包含版本、CMake 版本、构建时间、构建类型、C++ 标准、Git 信息与 `CAMUS_DIR=".camus"`、`CAMUS_CONF_NAME="camus.yaml"`、`CAMUS_PRIVATE_DIR="private"`。
+- 收集 `common/common/*` 源文件与 `cpp-httplib`，不再依赖 `libarchive`。
+- 生成 `build/build.h`（由 `config.h.in` 配置），包含版本、CMake 版本、构建时间、构建类型、C++ 标准、Git 信息与 `CAMUS_DATA_DIR_MACOS="Library/Application Support/Camus"`、`CAMUS_DATA_DIR_LINUX="/var/lib/camus"`、`CAMUS_CONF_NAME="camus.yaml"`、`CAMUS_PRIVATE_DIR="private"`。
 
 ## 9.3 Makefile 目标
 
@@ -54,7 +51,7 @@
 ## 9.4 测试
 
 - `ctest --extra-verbose -R build-test-site --test-dir build/release`（`make serve` 已包含）。
-- 测试内容：对 `site` 目录执行 `camus -d site`（调试日志），验证默认安装/构建链路。
+- 测试内容：对 `site` 目录执行 `camus -d site`（调试日志），验证默认构建链路。
 - CMake 复制 `LICENSE`、`README.md` 到构建目录供 CPack 使用。
 
 ## 9.5 打包（CPack）
@@ -69,8 +66,9 @@
 | `CPACK_OUTPUT_FILE_PREFIX` | `${CMAKE_BINARY_DIR}/packages` |
 | `CPACK_PACKAGE_FILE_NAME` | `${NAME}-v${VERSION}_${OS_NAME}${OS_RELEASE}-${PROCESSOR}`，整体转小写 |
 
-- Linux：安装到 `./usr/local/bin`，生成 DEB。
-- macOS `productbuild`：安装到 `./usr/local/bin`，组件 `Runtime`，identifier `cn.com.stdout.Camus`。
+- Linux：可执行文件安装到 `./usr/local/bin`，资源安装到 `var/lib/camus`，生成 DEB（`CPACK_MONOLITHIC_INSTALL ON`）。
+- macOS `productbuild`：可执行文件安装到 `./usr/local/bin`（组件 `Runtime`），资源安装到 `Library/Application Support/Camus`（组件 `Resources`），identifier `cn.com.stdout.Camus`。
+- macOS `productbuild` 启用用户域与系统域：用户域落到 `~/Library/Application Support/Camus`，系统域（如 `installer -target /`）落到 `/Library/Application Support/Camus`。
 - macOS `DragNDrop` 分支存在但当前 Makefile 默认用 `productbuild`。
 - 产物命名示例：`camus-v11.1.0_ubuntu24.04-x86_64.deb`（实际 `OS_RELEASE` 由主机决定）。
 
@@ -80,10 +78,10 @@
 
 | Job | Runner | 主要步骤 | 产物 |
 |---|---|---|---|
-| `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `xxd`、`mold`、`libarchive-dev`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus -iIw /tmp/site` + `camus -idw /tmp/site` | `build/release/packages` |
-| `build-macos` | `macos-14` | brew 安装依赖 → submodule → `make package` → `sudo installer -pkg *.pkg -target /` + 同样冒烟命令 | `build/release/packages` |
+| `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `mold`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` | `build/release/packages` |
+| `build-macos` | `macos-14` | brew 安装依赖 → submodule → `make package` → `sudo installer -pkg *.pkg -target /` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` | `build/release/packages` |
 | `release` | `ubuntu-24.04` | 下载并合并产物；仅在 tag 上通过 `softprops/action-gh-release` 发布（匹配 `*.dmg/*.pkg/*.rpm/*.deb/*.exe`） | GitHub Release |
-| `pages` | `ubuntu-24.04` 容器 | 安装 deb → `camus -iIw example` + `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |
+| `pages` | `ubuntu-24.04` 容器 | 安装 deb → `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |
 
 工作流权限：`contents: write`、`pages: write`、`id-token: write`；`pages` concurrency。
 

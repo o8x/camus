@@ -18,6 +18,7 @@
 #include "common/functions/functions.h"
 #include "common/logging/logging.h"
 #include "common/net/net.h"
+#include "common/paths/paths.h"
 #include "common/render/render.h"
 #include "common/str/str.h"
 #include "inja/inja.hpp"
@@ -751,26 +752,26 @@ namespace camus
 			return;
 		}
 
-		const std::filesystem::path embedded_dir = filesystem::clean_path(std::format("{}/assets", CAMUS_DIR), "./");
+		const std::filesystem::path default_dir = paths::default_assets_dir();
 		const std::filesystem::path user_dir = conf_.camus().assets_dir;
 
-		const bool has_embedded =
-			std::filesystem::is_directory(embedded_dir) && !std::filesystem::is_empty(embedded_dir);
+		const bool has_default = !default_dir.empty() && std::filesystem::is_directory(default_dir) &&
+								 !std::filesystem::is_empty(default_dir);
 		const bool has_user =
 			!user_dir.empty() && std::filesystem::is_directory(user_dir) && !std::filesystem::is_empty(user_dir);
 
-		if (!has_embedded && !has_user) {
-			logging::debug("skip assets: no embedded or user assets found");
+		if (!has_default && !has_user) {
+			logging::debug("skip assets: no default or user assets found");
 			return;
 		}
 
 		std::filesystem::create_directories(conf_.camus().dest_dir());
 
-		// 资源文件夹拷贝到目标目录，用户资源整体覆盖内嵌资源
+		// 资源文件夹拷贝到目标目录，用户资源整体覆盖默认资源
 		const std::filesystem::path dest_dir = conf_.camus().dest_dir() / "assets";
-		if (has_embedded) {
+		if (has_default) {
 			std::filesystem::copy(
-				embedded_dir,
+				default_dir,
 				dest_dir,
 				std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
 			);
@@ -813,8 +814,8 @@ namespace camus
 
 		logging::debug(
 			std::format(
-				"assets: promote copy embedded={} user={} files={}",
-				has_embedded ? std::filesystem::relative(embedded_dir, cmd_.workdir).string() : "-",
+				"assets: promote copy default={} user={} files={}",
+				has_default ? std::filesystem::relative(default_dir, cmd_.workdir).string() : "-",
 				has_user ? std::filesystem::relative(user_dir, cmd_.workdir).string() : "-",
 				count
 			)
