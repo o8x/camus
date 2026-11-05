@@ -35,7 +35,7 @@ Or create a new site in an empty directory:
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # install example camus.yaml, posts (with README.md) and .gitignore
+/path/to/camus -i      # install example camus.yaml, posts (with SUMMARY.md) and .gitignore
 /path/to/camus         # build
 ```
 
@@ -50,7 +50,7 @@ mkdir my-site && cd my-site
 | `camus -W` | Watch for changes and serve locally |
 | `camus -D` | Dry run: parse and render without writing files |
 | `camus -I` | Inspect the parsed configuration and catalog tree |
-| `camus -i` | Install example `camus.yaml`, `posts` (with `README.md`) and `.gitignore` |
+| `camus -i` | Install example `camus.yaml`, `posts` (with `SUMMARY.md`) and `.gitignore` |
 | `camus -c` | Copy the complete bundled resources into `./.camus` |
 | `camus -c -f` | Force re-copy `./.camus` |
 | `camus --open` | Build, then open the workdir in VS Code |
@@ -61,7 +61,7 @@ mkdir my-site && cd my-site
 A site uses one main config file plus optional per-directory metadata:
 
 - `camus.yaml` — site, output, rendering, friends and transfer configuration
-- `README.md` — optional metadata for a directory (`title`, `subtitle`, `description`)
+- `SUMMARY.md` — optional metadata for a directory (`title`, `subtitle`, `description`)
 
 ### `camus.yaml`
 
@@ -106,9 +106,9 @@ build:
 
 `cdn_url` is optional and empty by default. When set, `with_cdn(path)` returns `cdn_url + with_prefix(path)`; when empty it returns `path` unchanged. In watch mode (`-W`), both `public_url` and `cdn_url` are ignored so local builds use root-relative paths.
 
-### Directory metadata (`README.md`)
+### Directory metadata (`SUMMARY.md`)
 
-Every directory in the source tree may contain a `README.md` that describes it. `README.md` files are metadata only and are never rendered as articles.
+Every directory in the source tree may contain a `SUMMARY.md` that describes it. `SUMMARY.md` files are metadata only and are never rendered as articles.
 
 ```markdown
 ---
@@ -124,7 +124,7 @@ Parsing rules:
 - `title`, `subtitle` and `description` may be provided in an optional YAML front matter block.
 - If `title` is missing, the first `# Heading` in the body is used.
 - If `description` is missing, the remaining body is used.
-- Unset fields inherit from the root route; the root `README.md` (`posts/README.md` or `src/README.md`) defines the site title/subtitle/description.
+- Unset fields inherit from the root route; the root `SUMMARY.md` (`posts/SUMMARY.md` or `src/SUMMARY.md`) defines the site title/subtitle/description.
 - Newlines in metadata become `<br />`.
 
 ### Build rules

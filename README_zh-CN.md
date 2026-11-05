@@ -35,7 +35,7 @@ cd example
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # 安装示例 camus.yaml、posts（含 README.md）与 .gitignore
+/path/to/camus -i      # 安装示例 camus.yaml、posts（含 SUMMARY.md）与 .gitignore
 /path/to/camus         # 构建
 ```
 
@@ -50,7 +50,7 @@ mkdir my-site && cd my-site
 | `camus -W` | 监听文件变化并启动本地服务 |
 | `camus -D` | 干跑：解析与渲染，但不写文件 |
 | `camus -I` | 打印解析后的配置与目录树 |
-| `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `README.md`）与 `.gitignore` |
+| `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `SUMMARY.md`）与 `.gitignore` |
 | `camus -c` | 把完整内置资源复制到 `./.camus` |
 | `camus -c -f` | 强制重装 `./.camus` |
 | `camus --open` | 构建后在 VS Code 中打开工作目录 |
@@ -61,7 +61,7 @@ mkdir my-site && cd my-site
 站点由一个主配置文件与可选的目录元信息驱动：
 
 - `camus.yaml`：站点、输出、渲染、友链与搬运配置
-- `README.md`：可选的目录元信息（`title` / `subtitle` / `description`）
+- `SUMMARY.md`：可选的目录元信息（`title` / `subtitle` / `description`）
 
 ### `camus.yaml`
 
@@ -105,9 +105,9 @@ build:
 
 `cdn_url` 可选、默认空。设置后 `with_cdn(path)` 返回 `cdn_url + with_prefix(path)`；为空时原样返回 `path`。监听模式（`-W`）下会忽略 `public_url` 与 `cdn_url`，本地构建使用根相对路径。
 
-### 目录元信息（`README.md`）
+### 目录元信息（`SUMMARY.md`）
 
-源目录树中的任意目录都可以放置 `README.md` 来描述该目录。`README.md` 仅作为元信息，不会被当作文章渲染。
+源目录树中的任意目录都可以放置 `SUMMARY.md` 来描述该目录。`SUMMARY.md` 仅作为元信息，不会被当作文章渲染。
 
 ```markdown
 ---
@@ -123,7 +123,7 @@ subtitle: 可选的简短摘要
 - `title` / `subtitle` / `description` 可写在可选的 YAML Front Matter 中。
 - 缺少 `title` 时使用正文中第一个 `# 标题`。
 - 缺少 `description` 时使用剩余正文。
-- 未设置的字段继承根目录；根目录的 `README.md`（`posts/README.md` 或 `src/README.md`）定义站点标题/副标题/简介。
+- 未设置的字段继承根目录；根目录的 `SUMMARY.md`（`posts/SUMMARY.md` 或 `src/SUMMARY.md`）定义站点标题/副标题/简介。
 - 元信息中的换行会转换为 `<br />`。
 
 ### 搬运规则

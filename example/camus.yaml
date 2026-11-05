@@ -45,7 +45,7 @@ friends:
         desc: 一言网（hitokoto.cn）创立于 2016 年，隶属于萌创团队，目前网站主要提供一句话服务。
 
 # 目录搬运规则：把 path 目录的内容映射到 target 输出路径
-# 每个目录的 title / subtitle / description 来自该目录下的 README.md
+# 每个目录的 title / subtitle / description 来自该目录下的 SUMMARY.md
 build:
     -   path: /introduction                       # 指定源目录
         transfers:

@@ -8,7 +8,7 @@
 
 - 根节点 `path` 归一为 `/`；子节点 `path` 为相对源目录的路径。
 - **`private` 目录跳过**：任意层级中名为 `private` 的目录（常量 `CAMUS_PRIVATE_DIR`，定义于 `config.h.in`）不读取、不生成，也不进入目录树；用于存放不参与构建的本地私有内容。
-- 普通文件：读入全部内容并按 `\n` 拆分为 `contents`（`read_file(..., true)`，整体两端空白会被裁剪）。源目录中的 `README.md`（`CAMUS_README_NAME`）是目录元信息文件，扫描时直接跳过，不进入目录树。
+- 普通文件：读入全部内容并按 `\n` 拆分为 `contents`（`read_file(..., true)`，整体两端空白会被裁剪）。源目录中的 `SUMMARY.md`（`CAMUS_SUMMARY_NAME`）是目录元信息文件，扫描时直接跳过，不进入目录树。
 - 目录：仅当「有子节点」或「目录非空」时加入（空目录被忽略）；加入的目录节点 `directory = true`。
 - 符号链接：**先于**目录/文件判断检测（`entry.is_symlink()`），任意符号链接都会触发 `logging::fatal("catalog does not support symlinks ...")`，不会跟随链接进入源目录之外或造成循环。
 - 其它类型（设备、管道等）：`logging::fatal("catalog does not support file ...")`。
@@ -51,7 +51,7 @@
 
 1. 根目录：`path_prefix = public_url.path_prefix`，`external_path = "/"`，`display_name` 取目录名（根为空，收尾时回退 `site.title`）。
 2. 子目录：默认继承父目录的 `external_path` 并追加自身目录名；文件默认继承父目录的 `external_path`（因此父目录的搬运会完整作用到所有后代）。
-3. 若命中 `README.md` 生成的路由（`match_route`），用路由的 `title/subtitle/description` 覆盖元信息（非空字段才覆盖）。
+3. 若命中 `SUMMARY.md` 生成的路由（`match_route`），用路由的 `title/subtitle/description` 覆盖元信息（非空字段才覆盖）。
 4. 搬运匹配（`yaml_config::match_transfer`）在 `camus.yaml` 的 `transfer` 段展平后的规则中查找当前目录路径：支持 `source: .`（路由目录自身）与 `source: 子目录`（路由路径下拼接的子目录）；命中则覆盖当前目录的 `external_path`。
 5. 当前目录的 `external_path` 会写给它下面的直接子节点（目录追加目录名，文件直接继承）。
 
@@ -136,7 +136,7 @@ flowchart TD
 | `hidden` | 否 | 否 | 否 | 解析时立即返回，`display_name` 为空，收尾时因 `invalid()` 被移除 |
 | `hidden_in_toc` | 是 | **否**（从 TOC/目录项/友链页列表中过滤） | 是 | 仍渲染文章页、参与上一篇/下一篇与统计；只是不出现在导航列表 |
 
-> 注意：README 中的 `hidden-in-toc` 写法（连字符）不会被识别；代码识别的是 `hidden_in_toc`（下划线）。`build_toc_items()`、`emit_toc()`、`emit_friends()` 都会过滤 `hidden_in_toc`。
+> 注意：SUMMARY 中的 `hidden-in-toc` 写法（连字符）不会被识别；代码识别的是 `hidden_in_toc`（下划线）。`build_toc_items()`、`emit_toc()`、`emit_friends()` 都会过滤 `hidden_in_toc`。
 
 ## 4.7 隐藏片段
 

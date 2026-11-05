@@ -1,13 +1,13 @@
 # 3. 配置系统
 
-配置实现：`camus/src/yaml_config.h`、`camus/src/yaml_config.cpp`。主配置文件名固定为 `camus.yaml`（`config.h.in` 的 `CAMUS_CONF_NAME`），目录搬运规则写在 `camus.yaml` 的 `transfer` 段，目录元信息来自各目录下的 `README.md`（`CAMUS_README_NAME`），默认主题/资源从平台数据目录读取（见 §8）。
+配置实现：`camus/src/yaml_config.h`、`camus/src/yaml_config.cpp`。主配置文件名固定为 `camus.yaml`（`config.h.in` 的 `CAMUS_CONF_NAME`），目录搬运规则写在 `camus.yaml` 的 `transfer` 段，目录元信息来自各目录下的 `SUMMARY.md`（`CAMUS_SUMMARY_NAME`），默认主题/资源从平台数据目录读取（见 §8）。
 
 ## 3.1 配置文件与位置
 
 | 文件/目录 | 位置 | 作用 | 是否持久 |
 |---|---|---|---|
 | `camus.yaml` | 运行时当前工作目录 | 主配置 | 是 |
-| `README.md` | 源目录及任意子目录 | 目录页元信息（`title`/`subtitle`/`description`），不参与文章渲染 | 是 |
+| `SUMMARY.md` | 源目录及任意子目录 | 目录页元信息（`title`/`subtitle`/`description`），不参与文章渲染 | 是 |
 | `theme/{name}/*.html` | 工作目录 | 本地主题覆盖 | 是 |
 | `theme/pdf/{page.html,style.css,fonts.css,fonts/}` | 工作目录 | 本地 PDF 模板/样式/字体覆盖 | 是 |
 | `.camus/` | 工作目录 | `-c` 复制的本地主题、PDF 模板、资源与示例模板 | 是 |
@@ -15,13 +15,13 @@
 
 - `build()` 先 `reload()` 再 `chdir(workdir)`（`writer.cpp:806-808`），因此**构建时**配置从 `-w` 指定的工作目录读取。
 - `inspect()` 在 `chdir` 之前执行（`main.cpp:135-140`），因此 **`-I` 从进程原始当前目录读取 `camus.yaml`**，与 `-w` 无关。
-- 每次 `reload()` 重新读取 `camus.yaml` 并扫描各目录的 `README.md`；热重载（watch）依赖此行为。
+- 每次 `reload()` 重新读取 `camus.yaml` 并扫描各目录的 `SUMMARY.md`；热重载（watch）依赖此行为。
 
 ## 3.2 解析总则
 
 - 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`theme`、`pdf_engine`、`pdf_options`、`markdown_options`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。不再接受 `render` 嵌套段；出现时打印 WARN 并忽略其内容。
-- `README.md` 在目录扫描时跳过，不进入文章树。
-- 字符串值会做 `trim_space`；`README.md` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
+- `SUMMARY.md` 在目录扫描时跳过，不进入文章树。
+- 字符串值会做 `trim_space`；`SUMMARY.md` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
 - 源目录、资源目录与输出目录不再可配置：
   - 源目录固定按 `src` → `posts` 顺序探测，存在即使用，否则回退 `src`（随后若不存在则报错）；
   - 本地资源目录固定为 `./assets`，不存在时回退 `.camus/assets`，再回退数据目录的 `assets/`；
@@ -100,11 +100,11 @@ Markdown 引擎固定为 `cmark-gfm`，顶层 `markdown_options` 始终按本表
 
 顶层配置 `markdown_options` 在模板 JSON 的 `camus.render.options` 会显示为 `"{数值}({名称1,名称2,...})"`（`yaml_config.cpp:225-226`）。
 
-## 3.5 `transfer`（目录搬运）与 `README.md`（目录元信息）
+## 3.5 `transfer`（目录搬运）与 `SUMMARY.md`（目录元信息）
 
-### 3.5.1 `README.md` 元信息
+### 3.5.1 `SUMMARY.md` 元信息
 
-构建时会递归扫描源目录（含根目录）中的 `README.md`，为对应目录生成 `route_conf`（序列化字段：`path`、`title`、`subtitle`、`description`、`transfers`）。`README.md` 本身不会作为文章渲染。
+构建时会递归扫描源目录（含根目录）中的 `SUMMARY.md`，为对应目录生成 `route_conf`（序列化字段：`path`、`title`、`subtitle`、`description`、`transfers`）。`SUMMARY.md` 本身不会作为文章渲染。
 
 | 来源 | 说明 |
 |---|---|
@@ -116,12 +116,12 @@ Markdown 引擎固定为 `cmark-gfm`，顶层 `markdown_options` 始终按本表
 
 - Front Matter 使用 YAML 映射解析（`---` 包裹），非法 YAML 会打印 WARN 并忽略该段。
 - 字段会 `trim_space`，内部换行替换为 `<br />`。
-- 未设置的字段继承根路由（`source_dir/README.md`）的对应值。
-- 根路由 `path` 固定为 `/`；根 `README.md` 缺失时 `site` 默认为 `{path: "/", title: "A mysterious site"}`。
+- 未设置的字段继承根路由（`source_dir/SUMMARY.md`）的对应值。
+- 根路由 `path` 固定为 `/`；根 `SUMMARY.md` 缺失时 `site` 默认为 `{path: "/", title: "A mysterious site"}`。
 - 路由列表按 `path` 排序，根路由始终排在最前，保证 `route` 与 `meta.json` 输出稳定。
 - `path` 中包含 `private` 段的目录会被忽略并打印 WARN。
 
-示例（`posts/introduction/README.md`）：
+示例（`posts/introduction/SUMMARY.md`）：
 
 ```markdown
 ---
@@ -147,7 +147,7 @@ subtitle: Optional summary
 - 根路径 `/` 的 `transfers` 无效，出现时打印 WARN 并忽略。
 - 每条 transfer 的 `source`/`target` 缺失或 `target` 为空时会被忽略并打印 WARN。
 - transfer 的 `source` 会预先拼成完整源路径（`source: .` → 路由自身路径，否则 `路由路径/source`），因此 `source: 子目录` 可搬运路由下的子目录；搬运会作用于该目录的所有后代。
-- `transfers` 会同时挂到同 `path` 的 `README.md` 路由上，供模板 `route` 数据使用；没有 `README.md` 的路径仍会参与搬运匹配，但不会出现在 `route` 列表中。
+- `transfers` 会同时挂到同 `path` 的 `SUMMARY.md` 路由上，供模板 `route` 数据使用；没有 `SUMMARY.md` 的路径仍会参与搬运匹配，但不会出现在 `route` 列表中。
 - 搬运匹配使用 `filesystem::path_equal(..., clean_check=true)`。
 
 示例：
@@ -227,7 +227,7 @@ PDF 模板在上述配置 JSON 之外额外接收 `pdf` 对象（封面、目录
 ## 3.8 持久性与重载
 
 - 配置本身持久于磁盘；运行期不写回配置。
-- `reload()` 每次全量重读 `camus.yaml` 并重新扫描 `README.md`，先重置上一轮的 `camus_`、`routes_`、`transfers_`、`public_config_`，因此反复构建/热重载不会累积路由或友链。
+- `reload()` 每次全量重读 `camus.yaml` 并重新扫描 `SUMMARY.md`，先重置上一轮的 `camus_`、`routes_`、`transfers_`、`public_config_`，因此反复构建/热重载不会累积路由或友链。
 - 路由/友链的新增在下次构建生效。
 - `writer::inspect()` 与 `writer::build()` 会先把进程工作目录切到 `--workdir`，因此 `-w <dir> -I` 读取的是该目录下的配置。
 

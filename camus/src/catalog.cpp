@@ -46,7 +46,7 @@ namespace camus::catalog
 				}
 			} else if (std::filesystem::is_regular_file(entry.path())) {
 				if (const std::filesystem::path filename = entry.path().filename();
-					filename == CAMUS_README_NAME) {
+					filename == CAMUS_SUMMARY_NAME) {
 					logging::debug("skip metadata file name={}", filesystem::path_abs(entry.path()));
 					continue;
 				}

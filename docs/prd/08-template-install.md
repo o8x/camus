@@ -30,7 +30,7 @@
 │   ├── css/style.css          # 公共样式入口，默认空文件
 │   └── js/onload.js           # 公共脚本入口，默认空文件
 ├── posts/                     # 示例文章
-│   └── README.md              # 示例站点与目录元信息
+│   └── SUMMARY.md              # 示例站点与目录元信息
 ├── camus.yaml                 # 示例配置
 └── .gitignore                 # 示例忽略规则
 ```
@@ -41,7 +41,7 @@
 
 `install_templates()` 从 `paths::find("camus.yaml")` 所在的数据目录，把以下内容复制到工作目录根部（已存在的同名路径跳过）：
 
-- `posts/`（含各目录的 `README.md`）
+- `posts/`（含各目录的 `SUMMARY.md`）
 - `camus.yaml`
 - `.gitignore`
 
@@ -107,7 +107,7 @@ PDF 模板、样式与字体（`writer.cpp` 的 `read_pdf_theme_file()` / `copy_
 
 ## 8.4 安装位置（CPack）
 
-`camus/CMakeLists.txt` 安装 `example/` 下的 `theme/`、`assets/`、`posts/`（含各目录的 `README.md`）、`camus.yaml` 与 `.gitignore`：
+`camus/CMakeLists.txt` 安装 `example/` 下的 `theme/`、`assets/`、`posts/`（含各目录的 `SUMMARY.md`）、`camus.yaml` 与 `.gitignore`：
 
 | 平台 / 生成器 | 资源安装目标 |
 |---|---|

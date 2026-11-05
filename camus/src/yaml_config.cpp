@@ -45,18 +45,18 @@ namespace camus::config
 			return strings::replace(value, "\n", "<br />");
 		}
 
-		// README.md 支持可选的 YAML Front Matter（title/subtitle/description）；
+		// SUMMARY.md 支持可选的 YAML Front Matter（title/subtitle/description）；
 		// 未提供 title 时回退到正文第一个一级标题，未提供 description 时回退到正文。
-		directory_meta read_readme_meta(const std::filesystem::path &dir)
+		directory_meta read_summary_meta(const std::filesystem::path &dir)
 		{
 			directory_meta meta;
 
-			const std::filesystem::path readme = dir / CAMUS_README_NAME;
-			if (!std::filesystem::is_regular_file(readme)) {
+			const std::filesystem::path summary = dir / CAMUS_SUMMARY_NAME;
+			if (!std::filesystem::is_regular_file(summary)) {
 				return meta;
 			}
 
-			const std::string raw = filesystem::read_file(readme.string(), true);
+			const std::string raw = filesystem::read_file(summary.string(), true);
 			if (raw.empty()) {
 				return meta;
 			}
@@ -92,8 +92,8 @@ namespace camus::config
 						}
 					} catch (const std::exception &e) {
 						logging::warn(
-							"parse readme front matter failed path={} error={}",
-							filesystem::path_abs(readme),
+							"parse summary front matter failed path={} error={}",
+							filesystem::path_abs(summary),
 							e.what()
 						);
 					}
@@ -437,7 +437,7 @@ namespace camus::config
 		camus_.render.theme[CAMUS_THEME_TYPE_STATS] = read_theme(camus_.render.theme_name, "stats");
 		camus_.render.theme[CAMUS_THEME_TYPE_FRIENDS] = read_theme(camus_.render.theme_name, "friends");
 
-		// 目录元信息来自各目录下的 README.md，路由路径本身不再需要入口配置
+		// 目录元信息来自各目录下的 SUMMARY.md，路由路径本身不再需要入口配置
 		auto find_route = [&](const std::string &path) -> route_conf * {
 			for (auto &route : routes_) {
 				if (route.path == path) {
@@ -459,13 +459,13 @@ namespace camus::config
 			return routes_.back();
 		};
 
-		auto apply_readme = [&](const std::string &path) {
+		auto apply_summary = [&](const std::string &path) {
 			std::filesystem::path dir = camus_.source_dir;
 			if (path != "/") {
 				dir /= std::filesystem::path(path).relative_path();
 			}
 
-			const directory_meta meta = read_readme_meta(dir);
+			const directory_meta meta = read_summary_meta(dir);
 			route_conf &route = upsert_route(path);
 
 			if (!meta.title.empty()) {
@@ -481,7 +481,7 @@ namespace camus::config
 			}
 		};
 
-		// 扫描源目录（含根目录）中的 README.md，用于目录页元信息
+		// 扫描源目录（含根目录）中的 SUMMARY.md，用于目录页元信息
 		for (auto it = std::filesystem::recursive_directory_iterator(camus_.source_dir);
 			 it != std::filesystem::recursive_directory_iterator(); ++it) {
 			if (it->is_symlink()) {
@@ -495,7 +495,7 @@ namespace camus::config
 				continue;
 			}
 
-			if (!it->is_regular_file() || it->path().filename() != CAMUS_README_NAME) {
+			if (!it->is_regular_file() || it->path().filename() != CAMUS_SUMMARY_NAME) {
 				continue;
 			}
 
@@ -509,7 +509,7 @@ namespace camus::config
 				continue;
 			}
 
-			apply_readme(path);
+			apply_summary(path);
 		}
 
 		// build 段（兼容旧键 transfer）：{ path, transfers: [{ source, target }] }
