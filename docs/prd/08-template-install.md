@@ -36,7 +36,7 @@ flowchart TD
     I -->|失败| X[尝试删除 .camus, 返回 1]
     I -->|成功| J[INFO 安装成功]
     J --> K[写入 .camus/.version]
-    K --> L[对 assets/posts/camus.yaml/.env/.gitignore: 仅当目标不存在时从 .camus 复制]
+    K --> L[对 posts/camus.yaml/.env/.gitignore: 仅当目标不存在时从 .camus 复制]
     L --> M[返回 0]
 ```
 
@@ -55,13 +55,14 @@ flowchart TD
 |---|---|---|
 | `.camus/` | 内嵌 tar.gz 全量解压 | force 时先清空；否则存在即跳过安装 |
 | `.camus/.version` | 安装后写入 | 固定写入 `版本号\nUTC 时间` |
-| `./assets/` | `.camus/assets` | **仅当目标不存在**时复制 |
 | `./posts/` | `.camus/posts` | 仅当目标不存在时复制 |
 | `./camus.yaml` | `.camus/camus.yaml` | 仅当目标不存在时复制 |
 | `./.env` | `.camus/.env` | 仅当目标不存在时复制 |
 | `./.gitignore` | `.camus/.gitignore` | 仅当目标不存在时复制 |
 
-注意：`force` 只影响 `.camus` 目录的重装；工作目录下的 `assets/posts/camus.yaml/.env/.gitignore` 即使 force 也**不会覆盖**已有文件。
+注意：安装**不再生成 `./assets/`**。构建时自动使用 `.camus/assets`；若工作目录存在本地 `assets_dir`（默认 `assets`），则整体覆盖内嵌资源（见 §6.9）。
+
+`force` 只影响 `.camus` 目录的重装；工作目录下的 `posts/camus.yaml/.env/.gitignore` 即使 force 也**不会覆盖**已有文件。
 
 ## 8.4 `.version` 文件
 

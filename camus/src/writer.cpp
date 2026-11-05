@@ -1,6 +1,7 @@
 #include "writer.h"
 
 #include <cassert>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <ranges>
@@ -9,6 +10,7 @@
 #include <vector>
 
 #include <build/build.h>
+#include <unistd.h>
 
 #include "common/error/error.h"
 #include "common/filesystem/filesystem.h"
@@ -19,6 +21,133 @@
 #include "common/str/str.h"
 #include "inja/inja.hpp"
 #include "yaml_config.h"
+
+namespace
+{
+	bool command_exists(const std::string &name)
+	{
+		if (name.empty()) {
+			return false;
+		}
+
+		if (name.contains('/')) {
+			return access(name.c_str(), X_OK) == 0;
+		}
+
+		const char *env = std::getenv("PATH");
+		if (env == nullptr) {
+			return false;
+		}
+
+		for (const auto &dir : strings::split(env, ':')) {
+			if (dir.empty()) {
+				continue;
+			}
+
+			if (const std::filesystem::path candidate = std::filesystem::path(dir) / name;
+				access(candidate.c_str(), X_OK) == 0) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	std::string find_command(const std::vector<std::string> &names)
+	{
+		for (const auto &name : names) {
+			if (command_exists(name)) {
+				return name;
+			}
+		}
+
+		return "";
+	}
+
+	std::string resolve_pdf_engine(const std::string &engine)
+	{
+		const std::string name = strings::to_lower(strings::trim_space(engine));
+
+		if (name.contains('/')) {
+			return command_exists(name) ? name : "";
+		}
+
+		if (name == "chrome" || name == "chromium" || name == "google-chrome") {
+#ifdef __APPLE__
+			if (const std::string path = find_command(
+					{"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+					 "/Applications/Chromium.app/Contents/MacOS/Chromium"}
+				);
+				!path.empty()) {
+				return path;
+			}
+#endif
+			return find_command({"google-chrome", "google-chrome-stable", "chromium", "chromium-browser"});
+		}
+
+		if (name == "edge" || name == "msedge" || name == "microsoft-edge") {
+#ifdef __APPLE__
+			if (const std::string path =
+					find_command({"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"});
+				!path.empty()) {
+				return path;
+			}
+#endif
+			return find_command({"microsoft-edge", "microsoft-edge-stable", "microsoft-edge-beta"});
+		}
+
+		return "";
+	}
+
+	std::string path_to_file_url(const std::filesystem::path &path)
+	{
+		std::string url = "file://";
+		const std::string value = path.string();
+		for (const auto &part : strings::split(value, '/')) {
+			if (!part.empty()) {
+				url += "/" + strings::url_encode(part);
+			}
+		}
+
+		return url.empty() ? "file:///" : url;
+	}
+
+	std::string shell_quote(const std::string &value)
+	{
+		return "'" + strings::replace(value, "'", "'\\''") + "'";
+	}
+
+	constexpr std::string_view pdf_html_style = R"(
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@page { size: A4; margin: 20mm 18mm; }
+html { font-size: 16px; }
+body {
+    font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    color: #262626;
+    line-height: 1.7;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+main { max-width: 100%; }
+h1, h2, h3, h4, h5, h6 { color: #161616; line-height: 1.35; margin: 1.6em 0 0.6em; page-break-after: avoid; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.15rem; }
+p { margin: 0.7em 0; }
+a { color: #0f62fe; text-decoration: none; }
+blockquote { margin: 1em 0; padding: 0.6em 1em; border-left: 3px solid #c6c6c6; background: #f4f4f4; color: #525252; }
+ul, ol { margin: 0.7em 0 0.7em 1.5em; }
+li { margin: 0.25em 0; }
+code { font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace; font-size: 0.88em; background: #f4f4f4; padding: 0.1em 0.3em; }
+pre { margin: 1em 0; padding: 1em; background: #262626; color: #f4f4f4; overflow-x: auto; page-break-inside: avoid; }
+pre code { background: transparent; color: inherit; padding: 0; }
+img { max-width: 100%; height: auto; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9rem; page-break-inside: avoid; }
+th, td { padding: 0.4em 0.6em; border-bottom: 1px solid #e0e0e0; text-align: left; }
+th { background: #f4f4f4; font-weight: 600; }
+hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.5em 0; }
+)";
+} // namespace
 
 namespace camus
 {
@@ -54,7 +183,7 @@ namespace camus
 		pending_writes_.clear();
 	}
 
-		void writer::emit_article()
+	void writer::emit_article()
 	{
 		resolve_directory_routes();
 		parse_article_frontmatter();
@@ -182,8 +311,7 @@ namespace camus
 				}
 			}
 
-			node.property.visibility =
-				params["visibility"] == "hidden_in_toc" ? catalog::hidden_in_toc : catalog::open;
+			node.property.visibility = params["visibility"] == "hidden_in_toc" ? catalog::hidden_in_toc : catalog::open;
 
 			if (conf_.camus().output.filename_case == "uuid") {
 				node.property.display_name = strings::uuid_v4();
@@ -281,9 +409,7 @@ namespace camus
 	}
 
 	void writer::accumulate_article_stats(
-		const catalog::catalog_node &node,
-		const size_t word_count,
-		const double read_mins,
+		const catalog::catalog_node &node, const size_t word_count, const double read_mins,
 		std::unordered_map<std::string, article_stats> &stats
 	)
 	{
@@ -315,10 +441,8 @@ namespace camus
 	}
 
 	void writer::render_single_article(
-		catalog::catalog_node &node,
-		const std::vector<nlohmann::json> &toc_items,
-		std::unordered_map<std::string, article_stats> &stats,
-		const std::filesystem::path &out_dir
+		catalog::catalog_node &node, const std::vector<nlohmann::json> &toc_items,
+		std::unordered_map<std::string, article_stats> &stats, const std::filesystem::path &out_dir
 	)
 	{
 		if (node.link_url().empty()) {
@@ -395,8 +519,7 @@ namespace camus
 	}
 
 	void writer::render_stats_page(
-		const std::unordered_map<std::string, article_stats> &stats,
-		const std::vector<nlohmann::json> &toc_items
+		const std::unordered_map<std::string, article_stats> &stats, const std::vector<nlohmann::json> &toc_items
 	)
 	{
 		nlohmann::json j = conf_.json();
@@ -538,10 +661,7 @@ namespace camus
 			}
 
 			if (conf_.camus().output.meta) {
-				add_write(
-					filesystem::clean_path("meta.json", conf_.camus().dest_dir()),
-					toc_full.dump(4)
-				);
+				add_write(filesystem::clean_path("meta.json", conf_.camus().dest_dir()), toc_full.dump(4));
 			}
 
 			return;
@@ -584,36 +704,42 @@ namespace camus
 
 	void writer::emit_assets()
 	{
-		const std::string assets_dir = conf_.camus().assets_dir;
-		if (!std::filesystem::exists(assets_dir)) {
+		if (cmd_.dryrun) {
 			return;
 		}
 
-		if (cmd_.dryrun) {
+		const std::filesystem::path embedded_dir = filesystem::clean_path(std::format("{}/assets", CAMUS_DIR), "./");
+		const std::filesystem::path user_dir = conf_.camus().assets_dir;
+
+		const bool has_embedded =
+			std::filesystem::is_directory(embedded_dir) && !std::filesystem::is_empty(embedded_dir);
+		const bool has_user =
+			!user_dir.empty() && std::filesystem::is_directory(user_dir) && !std::filesystem::is_empty(user_dir);
+
+		if (!has_embedded && !has_user) {
+			logging::debug("skip assets: no embedded or user assets found");
 			return;
 		}
 
 		std::filesystem::create_directories(conf_.camus().dest_dir());
 
-		// 整体拷贝资源文件夹
-		if (std::filesystem::is_empty(assets_dir)) {
-			logging::debug(std::format("skip empty assets directory: {}", assets_dir));
-			return;
+		// 资源文件夹拷贝到目标目录，用户资源整体覆盖内嵌资源
+		const std::filesystem::path dest_dir = conf_.camus().dest_dir() / "assets";
+		if (has_embedded) {
+			std::filesystem::copy(
+				embedded_dir,
+				dest_dir,
+				std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
+			);
 		}
 
-		// 资源文件夹拷贝到目标目录
-		const std::filesystem::path dest_dir = conf_.camus().dest_dir() / "assets";
-		std::filesystem::copy(
-			filesystem::clean_path(std::format("{}/assets", CAMUS_DIR), "./"),
-			dest_dir,
-			std::filesystem::copy_options::recursive
-		);
-
-		std::filesystem::copy(
-			assets_dir,
-			dest_dir,
-			std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
-		);
+		if (has_user) {
+			std::filesystem::copy(
+				user_dir,
+				dest_dir,
+				std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
+			);
+		}
 
 		// 替换资源文件中的模板
 		size_t count = 0;
@@ -644,12 +770,167 @@ namespace camus
 
 		logging::debug(
 			std::format(
-				"assets: promote copy {}/... to {}/ files={}",
-				std::filesystem::relative(assets_dir, cmd_.workdir).string(),
-				std::filesystem::relative(dest_dir, cmd_.workdir).string(),
+				"assets: promote copy embedded={} user={} files={}",
+				has_embedded ? std::filesystem::relative(embedded_dir, cmd_.workdir).string() : "-",
+				has_user ? std::filesystem::relative(user_dir, cmd_.workdir).string() : "-",
 				count
 			)
 		);
+	}
+
+	void writer::emit_pdf()
+	{
+		if (conf_.camus().render.pdf_engine.empty()) {
+			return;
+		}
+
+		if (cmd_.dryrun) {
+			return;
+		}
+
+		const std::string engine = resolve_pdf_engine(conf_.camus().render.pdf_engine);
+		if (engine.empty()) {
+			logging::warn("pdf engine not found, skip pdf generation name={}", conf_.camus().render.pdf_engine);
+			return;
+		}
+
+		std::vector<std::string> sections;
+		sections.push_back(std::format("# {}\n\n{}\n", conf_.camus().site.title, conf_.camus().site.description));
+
+		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
+			if (node.path.extension() != ".md" || node.property.visibility == catalog::hidden) {
+				return;
+			}
+
+			std::string markdown = strings::string_join(node.contents, "\n");
+			for (const auto &[k, v] : conf_.camus().envs) {
+				markdown = strings::replace(markdown, "{{ env." + k + " }}", v);
+				markdown = strings::replace(markdown, "{{env." + k + "}}", v);
+			}
+
+			sections.push_back(std::format("## {}\n\n{}", node.property.display_name, markdown));
+		});
+
+		if (sections.size() <= 1) {
+			logging::debug("skip pdf generation: no articles");
+			return;
+		}
+
+		const std::string markdown = strings::string_join(sections, "\n\n---\n\n");
+		const std::filesystem::path dest_dir = conf_.camus().dest_dir();
+		const std::filesystem::path html_dir = dest_dir / "pdf";
+		const std::filesystem::path markdown_path = dest_dir / "index.md";
+		const std::filesystem::path html_path = html_dir / "index.html";
+		std::filesystem::path pdf_path = dest_dir / "index.pdf";
+
+		std::filesystem::create_directories(html_dir);
+		filesystem::write_file(markdown_path, markdown);
+
+		const std::string body = render::render_markdown(
+			markdown.c_str(),
+			conf_.camus().render.markdown_engine,
+			conf_.camus().render.markdown_options
+		);
+
+		const std::string html = std::format(
+			"<!DOCTYPE html>\n<html lang=\"{}\">\n<head>\n<meta charset=\"utf-8\">\n"
+			"<title>{}</title>\n<style>{}</style>\n</head>\n<body>\n<main>\n{}\n</main>\n</body>\n</html>\n",
+			conf_.camus().site.title.empty() ? "en" : "zh-CN",
+			conf_.camus().site.title,
+			pdf_html_style,
+			body
+		);
+
+		filesystem::write_file(html_path, html);
+
+		std::vector<std::string> args;
+		bool has_headless = false;
+		bool has_print_to_pdf = false;
+		bool has_user_data_dir = false;
+
+		for (const auto &option : conf_.camus().render.pdf_options) {
+			if (option.empty()) {
+				continue;
+			}
+
+			if (option.starts_with("--headless")) {
+				has_headless = true;
+			}
+
+			if (option.starts_with("--print-to-pdf")) {
+				if (has_print_to_pdf) {
+					continue;
+				}
+
+				has_print_to_pdf = true;
+
+				if (const auto pos = option.find('='); pos != std::string::npos) {
+					std::string value = option.substr(pos + 1);
+					if (!value.empty()) {
+						value = strings::replace(value, "{{dest_dir}}", dest_dir.string());
+						value = strings::replace(value, "{{ dest_dir }}", dest_dir.string());
+
+						std::filesystem::path path(value);
+						if (path.is_relative()) {
+							path = dest_dir / path;
+						}
+
+						pdf_path = path.lexically_normal();
+					}
+				}
+				continue;
+			}
+
+			if (option.starts_with("--user-data-dir")) {
+				has_user_data_dir = true;
+			}
+
+			args.push_back(option);
+		}
+
+		if (!has_headless) {
+			args.insert(args.begin(), "--headless");
+		}
+
+		if (const std::filesystem::path parent = pdf_path.parent_path(); !parent.empty()) {
+			std::filesystem::create_directories(parent);
+		}
+
+		args.push_back("--print-to-pdf=" + pdf_path.string());
+
+		const std::filesystem::path profile_dir =
+			std::filesystem::temp_directory_path() / std::format("camus-pdf-{}", getpid());
+		std::error_code ec;
+		std::filesystem::remove_all(profile_dir, ec);
+		std::filesystem::create_directories(profile_dir, ec);
+
+		if (!has_user_data_dir) {
+			args.push_back("--user-data-dir=" + profile_dir.string());
+		}
+
+		args.push_back(path_to_file_url(html_path));
+
+		std::string command = shell_quote(engine);
+		for (const auto &arg : args) {
+			command += " " + shell_quote(arg);
+		}
+
+		logging::debug("pdf command: {}", command);
+		const int status = std::system(command.c_str());
+
+		std::filesystem::remove_all(profile_dir, ec);
+
+		if (status != 0) {
+			logging::warn("pdf generation command failed status={}", status);
+			return;
+		}
+
+		if (!std::filesystem::exists(pdf_path) || std::filesystem::file_size(pdf_path, ec) == 0) {
+			logging::warn("pdf generation failed, output not found name={}", pdf_path.string());
+			return;
+		}
+
+		logging::debug("make pdf dest={} engine={}", pdf_path.string(), engine);
 	}
 
 	writer::writer(const cmdline &cmd) : conf_(CAMUS_CONF_NAME), cmd_(cmd)
@@ -819,6 +1100,7 @@ namespace camus
 		emit_assets();
 
 		flush_writes();
+		emit_pdf();
 
 		logging::info("build complete articles={} output={}", catalog_.size(), conf_.camus().dest_dir().string());
 		return 0;

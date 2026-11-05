@@ -34,6 +34,9 @@ html/
 ├── friends.html
 ├── sitemap.xml                     # output.sitemap=true
 ├── meta.json                       # output.meta=true
+├── index.md                        # 配置 pdf_engine 时：合并后的 Markdown
+├── index.pdf                       # 配置 pdf_engine 时：最终 PDF
+├── pdf/index.html                  # 配置 pdf_engine 时：PDF 中间 HTML
 └── <assets 内容提升到根>            # css/ js/ fonts/ robots.txt favicon.ico ...
 ```
 
@@ -45,7 +48,8 @@ html/
 | `friends.html` | 始终（除非 dryrun） | `writer.cpp:461` |
 | `sitemap.xml` | `output.sitemap: true` | `writer.cpp:555` |
 | `meta.json` | `output.meta: true` 且 `html_engine=default` | `writer.cpp:540-545` |
-| 静态资源 | `assets_dir` 存在且非空 | `writer.cpp:585` |
+| 静态资源 | 内嵌 `.camus/assets` 或本地 `assets_dir` 非空 | `writer.cpp` `emit_assets()` |
+| `index.md` / `index.pdf` / `pdf/index.html` | `render.pdf_engine` 非空且引擎可用 | `writer.cpp` `emit_pdf()` |
 
 ## 6.3 文章输出
 
@@ -124,25 +128,28 @@ html/
 
 ## 6.9 静态资源
 
-`emit_assets()`（`writer.cpp:585`）：
+`emit_assets()`（`writer.cpp`）：
 
 ```mermaid
 flowchart TD
-    A[assets_dir 不存在] -->|是| Z[跳过]
-    A -->|否| B[创建 dest_dir]
-    B --> C{assets_dir 为空?}
-    C -->|是| Y[记录 debug 并跳过]
-    C -->|否| D[复制内嵌 .camus/assets -> dest/assets]
-    D --> E[覆盖复制用户 assets_dir -> dest/assets]
-    E --> F[遍历 dest/assets: .css/.js/.txt/.json 用 inja 渲染]
-    F --> G[把 dest/assets 内容提升复制到 dest 根目录]
-    G --> H[删除临时 dest/assets]
+    A[检查内嵌 .camus/assets 与本地 assets_dir] --> B{两者都不可用/为空?}
+    B -->|是| Z[记录 debug 并跳过]
+    B -->|否| C[创建 dest_dir]
+    C --> D{内嵌资源可用?}
+    D -->|是| E[复制 .camus/assets -> dest/assets]
+    D -->|否| F
+    E --> F{本地 assets_dir 可用?}
+    F -->|是| G[覆盖复制本地 assets_dir -> dest/assets]
+    F -->|否| H
+    G --> H[遍历 dest/assets: .css/.js/.txt/.json 用 inja 渲染]
+    H --> I[把 dest/assets 内容提升复制到 dest 根目录]
+    I --> J[删除临时 dest/assets]
 ```
 
-- 内嵌默认资源来自 `.camus/assets`（`-i` 安装时生成），用户 `assets_dir` 覆盖同名文件。
+- 内嵌默认资源来自 `.camus/assets`（`-i` 安装时生成），**不依赖工作目录存在 `./assets`**。
+- 本地 `assets_dir` 存在且非空时整体覆盖内嵌同名文件；未配置、不存在或为空时仅使用内嵌资源。
 - 仅 `.css`、`.js`、`.txt`、`.json` 会做 inja 变量替换，其它文件原样复制。
 - 最终资源被**提升到输出根目录**（如 `html/css/...`、`html/robots.txt`），不保留 `assets/` 前缀。
-- 用户 `assets_dir` 为空目录时直接跳过（不复制内嵌资源）。
 
 ## 6.10 dryrun 的影响
 
@@ -155,6 +162,34 @@ flowchart TD
 | `flush_writes` | 队列为空，无写入 |
 | `emit_toc` | 提前返回（不生成目录页/meta） |
 | `emit_assets` | 提前返回 |
+| `emit_pdf` | 提前返回 |
 | 文章/统计/友链/sitemap | 正常计算并调用 `add_write`，但不落盘 |
 
 因此 dryrun 可用于验证配置与渲染流程而不改变磁盘。
+
+## 6.11 PDF 输出
+
+`emit_pdf()` 在 `flush_writes()` 之后执行，仅在 `render.pdf_engine` 非空时生效：
+
+```mermaid
+flowchart TD
+    A[pdf_engine 为空] -->|是| Z[跳过]
+    A -->|否| B[解析 Chrome/Edge 可执行文件]
+    B -->|未找到| W[WARN 并跳过]
+    B -->|找到| C[按目录树先序收集 visibility != hidden 的 .md]
+    C --> D[替换 env 变量, 合并为单个 Markdown]
+    D --> E[写 dest_dir/index.md]
+    E --> F[cmark-gfm 渲染为 HTML]
+    F --> G[写入 dest_dir/pdf/index.html（内联打印样式）]
+    G --> H[调用浏览器 --headless --print-to-pdf=<解析后的输出路径>]
+    H --> I{退出码为 0 且 PDF 非空?}
+    I -->|否| W2[WARN 并跳过]
+    I -->|是| J[完成]
+```
+
+- 合并文档以 `# {site.title}` 开头，每篇文章为 `## {display_name}` + 正文，文章间用 `---` 分隔。
+- 文章正文使用 Front Matter 解析后的内容，并替换 `.env` 变量；`hidden` 文章不参与，`hidden_in_toc` 参与。
+- PDF 输出路径默认 `dest_dir/index.pdf`；`--print-to-pdf` 中可用 `{{dest_dir}}` 占位符自定义，如 `--print-to-pdf={{dest_dir}}/docs/book.pdf`（相对路径按 `dest_dir` 解析）。
+- PDF 中间 HTML 固定在 `dest_dir/pdf/index.html`，避免覆盖站点首页 `dest_dir/index.html`。
+- PDF 生成失败只告警，不影响 HTML 站点构建结果与退出码。
+- `dryrun` 下整个阶段跳过。

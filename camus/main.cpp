@@ -71,7 +71,7 @@ install_template(const std::filesystem::path &exec_name, const bool force, const
 			version_file,
 			std::format("{}\n{}", PROJECT_VERSION, functions::format_time_t(time(nullptr)))
 		);
-		for (const auto &name : std::vector<std::string>{"assets", "posts", "camus.yaml", ".env", ".gitignore"}) {
+		for (const auto &name : std::vector<std::string>{"posts", "camus.yaml", ".env", ".gitignore"}) {
 			if (!std::filesystem::exists(name)) {
 				std::filesystem::copy(dest_dir / name, name, std::filesystem::copy_options::recursive);
 			}

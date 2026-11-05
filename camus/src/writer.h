@@ -71,6 +71,7 @@ namespace camus
 		void emit_toc();
 		void emit_sitemap();
 		void emit_assets();
+		void emit_pdf();
 
 	  public:
 		explicit writer(const cmdline &cmd);

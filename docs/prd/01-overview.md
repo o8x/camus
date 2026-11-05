@@ -8,6 +8,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 - Markdown（cmark-gfm）渲染，支持 Front Matter 与隐藏片段。
 - 多主题：内嵌 `default`、`document`、`pixel`、`terminal` 等主题，本地可覆盖或自定义。
 - 目录树与目录索引页、统计页、友链页、`sitemap.xml`、`meta.json` 生成。
+- 可选 PDF 输出：把全部可见文章合并为单个 Markdown，经 cmark-gfm 转 HTML 后调用 Chrome/Edge 无头模式打印为 PDF。
 - `-W` 监听模式：轮询文件变化并自动重建，同时提供本地 HTTP 服务。
 
 当前版本：**10.0.0**（来源：`CMakeLists.txt` 的 `project(... VERSION 10.0.0)`）。
@@ -24,6 +25,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 | cpp-httplib | 监听模式本地 HTTP 服务 | `third-party/cpp-httplib` |
 | libarchive | 解压内嵌的模板压缩包 | 系统依赖，`pkg_check_modules(ARCHIVE ...)` |
 | CPack | 生成 deb/pkg 等安装包 | `camus/CMakeLists.txt` |
+| Chrome / Edge（可选） | 无头模式把中间 HTML 打印为 PDF | 系统已安装的浏览器，按 `render.pdf_engine` 解析 |
 
 依赖全部以 Git submodule 形式存在（`.gitmodules`），构建时需 `git submodule update --init --recursive`。
 
@@ -54,7 +56,10 @@ flowchart TD
     F --> G[emit_sitemap]
     G --> H[emit_assets]
     H --> I[flush_writes 统一落盘]
-    I --> J[INFO build complete, 返回 0]
+    I --> P{配置了 pdf_engine?}
+    P -->|是| Q[emit_pdf: 合并 Markdown -> HTML -> Chrome/Edge 打印]
+    P -->|否| J
+    Q --> J[INFO build complete, 返回 0]
 ```
 
 `emit_article` 内部又分为：路由解析 → Front Matter 解析 → 清空输出目录 → 收集文章 → 填充上一篇/下一篇 → 计算 TOC → 逐篇渲染与统计 → 统计页 → 目录属性收尾（详见 §4、§6）。
@@ -66,7 +71,7 @@ flowchart TD
 | workdir | 工作目录，`-w` 指定，默认当前目录；运行时会 `chdir` 到该目录 |
 | source_dir | Markdown 源目录，默认取自 `camus.yaml` |
 | dest_dir | HTML 输出目录 |
-| assets_dir | 静态资源目录，内容会被提升到输出根目录 |
+| assets_dir | 本地静态资源目录；缺省时使用 `.camus/assets`，内容会被提升到输出根目录 |
 | catalog | 运行期内存中的目录树 `catalog_node` |
 | route | `camus.yaml` 中 `catalog` 段的目录配置，可设置标题/副标题/描述/搬运 |
 | transfer | 路由内的文件搬运映射，把源目录内容映射到另一输出路径 |

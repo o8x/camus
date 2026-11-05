@@ -18,7 +18,7 @@
 ## 核心设计
 
 - **单文件自包含**：示例站点模板在构建后以 gzip 压缩包形式追加到可执行文件末尾；`-i` 时从自身二进制尾部解出模板安装到工作目录（详见 §8）。
-- **流水线式构建**：`writer::build()` 依次执行 `emit_article → emit_toc → emit_friends → emit_sitemap → emit_assets → flush_writes`，所有文件写入先进入内存队列，最后统一落盘（详见 §1.4、§6）。
+- **流水线式构建**：`writer::build()` 依次执行 `emit_article → emit_toc → emit_friends → emit_sitemap → emit_assets → flush_writes → emit_pdf`，所有文件写入先进入内存队列统一落盘，最后按需调用 Chrome/Edge 生成 PDF（详见 §1.4、§6）。
 - **配置驱动**：`camus.yaml` 提供站点、输出、部署、渲染、路由、友链配置；`.env` 提供模板变量；配置每次构建重新加载（详见 §3）。
 - **内存目录树**：构建开始时扫描 `source_dir` 生成 `catalog_node` 树，文章 Front Matter、路由映射、导航、统计都在该树上完成（详见 §4）。
 - **模板引擎**：HTML 使用 inja，Markdown 使用 cmark-gfm；主题由 `theme/{name}/{home,page,stats,friends}.html` 组成，本地 `theme/` 可覆盖内嵌主题（详见 §5）。

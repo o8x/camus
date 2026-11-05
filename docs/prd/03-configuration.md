@@ -20,7 +20,7 @@
 - 根节点必须包含 `camus` 映射，否则 `error::panic("config file parse failed")`（退出 127）。
 - `catalog` 必须是序列，否则 `panic("parse catalog config failed")`。
 - 字符串值会做 `trim_space`；`catalog` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
-- 路径（`source_dir`、`assets_dir`、`dest_dir`）在解析后转为绝对路径供内部使用；模板 JSON 中保留解析前的值（见 §3.8）。
+- 路径（`source_dir`、`assets_dir`、`dest_dir`）在解析后转为绝对路径供内部使用（`assets_dir` 为空时保持为空，回退内嵌资源）；模板 JSON 中保留解析前的值（见 §3.8）。
 - 注意 `render.html_engine` 在遍历 `camus` 每个键时都会被重置为 `default`（`yaml_config.cpp:124`），因此 `render` 段**应放在 `camus` 段末尾**；若其后还有其它键，`html_engine` 会被重置为 `default`。
 
 ## 3.3 `camus` 段字段
@@ -28,7 +28,7 @@
 | 字段 | 类型 | 默认/必填 | 说明 | 代码位置 |
 |---|---|---|---|---|
 | `source_dir` | 字符串路径 | 必填（建议） | Markdown 源目录 | `yaml_config.cpp:213` |
-| `assets_dir` | 字符串路径 | 必填（建议） | 静态资源目录 | `yaml_config.cpp:215` |
+| `assets_dir` | 字符串路径 | 可选 | 本地静态资源目录；未配置或不存在时自动使用内嵌 `.camus/assets` | `yaml_config.cpp:215` |
 | `output.meta` | bool | 必填 | 是否输出 `meta.json` | `yaml_config.cpp:184` |
 | `output.sitemap` | bool | 必填 | 是否输出 `sitemap.xml` | `yaml_config.cpp:183` |
 | `output.filename_case` | 字符串 | 默认 `keep` | `uuid` 时文章 `display_name` 生成 UUID 并输出到 `/s/<uuid>.html` 风格短链 | `yaml_config.cpp:182` |
@@ -40,10 +40,27 @@
 | `render.html_engine` | 字符串 | 默认 `default` | 目前仅支持 `default` | `yaml_config.cpp:128`、`writer.cpp:550` |
 | `render.markdown_engine` | 字符串 | 目前仅支持 `cmark-gfm` | Markdown 引擎 | `yaml_config.cpp:126` |
 | `render.markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp:144-175` |
-| `render.pdf_engine` | 字符串 | 可选 | 仅当非空时读取 `pdf_options`；当前版本未参与渲染流程 | `yaml_config.cpp:127-136` |
-| `render.pdf_options` | 字符串数组 | 可选 | 与 `pdf_engine` 同时收集 | 同上 |
+| `render.pdf_engine` | 字符串 | 可选 | PDF 引擎：`chromium`/`chrome`/`edge`，或可执行文件路径；非空时启用 PDF 生成 | `yaml_config.cpp:127-136` |
+| `render.pdf_options` | 字符串数组 | 可选 | Chrome/Edge 启动参数；`--print-to-pdf=` 会替换为实际输出路径 | 同上 |
 
 `deploy.full_prefix()` = `protocol + domain_name + path_prefix`。示例配置产物为 `https://stdout.com.cn/camus`。
+
+### 3.3.1 PDF 引擎与参数
+
+`render.pdf_engine` 非空时构建末尾执行 PDF 生成（见 §6.11）：
+
+| 配置值 | macOS 解析 | Linux 解析 |
+|---|---|---|
+| `chromium` / `chrome` / `google-chrome` | `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`，其次 Chromium | `google-chrome`、`google-chrome-stable`、`chromium`、`chromium-browser`（按 PATH 查找） |
+| `edge` / `msedge` / `microsoft-edge` | `/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge` | `microsoft-edge`、`microsoft-edge-stable`、`microsoft-edge-beta`（按 PATH 查找） |
+| 含 `/` 的路径 | 直接作为可执行文件路径 | 同左 |
+
+- 引擎找不到时输出 WARN 并跳过 PDF，不影响 HTML 构建。
+- `pdf_options` 原样作为启动参数；其中以 `--print-to-pdf` 开头的项只取第一个并统一重写，支持 `{{dest_dir}}` 占位符：
+  - `--print-to-pdf=`：默认输出 `<dest_dir>/index.pdf`；
+  - `--print-to-pdf={{dest_dir}}/docs/book.pdf`：输出到 `<dest_dir>/docs/book.pdf`；
+  - `--print-to-pdf=book.pdf`：相对路径按 `<dest_dir>/book.pdf` 解析。
+- 未显式提供 `--headless` 时自动追加；始终追加临时 `--user-data-dir`（构建结束删除），避免污染用户浏览器配置。
 
 ### 3.4 markdown_options 映射
 

@@ -59,11 +59,13 @@ namespace camus::config
 		std::string theme_name = "default";
 		std::string html_engine;
 		std::string markdown_engine;
+		std::string pdf_engine;
+		std::vector<std::string> pdf_options;
 		int markdown_options;
 		// 主题数据
 		std::unordered_map<camus_theme_type, std::string> theme;
 
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(render_conf, theme_name, markdown_engine, html_engine, markdown_engine);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(render_conf, theme_name, html_engine, markdown_engine, pdf_engine, pdf_options);
 	};
 
 	struct output_conf {
