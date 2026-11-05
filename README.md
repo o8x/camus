@@ -71,16 +71,15 @@ filename_case: keep        # keep | uuid
 # https://stdout.com.cn/camus -> https:// + stdout.com.cn + /camus
 public_url: https://stdout.com.cn/camus
 
-render:
-  theme: terminal
-  pdf_engine: chrome
-  pdf_options:
-    - --headless
-    - --print-to-pdf={{dest_dir}}/index.pdf
-  markdown_options:
-    - DEFAULT
-    - SMART
-    - FOOTNOTES
+theme: terminal
+pdf_engine: chrome         # use "disable" to skip PDF generation
+pdf_options:
+  - --headless
+  - --print-to-pdf={{dest_dir}}/index.pdf
+markdown_options:
+  - DEFAULT
+  - SMART
+  - FOOTNOTES
 
 friends:
   - title: Alex
@@ -188,5 +187,5 @@ Themes contain `home.html`, `page.html`, `stats.html` and `friends.html`, loaded
 ```text
 dist/
 ├── html/            # static HTML site (index pages, articles, stats, friends, sitemap, meta)
-└── pdf/             # when pdf_engine is configured
+└── pdf/             # when pdf_engine is configured and not "disable"
 ```

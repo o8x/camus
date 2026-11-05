@@ -872,7 +872,8 @@ namespace camus
 
 	void writer::emit_pdf()
 	{
-		if (conf_.camus().render.pdf_engine.empty()) {
+		const std::string pdf_engine = strings::trim_space(conf_.camus().render.pdf_engine);
+		if (pdf_engine.empty() || strings::to_lower(pdf_engine) == "disable") {
 			return;
 		}
 
@@ -880,9 +881,9 @@ namespace camus
 			return;
 		}
 
-		const std::string engine = resolve_pdf_engine(conf_.camus().render.pdf_engine);
+		const std::string engine = resolve_pdf_engine(pdf_engine);
 		if (engine.empty()) {
-			logging::warn("pdf engine not found, skip pdf generation name={}", conf_.camus().render.pdf_engine);
+			logging::warn("pdf engine not found, skip pdf generation name={}", pdf_engine);
 			return;
 		}
 

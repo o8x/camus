@@ -19,14 +19,14 @@
 
 ## 3.2 解析总则
 
-- 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`render`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。
+- 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`theme`、`pdf_engine`、`pdf_options`、`markdown_options`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。不再接受 `render` 嵌套段；出现时打印 WARN 并忽略其内容。
 - `catalog.yaml` 必须存在且根节点为序列，否则 `panic("catalog file not found ...")` / `panic("parse catalog config failed")`。
 - 字符串值会做 `trim_space`；`catalog.yaml` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
 - 源目录、资源目录与输出目录不再可配置：
   - 源目录固定按 `src` → `posts` 顺序探测，存在即使用，否则回退 `src`（随后若不存在则报错）；
   - 本地资源目录固定为 `./assets`，不存在时回退 `.camus/assets`，再回退数据目录的 `assets/`；
   - HTML 输出固定为 `./dist/html`，PDF 输出固定为 `./dist/pdf`。
-- `render.html_engine` 固定为 `default`，`render.markdown_engine` 固定为 `cmark-gfm`，均不从配置读取。
+- `html_engine` 固定为 `default`，`markdown_engine` 固定为 `cmark-gfm`，均不从配置读取。
 - 路径在解析后转为绝对路径供内部使用；模板 JSON 中保留解析后的值（见 §3.7）。
 
 ## 3.3 顶层配置字段
@@ -40,10 +40,10 @@
 | `protocol` | 字符串（只读派生） | 默认 `https://` | `public_url` 的协议部分，含 `://` | 同上 |
 | `domain_name` | 字符串（只读派生） | 空 | `public_url` 的域名部分（含端口，去除空格） | 同上 |
 | `path_prefix` | 字符串（只读派生） | 空 | `public_url` 的路径部分，以 `/` 开头且不带尾斜杠 | 同上 |
-| `render.theme` | 字符串 | 默认 `default` | 主题目录名 | `yaml_config.cpp:129` |
-| `render.markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp:144-175` |
-| `render.pdf_engine` | 字符串 | 可选 | PDF 引擎：`chromium`/`chrome`/`edge`，或可执行文件路径；非空时启用 PDF 生成 | `yaml_config.cpp:127-136` |
-| `render.pdf_options` | 字符串数组 | 可选 | Chrome/Edge 启动参数；`--print-to-pdf=` 会替换为实际输出路径 | 同上 |
+| `theme` | 字符串 | 默认 `default` | 主题目录名 | `yaml_config.cpp` |
+| `markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp` |
+| `pdf_engine` | 字符串 | 可选 | PDF 引擎：`chromium`/`chrome`/`edge`，或可执行文件路径；非空且不为 `disable` 时启用 PDF 生成 | `yaml_config.cpp` |
+| `pdf_options` | 字符串数组 | 可选 | Chrome/Edge 启动参数；`--print-to-pdf=` 会替换为实际输出路径 | `yaml_config.cpp` |
 
 `public_url` 拆解规则（`parse_public_url()`）：
 
@@ -58,7 +58,7 @@
 
 ### 3.3.1 PDF 引擎与参数
 
-`render.pdf_engine` 非空时构建末尾执行 PDF 生成（见 §6.11）：
+`pdf_engine` 非空且不为 `disable` 时构建末尾执行 PDF 生成（见 §6.11）；`disable` 不区分大小写并忽略首尾空格：
 
 | 配置值 | macOS 解析 | Linux 解析 |
 |---|---|---|
@@ -66,6 +66,7 @@
 | `edge` / `msedge` / `microsoft-edge` | `/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge` | `microsoft-edge`、`microsoft-edge-stable`、`microsoft-edge-beta`（按 PATH 查找） |
 | 含 `/` 的路径 | 直接作为可执行文件路径 | 同左 |
 
+- `pdf_engine: disable` 表示显式禁用 PDF：不解析引擎、不产生 `dist/pdf` 内容，也不输出告警。
 - 引擎找不到时输出 WARN 并跳过 PDF，不影响 HTML 构建。
 - `pdf_options` 原样作为启动参数；其中以 `--print-to-pdf` 开头的项只取第一个并统一重写，支持 `{{dest_dir}}` 占位符（占位符代表 PDF 输出目录 `./dist/pdf`）：
   - `--print-to-pdf=`：默认输出 `<dest_dir>/index.pdf`；
@@ -76,7 +77,7 @@
 
 ### 3.4 markdown_options 映射
 
-Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表解析；未知名会被收集用于展示但不产生标志位。`DEFAULT` 对应 `CMARK_OPT_DEFAULT`；Debug/RelWithDebInfo 构建默认追加 `SOURCEPOS`。
+Markdown 引擎固定为 `cmark-gfm`，顶层 `markdown_options` 始终按本表解析；未知名会被收集用于展示但不产生标志位。`DEFAULT` 对应 `CMARK_OPT_DEFAULT`；Debug/RelWithDebInfo 构建默认追加 `SOURCEPOS`。
 
 | 配置名 | cmark 标志 |
 |---|---|
@@ -94,7 +95,7 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 | `TABLE_PREFER_STYLE_ATTRIBUTES` | `CMARK_OPT_TABLE_PREFER_STYLE_ATTRIBUTES` |
 | `FULL_INFO_STRING` | `CMARK_OPT_FULL_INFO_STRING` |
 
-顶层配置 `render.markdown_options` 在模板 JSON 的 `camus.render.options` 会显示为 `"{数值}({名称1,名称2,...})"`（`yaml_config.cpp:225-226`）。
+顶层配置 `markdown_options` 在模板 JSON 的 `camus.render.options` 会显示为 `"{数值}({名称1,名称2,...})"`（`yaml_config.cpp:225-226`）。
 
 ## 3.5 `catalog.yaml`（路由与搬运）
 
@@ -159,7 +160,7 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 | `protocol` | 字符串 | `public_url` 的协议部分（`https://`） |
 | `domain_name` | 字符串 | `public_url` 的域名部分 |
 | `path_prefix` | 字符串 | `public_url` 的路径前缀 |
-| `render` | 对象 | 渲染配置（`theme_name`、`html_engine`、`markdown_engine`、`pdf_engine`、`pdf_options`） |
+| `render` | 对象 | 模板兼容聚合对象（`theme_name`、`html_engine`、`markdown_engine`、`pdf_engine`、`pdf_options`）；对应配置项在 `camus.yaml` 顶层，此对象仅用于模板数据 |
 | `friends` | 数组 | 友情链接 |
 | `site` | 对象 | 根路由（`path/title/subtitle/description/transfers`） |
 | `route` | 数组 | 全部路由（继承后） |

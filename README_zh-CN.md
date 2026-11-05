@@ -71,16 +71,15 @@ filename_case: keep        # keep | uuid
 # https://stdout.com.cn/camus -> https:// + stdout.com.cn + /camus
 public_url: https://stdout.com.cn/camus
 
-render:
-  theme: terminal
-  pdf_engine: chrome
-  pdf_options:
-    - --headless
-    - --print-to-pdf={{dest_dir}}/index.pdf
-  markdown_options:
-    - DEFAULT
-    - SMART
-    - FOOTNOTES
+theme: terminal
+pdf_engine: chrome         # 设为 disable 时跳过 PDF 生成
+pdf_options:
+  - --headless
+  - --print-to-pdf={{dest_dir}}/index.pdf
+markdown_options:
+  - DEFAULT
+  - SMART
+  - FOOTNOTES
 
 friends:
   - title: Alex
@@ -188,5 +187,5 @@ visibility: open
 ```text
 dist/
 ├── html/            # 静态 HTML 站点（目录页、文章、stats、friends、sitemap、meta）
-└── pdf/             # 配置 pdf_engine 时生成
+└── pdf/             # pdf_engine 非空且不为 disable 时生成
 ```

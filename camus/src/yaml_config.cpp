@@ -179,31 +179,34 @@ namespace camus::config
 			const auto key = strings::trim_space(it.first.as<std::string>());
 
 			if (key == "render") {
-				YAML::Node render = it.second;
-				if (render["pdf_engine"]) {
-					camus_.render.pdf_engine = get_string(render["pdf_engine"]);
-				}
+				logging::warn("config key 'render' is no longer supported, move theme/pdf_engine/pdf_options/markdown_options to top level");
+				continue;
+			}
 
-				if (const std::string theme = get_string(render["theme"]); !theme.empty()) {
+			if (key == "theme") {
+				if (const std::string theme = get_string(it.second); !theme.empty()) {
 					camus_.render.theme_name = theme;
 				}
+				continue;
+			}
 
-				// 有值就生成
-				if (!camus_.render.pdf_engine.empty()) {
-					if (const YAML::Node options = render["pdf_options"]; options && options.IsSequence()) {
-						for (const auto &opt : options) {
-							camus_.render.pdf_options.push_back(opt.as<std::string>());
-						}
+			if (key == "pdf_engine") {
+				camus_.render.pdf_engine = get_string(it.second);
+				continue;
+			}
+
+			if (key == "pdf_options") {
+				if (it.second && it.second.IsSequence()) {
+					for (const auto &opt : it.second) {
+						camus_.render.pdf_options.push_back(opt.as<std::string>());
 					}
 				}
+				continue;
+			}
 
-				camus_.render.markdown_options = CMARK_OPT_DEFAULT;
-				if (WORK_ON_DEBUG) {
-					camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
-				}
-
-				if (const YAML::Node options = render["markdown_options"]; options && options.IsSequence()) {
-					for (const auto &opt : options) {
+			if (key == "markdown_options") {
+				if (it.second && it.second.IsSequence()) {
+					for (const auto &opt : it.second) {
 						const auto name = opt.as<std::string>();
 						markdown_options.push_back(name);
 
@@ -236,7 +239,6 @@ namespace camus::config
 						}
 					}
 				}
-
 				continue;
 			}
 

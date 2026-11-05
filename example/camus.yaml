@@ -7,28 +7,27 @@ filename_case: keep                         # 转换md的输出文件名：keep 
 #   https://stdout.com.cn/camus -> protocol=https:// domain_name=stdout.com.cn path_prefix=/camus
 public_url: https://stdout.com.cn/camus
 # 页面渲染配置
-render:
-    theme: terminal                         # 加载 theme/name/*.html
-    pdf_engine: chrome                      # PDF 引擎：chromium/chrome/edge（Linux 自动按 PATH 查找）
-    pdf_options:
-        - --headless
-        - --enable-logging
-        - --no-pdf-header-footer
-        - --print-to-pdf={{dest_dir}}/index.pdf  # {{dest_dir}} 为 PDF 输出目录，可自定义文件名与位置
-    markdown_options:                       # markdown 引擎参数
-        - DEFAULT                           # 默认选项，采用安全模式（过滤原始HTML和危险链接）
-        - VALIDATE_UTF8                     # 解析前验证 UTF-8 编码，将非法序列替换为替换字符 U+FFFD
-        - SMART                             # 智能排版：将直引号转为弯引号，---转为长破折号，--转为短破折号
-        - FOOTNOTES                         # 解析脚注语法
-        - FULL_INFO_STRING                  # 代码块中保留完整信息字符串，并在独立的属性中提供
-        - TABLE_PREFER_STYLE_ATTRIBUTES     # 表格单元格对齐使用 style 属性而非 align 属性
-        - UNSAFE                            # 渲染原始 HTML 和不安全链接（如javascript:等），默认会过滤
-        #   - SOURCEPOS                     # 在所有块级元素上添加 data-sourcepos 属性，标明源位置
-        #   - HARDBREAKS                    # 将 softbreak（换行）渲染为强制换行标签 <br />
-        #   - NOBREAKS                      # 将 softbreak 渲染为空格（而不是换行）
-        #   - GITHUB_PRE_LANG               # 代码块使用 GitHub 风格 <pre lang="x">
-        #   - LIBERAL_HTML_TAG              # 放宽对内联 HTML 标签的解析，允许更自由的标签格式
-        #   - STRIKETHROUGH_DOUBLE_TILDE    # 仅当删除线由恰好2个波浪线包围时才解析，提高与 redcarpet 的兼容性
+theme: terminal                             # 加载 theme/name/*.html
+pdf_engine: chrome                          # PDF 引擎：chromium/chrome/edge（Linux 自动按 PATH 查找）；disable 时不生成 PDF
+pdf_options:
+    - --headless
+    - --enable-logging
+    - --no-pdf-header-footer
+    - --print-to-pdf={{dest_dir}}/index.pdf  # {{dest_dir}} 为 PDF 输出目录，可自定义文件名与位置
+markdown_options:                           # markdown 引擎参数
+    - DEFAULT                               # 默认选项，采用安全模式（过滤原始HTML和危险链接）
+    - VALIDATE_UTF8                         # 解析前验证 UTF-8 编码，将非法序列替换为替换字符 U+FFFD
+    - SMART                                 # 智能排版：将直引号转为弯引号，---转为长破折号，--转为短破折号
+    - FOOTNOTES                             # 解析脚注语法
+    - FULL_INFO_STRING                      # 代码块中保留完整信息字符串，并在独立的属性中提供
+    - TABLE_PREFER_STYLE_ATTRIBUTES         # 表格单元格对齐使用 style 属性而非 align 属性
+    - UNSAFE                                # 渲染原始 HTML 和不安全链接（如javascript:等），默认会过滤
+    #   - SOURCEPOS                         # 在所有块级元素上添加 data-sourcepos 属性，标明源位置
+    #   - HARDBREAKS                        # 将 softbreak（换行）渲染为强制换行标签 <br />
+    #   - NOBREAKS                          # 将 softbreak 渲染为空格（而不是换行）
+    #   - GITHUB_PRE_LANG                   # 代码块使用 GitHub 风格 <pre lang="x">
+    #   - LIBERAL_HTML_TAG                  # 放宽对内联 HTML 标签的解析，允许更自由的标签格式
+    #   - STRIKETHROUGH_DOUBLE_TILDE        # 仅当删除线由恰好2个波浪线包围时才解析，提高与 redcarpet 的兼容性
 
 # 友情链接
 friends:

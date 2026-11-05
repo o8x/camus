@@ -28,7 +28,7 @@
 
 - 仅支持 `engine == "cmark-gfm"`；其它引擎 `logging::fatal("unsupported engine type ...")`。
 - 调用 `cmark_markdown_to_html`，失败返回空串。
-- 选项位由 `render.markdown_options` 映射（见 §3.4），Debug/RelWithDebInfo 构建默认带 `CMARK_OPT_SOURCEPOS`。
+- 选项位由顶层 `markdown_options` 映射（见 §3.4），Debug/RelWithDebInfo 构建默认带 `CMARK_OPT_SOURCEPOS`。
 
 ## 5.3 文章渲染流程
 

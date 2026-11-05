@@ -25,7 +25,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 | nlohmann/json | JSON 数据模型与输出 | `third-party/nlohmann_json` |
 | cpp-httplib | 监听模式本地 HTTP 服务 | `third-party/cpp-httplib` |
 | CPack | 生成 deb/pkg 等安装包，并安装主题/资源/示例模板 | `camus/CMakeLists.txt` |
-| Chrome / Edge（可选） | 无头模式把中间 HTML 打印为 PDF | 系统已安装的浏览器，按 `render.pdf_engine` 解析 |
+| Chrome / Edge（可选） | 无头模式把中间 HTML 打印为 PDF | 系统已安装的浏览器，按顶层 `pdf_engine` 解析（`disable` 时禁用 PDF） |
 
 依赖全部以 Git submodule 形式存在（`.gitmodules`），构建时需 `git submodule update --init --recursive`。
 
@@ -62,7 +62,7 @@ flowchart TD
     F --> G[emit_sitemap]
     G --> H[emit_assets]
     H --> I[flush_writes 统一落盘]
-    I --> P{配置了 pdf_engine?}
+    I --> P{pdf_engine 非空且不为 disable?}
     P -->|是| Q[emit_pdf: 合并 Markdown + 封面/扉页/目录 -> HTML -> Chrome/Edge 打印]
     P -->|否| J
     Q --> J[INFO build complete, 返回 0]

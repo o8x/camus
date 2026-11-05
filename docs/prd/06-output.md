@@ -36,7 +36,7 @@ dist/
 │   ├── sitemap.xml                 # sitemap=true
 │   ├── meta.json                   # meta=true
 │   └── <assets 内容提升到根>        # css/ js/ fonts/ robots.txt favicon.ico ...
-└── pdf/                            # 配置 pdf_engine 时
+└── pdf/                            # pdf_engine 非空且不为 disable 时
     ├── index.md                    # 合并后的 Markdown
     ├── index.html                  # PDF 中间 HTML
     ├── index.pdf                   # 最终 PDF（可由 pdf_options 自定义路径）
@@ -53,7 +53,7 @@ dist/
 | `sitemap.xml` | `sitemap: true` | `writer.cpp:555` |
 | `meta.json` | `meta: true` | `writer.cpp:540-545` |
 | 静态资源 | 数据目录 `assets/` 或本地 `./assets` 非空 | `writer.cpp` `emit_assets()` |
-| `index.md` / `index.pdf` / `index.html`（均位于 `dist/pdf`） | `render.pdf_engine` 非空且引擎可用 | `writer.cpp` `emit_pdf()` |
+| `index.md` / `index.pdf` / `index.html`（均位于 `dist/pdf`） | `pdf_engine` 非空、不为 `disable` 且引擎可用 | `writer.cpp` `emit_pdf()` |
 | `dist/pdf/fonts/` | `theme/pdf/fonts/` 存在 | `writer.cpp` `copy_pdf_theme_fonts()` |
 
 ## 6.3 文章输出
@@ -175,11 +175,11 @@ flowchart TD
 
 ## 6.11 PDF 输出
 
-`emit_pdf()` 在 `flush_writes()` 之后执行，仅在 `render.pdf_engine` 非空时生效：
+`emit_pdf()` 在 `flush_writes()` 之后执行，仅在顶层 `pdf_engine` 非空且不为 `disable` 时生效：
 
 ```mermaid
 flowchart TD
-    A[pdf_engine 为空] -->|是| Z[跳过]
+    A[pdf_engine 为空或为 disable] -->|是| Z[跳过]
     A -->|否| B[解析 Chrome/Edge 可执行文件]
     B -->|未找到| W[WARN 并跳过]
     B -->|找到| C[按目录树先序收集 visibility != hidden 的 .md]
