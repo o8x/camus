@@ -78,7 +78,7 @@
 
 | Job | Runner | 主要步骤 | 产物 |
 |---|---|---|---|
-| `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `mold`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` | `build/release/packages` |
+| `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `mold`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` + `camus -cw /tmp/site-copy` | `build/release/packages` |
 | `build-macos` | `macos-14` | brew 安装依赖 → submodule → `make package` → `sudo installer -pkg *.pkg -target /` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` | `build/release/packages` |
 | `release` | `ubuntu-24.04` | 下载并合并产物；仅在 tag 上通过 `softprops/action-gh-release` 发布（匹配 `*.dmg/*.pkg/*.rpm/*.deb/*.exe`） | GitHub Release |
 | `pages` | `ubuntu-24.04` 容器 | 安装 deb → `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |

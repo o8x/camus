@@ -5,6 +5,7 @@
     <meta name="description" content="{{ site.subtitle }}">
     <title>{% if current.path != "/" and current.title %}{{ current.title }} - {{ site.title }}{% else %}{{ site.title }} - {{ site.subtitle }}{% endif %}</title>
     <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="{{ with_prefix("/css/style.css") }}">
 </head>
 <body>
 
@@ -63,5 +64,6 @@
         </td>
     </tr>
 </table>
+<script src="{{ with_prefix("/js/onload.js") }}"></script>
 </body>
 </html>

@@ -297,6 +297,7 @@
             .boot-lines { font-size: 1rem; }
         }
     </style>
+    <link rel="stylesheet" href="{{ with_prefix("/css/style.css") }}">
 </head>
 <body>
     <div class="boot-screen">
@@ -406,5 +407,6 @@ READY<span class="boot-cursor"></span></div>
 })();
 </script>
 <script src="{{ with_prefix("/js/ark-pixel-font.js") }}"></script>
+<script src="{{ with_prefix("/js/onload.js") }}"></script>
 </body>
 </html>

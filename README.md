@@ -35,7 +35,7 @@ Or create a new site in an empty directory:
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # install example posts/config into ./.camus and scaffold the workdir
+/path/to/camus -i      # install example camus.yaml, catalog.yaml, posts and .gitignore
 /path/to/camus         # build
 ```
 
@@ -50,8 +50,9 @@ mkdir my-site && cd my-site
 | `camus -W` | Watch for changes and serve locally |
 | `camus -D` | Dry run: parse and render without writing files |
 | `camus -I` | Inspect the parsed configuration and catalog tree |
-| `camus -i` | Install the bundled example resources into `./.camus` |
-| `camus -i -f` | Force reinstall `./.camus` |
+| `camus -i` | Install example `camus.yaml`, `catalog.yaml`, `posts` and `.gitignore` |
+| `camus -c` | Copy the complete bundled resources into `./.camus` |
+| `camus -c -f` | Force re-copy `./.camus` |
 
 ## Configuration
 
@@ -175,7 +176,7 @@ Supported fields include `display-name`, `short-path`, `date`, `visibility` (`op
 
 ## Themes and template helpers
 
-Themes contain `home.html`, `page.html`, `stats.html` and `friends.html`, loaded from `theme/{name}/`, then `.camus/theme/{name}/`, then the platform data directory. Templates use [inja](https://github.com/pantor/inja) and expose the parsed configuration plus helpers:
+Themes contain `home.html`, `page.html`, `stats.html` and `friends.html`, loaded from `theme/{name}/`, then `.camus/theme/{name}/`, then the platform data directory. All built-in themes reference the shared `assets/css/style.css` and `assets/js/onload.js` entries (empty by default, override locally in `./assets`). Templates use [inja](https://github.com/pantor/inja) and expose the parsed configuration plus helpers:
 
 | Helper | Description |
 |---|---|

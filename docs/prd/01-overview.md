@@ -4,7 +4,7 @@
 
 Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章与主题模板，生成静态 HTML 站点。核心特性：
 
-- 外部资源安装：主题、默认静态资源与示例模板由安装包放到平台数据目录；`-i` 可把它们复制到工作目录 `.camus`，安装后优先使用 `.camus`。
+- 外部资源安装：主题、默认静态资源与示例模板由安装包放到平台数据目录；`-c` 可把完整资源复制到工作目录 `.camus`，`-i` 只安装示例配置与文章，复制后优先使用 `.camus`。
 - Markdown（cmark-gfm）渲染，支持 Front Matter 与隐藏片段。
 - 多主题：数据目录内置 `default`、`document`、`pixel`、`terminal` 等主题，本地 `theme/` 可覆盖或自定义。
 - 目录树与目录索引页、统计页、友链页、`sitemap.xml`、`meta.json` 生成。
@@ -45,7 +45,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 - PDF 模板/样式/字体：工作目录 `theme/pdf/{page.html,style.css,fonts.css,fonts/}` → `.camus/theme/pdf/...` → 数据目录。
 - 静态资源：工作目录 `./assets` 优先；否则 `.camus/assets`，再否则数据目录 `assets/`。
 
-构建不再向可执行文件追加模板。`-i` 从数据目录复制资源到 `.camus`，`-f` 覆盖已有 `.camus`（详见 §8）。
+构建不再向可执行文件追加模板。`-i` 从数据目录安装 `camus.yaml`、`catalog.yaml`、`posts`、`.gitignore` 到工作目录根部；`-c` 复制完整资源到 `.camus`，`-f` 覆盖已有 `.camus`（详见 §8）。
 
 ## 1.4 构建流水线
 

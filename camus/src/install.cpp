@@ -5,16 +5,20 @@
 #include <string>
 #include <vector>
 
+#include <build/build.h>
+
 #include "common/filesystem/filesystem.h"
 #include "common/logging/logging.h"
 #include "common/paths/paths.h"
 
 namespace
 {
-	void scaffold_workdir(const std::filesystem::path &workdir, const std::filesystem::path &local_dir)
+	const std::vector<std::string> template_entries{"posts", "camus.yaml", "catalog.yaml", ".gitignore"};
+
+	void scaffold_workdir(const std::filesystem::path &workdir, const std::filesystem::path &source_dir)
 	{
-		for (const auto &name : std::vector<std::string>{"posts", "camus.yaml", "catalog.yaml", ".gitignore"}) {
-			const std::filesystem::path source = local_dir / name;
+		for (const auto &name : template_entries) {
+			const std::filesystem::path source = source_dir / name;
 			const std::filesystem::path target = workdir / name;
 
 			if (!std::filesystem::exists(source) || std::filesystem::exists(target)) {
@@ -24,11 +28,36 @@ namespace
 			std::filesystem::copy(source, target, std::filesystem::copy_options::recursive);
 		}
 	}
+
+	std::filesystem::path template_source_dir()
+	{
+		const std::filesystem::path config = camus::paths::find(CAMUS_CONF_NAME);
+		return config.empty() ? std::filesystem::path{} : config.parent_path();
+	}
 } // namespace
 
 namespace camus
 {
-	int install_resources(const std::filesystem::path &workdir, const bool force)
+	int install_templates(const std::filesystem::path &workdir)
+	{
+		const std::filesystem::path source = template_source_dir();
+		if (source.empty()) {
+			logging::error("install failed: no template resources found in data directories");
+			return 1;
+		}
+
+		try {
+			scaffold_workdir(workdir, source);
+			logging::info("templates installed at '{}'", filesystem::path_abs(workdir));
+		} catch (const std::exception &e) {
+			logging::error("install failed error={}", e.what());
+			return 1;
+		}
+
+		return 0;
+	}
+
+	int copy_resources(const std::filesystem::path &workdir, const bool force)
 	{
 		const std::filesystem::path source = paths::source_data_dir();
 		if (source.empty()) {

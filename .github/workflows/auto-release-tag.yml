@@ -47,6 +47,7 @@ jobs:
                     camus -v
                     camus -dw "$GITHUB_WORKSPACE/example"
                     camus -iw /tmp/site
+                    camus -cw /tmp/site-copy
 
             -   name: Upload
                 uses: actions/upload-artifact@v4
@@ -79,6 +80,7 @@ jobs:
                     camus -v
                     camus -dw "$GITHUB_WORKSPACE/example"
                     camus -iw /tmp/site
+                    camus -cw /tmp/site-copy
 
             -   name: Upload artifact
                 uses: actions/upload-artifact@v4

@@ -152,8 +152,9 @@ flowchart TD
     I --> J[删除临时 dist/html/assets]
 ```
 
-- 默认资源优先使用 `.camus/assets`（`-i` 安装），否则使用平台数据目录的 `assets/`（macOS `~/Library/Application Support/Camus`，Linux `/var/lib/camus`），**不依赖工作目录存在 `./assets`**。
+- 默认资源优先使用 `.camus/assets`（`-c` 复制），否则使用平台数据目录的 `assets/`（macOS `~/Library/Application Support/Camus`，Linux `/var/lib/camus`），**不依赖工作目录存在 `./assets`**。
 - 本地资源目录固定为 `./assets`；存在且非空时整体覆盖默认同名文件，不存在或为空时仅使用默认资源。
+- 默认资源包含空文件 `css/style.css` 与 `js/onload.js`，所有内置主题都会引用它们；本地未覆盖时输出同名空文件，不报错。
 - 仅 `.css`、`.js`、`.txt`、`.json` 会做 inja 变量替换，其它文件原样复制。
 - 最终资源被**提升到输出根目录**（如 `dist/html/css/...`、`dist/html/robots.txt`），不保留 `assets/` 前缀。
 

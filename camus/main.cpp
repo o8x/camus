@@ -13,8 +13,9 @@ int main(const int argc, char **argv)
 	arg.set_program_name("Great writer Camus");
 	arg.add("help", 'h', "print this help and exit");
 	arg.add("version", 'v', "print version and exit");
-	arg.add("install", 'i', "install resources into .camus from data dir");
-	arg.add("force", 'f', "overwrite existing .camus when installing");
+	arg.add("install", 'i', "install camus.yaml, catalog.yaml, posts and .gitignore from data dir");
+	arg.add("copy", 'c', "copy full resources into .camus from data dir");
+	arg.add("force", 'f', "overwrite existing .camus when copying");
 	arg.add("debug", 'd', "enable debugging");
 	arg.add("watch", 'W', "automate building when changes occur");
 	arg.add("dryrun", 'D', "dry run");
@@ -45,8 +46,14 @@ int main(const int argc, char **argv)
 		};
 
 		if (arg.exist("install")) {
-			if (const int installed = camus::install_resources(cmd.workdir, arg.exist("force")); installed != 0) {
+			if (const int installed = camus::install_templates(cmd.workdir); installed != 0) {
 				return installed;
+			}
+		}
+
+		if (arg.exist("copy")) {
+			if (const int copied = camus::copy_resources(cmd.workdir, arg.exist("force")); copied != 0) {
+				return copied;
 			}
 		}
 

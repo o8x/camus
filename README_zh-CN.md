@@ -35,7 +35,7 @@ cd example
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # 把示例文章/配置安装到 ./.camus，并补齐工作目录
+/path/to/camus -i      # 安装示例 camus.yaml、catalog.yaml、posts 与 .gitignore
 /path/to/camus         # 构建
 ```
 
@@ -50,8 +50,9 @@ mkdir my-site && cd my-site
 | `camus -W` | 监听文件变化并启动本地服务 |
 | `camus -D` | 干跑：解析与渲染，但不写文件 |
 | `camus -I` | 打印解析后的配置与目录树 |
-| `camus -i` | 把内置示例资源安装到 `./.camus` |
-| `camus -i -f` | 强制重装 `./.camus` |
+| `camus -i` | 安装示例 `camus.yaml`、`catalog.yaml`、`posts`、`.gitignore` |
+| `camus -c` | 把完整内置资源复制到 `./.camus` |
+| `camus -c -f` | 强制重装 `./.camus` |
 
 ## 配置
 
@@ -175,7 +176,7 @@ visibility: open
 
 ## 主题与模板函数
 
-主题包含 `home.html`、`page.html`、`stats.html`、`friends.html`，加载顺序为 `theme/{name}/` → `.camus/theme/{name}/` → 平台数据目录。模板使用 [inja](https://github.com/pantor/inja)，可直接访问解析后的配置，并提供：
+主题包含 `home.html`、`page.html`、`stats.html`、`friends.html`，加载顺序为 `theme/{name}/` → `.camus/theme/{name}/` → 平台数据目录。所有内置主题都会引用公共入口 `assets/css/style.css` 与 `assets/js/onload.js`（默认空文件，可在本地 `./assets` 覆盖）。模板使用 [inja](https://github.com/pantor/inja)，可直接访问解析后的配置，并提供：
 
 | 函数 | 说明 |
 |---|---|
