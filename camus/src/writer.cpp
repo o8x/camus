@@ -6,6 +6,7 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <ranges>
 #include <string>
 #include <thread>
@@ -24,6 +25,7 @@
 #include "common/render/render.h"
 #include "common/str/str.h"
 #include "inja/inja.hpp"
+#include "pdf.h"
 #include "yaml_config.h"
 
 namespace
@@ -930,6 +932,7 @@ namespace camus
 		const std::string fonts_source = read_pdf_theme_file(CAMUS_PDF_FONTS_NAME, false);
 
 		nlohmann::json view = conf_.json();
+		view["pdf_page_offset"] = 0;
 		std::string markdown = std::format("# {}\n\n{}\n", site_title, conf_.camus().site.description);
 
 		nlohmann::json pdf;
@@ -952,6 +955,7 @@ namespace camus
 		pdf["title_page"] = {
 			{"title", cover_title},
 			{"subtitle", cover_subtitle},
+			{"description", cover_desc},
 		};
 		pdf["meta"] = {
 			{"article_count", articles.size()},
@@ -989,6 +993,7 @@ namespace camus
 					{"number", number},
 					{"title", html_escape(label)},
 					{"tags", tags},
+					{"page", ""},
 				}
 			);
 
@@ -1022,10 +1027,6 @@ namespace camus
 		copy_pdf_theme_fonts(pdf_dir);
 
 		view["pdf"] = std::move(pdf);
-
-		const std::string html = render::inja_render(inja_, template_source, view);
-
-		filesystem::write_file(html_path, html);
 
 		std::vector<std::string> args;
 		bool has_headless = false;
@@ -1100,19 +1101,62 @@ namespace camus
 		}
 
 		logging::debug("pdf command: {}", command);
-		const int status = std::system(command.c_str());
+
+		const auto render_and_print = [&]() {
+			filesystem::write_file(html_path, render::inja_render(inja_, template_source, view));
+
+			const int status = std::system(command.c_str());
+			if (status != 0) {
+				logging::warn("pdf generation command failed status={}", status);
+				return false;
+			}
+
+			if (!std::filesystem::exists(pdf_path) || std::filesystem::file_size(pdf_path, ec) == 0) {
+				logging::warn("pdf generation failed, output not found name={}", pdf_path.string());
+				return false;
+			}
+
+			return true;
+		};
+
+		if (!render_and_print()) {
+			std::filesystem::remove_all(profile_dir, ec);
+			return;
+		}
+
+		const std::map<std::string, int> anchor_pages = pdf::read_anchor_pages(pdf_path);
+
+		int page_offset = 0;
+		if (const auto intro = anchor_pages.find("pdf-intro"); intro != anchor_pages.end()) {
+			page_offset = 1 - intro->second;
+		}
+
+		bool numbered = page_offset != 0;
+		for (auto &item : view["pdf"]["toc"]) {
+			const auto page = anchor_pages.find(item["anchor"].get<std::string>());
+			if (page == anchor_pages.end()) {
+				continue;
+			}
+
+			const int number = page->second + page_offset;
+			if (number < 1) {
+				continue;
+			}
+
+			item["page"] = number;
+			numbered = true;
+		}
+
+		if (numbered) {
+			view["pdf_page_offset"] = page_offset;
+			view["pdf"]["style"] = render::inja_render(inja_, style_source, view);
+			logging::debug("pdf page offset={} toc page numbers resolved count={}", page_offset, anchor_pages.size());
+			if (!render_and_print()) {
+				logging::warn("pdf generation with toc page numbers failed, keep previous output");
+			}
+		}
 
 		std::filesystem::remove_all(profile_dir, ec);
-
-		if (status != 0) {
-			logging::warn("pdf generation command failed status={}", status);
-			return;
-		}
-
-		if (!std::filesystem::exists(pdf_path) || std::filesystem::file_size(pdf_path, ec) == 0) {
-			logging::warn("pdf generation failed, output not found name={}", pdf_path.string());
-			return;
-		}
 
 		logging::debug("make pdf dest={} engine={}", pdf_path.string(), engine);
 	}

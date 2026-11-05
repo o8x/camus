@@ -163,16 +163,21 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 |---|---|---|
 | `pdf.lang` | 字符串 | 站点标题非空时为 `zh-CN`，否则为 `en` |
 | `pdf.title` | 字符串 | 已 HTML 转义的封面标题（站点标题为空时回退 `Camus`） |
-| `pdf.style` | 字符串 | `style.css` 经配置 JSON 渲染后的内容（可写 inja 配置变量） |
+| `pdf.style` | 字符串 | `style.css` 经配置 JSON 渲染后的内容（可写 inja 配置变量；另提供顶层 `pdf_page_offset` 供页码偏移使用） |
 | `pdf.fonts` | 字符串 | `fonts.css` 经配置 JSON 渲染后的内容；文件缺失时为空串 |
 | `pdf.intro` | 字符串 | 引导页 Markdown（`# site.title` + `site.description`）渲染后的 HTML，**未转义** |
-| `pdf.cover` | 对象 | `eyebrow`、`title`、`subtitle`、`description`、`meta`（生成日期），均按模板需要预转义 |
-| `pdf.title_page` | 对象 | `title`、`subtitle` |
-| `pdf.meta` | 对象 | `article_count`、`generated_at`、`domain`、`version` |
-| `pdf.toc` | 数组 | 每项 `anchor`、`index`、`number`（两位序号）、`title`、`tags`；`title`/`tags` 已转义 |
+| `pdf.cover` | 对象 | `eyebrow`、`title`、`subtitle`、`description`、`meta`（生成日期），均按模板需要预转义；默认模板只输出 `title`、`subtitle`，其余字段保留以兼容自定义主题 |
+| `pdf.title_page` | 对象 | `title`、`subtitle`、`description`（`site.description`），均按模板需要预转义 |
+| `pdf.meta` | 对象 | `article_count`、`generated_at`、`domain`、`version`；默认模板不显示 `article_count` |
+| `pdf.toc` | 数组 | 每项 `anchor`、`index`、`number`（两位序号）、`title`、`tags`、`page`（1 起始页码；解析不到时为空串）；`title`/`tags` 已转义 |
 | `pdf.articles` | 数组 | 每项 `anchor`、`index`、`number`、`title`、`tags`、`content`；`content` 为渲染后的文章 HTML，**未转义** |
 
-- `style.css` 与 `fonts.css` 先以配置 JSON 单独渲染（可使用 `{{ build.version }}`、`{{ site.title }}` 等配置变量），再分别作为 `pdf.style` / `pdf.fonts` 字符串插入 `page.html`；`page.html` 自身以「配置 JSON + `pdf` 对象」渲染。插入的样式内容不会被二次解析。
+- 默认模板的扉页与目录使用英文标签（`Generated` / `Site` / `Version` / `Contents`），不输出文章数。
+- 页码从正文（`#pdf-intro` 引导页）开始计为第 1 页：封面、扉页、目录使用命名页 `page: front`，其 `@bottom-center` 内容为空；`html { counter-reset: page {{ pdf_page_offset }}; }` 整体偏移页计数。默认模板在 `<body>` 顶部放置一个 `display: none` 的 `#pdf-intro` 链接，使浏览器在 PDF 中生成该锚点的命名目标。
+- 默认 `style.css` 通过 `@page { @bottom-center { content: counter(page); } }` 在正文页底部居中输出页码；`pdf.toc[].page` 使用同一套正文页序（物理页 + `pdf_page_offset`）。
+- **两遍渲染**：第一次生成 PDF 后解析其命名目标（anchor → 页对象）得到各锚点物理页码；以 `pdf-intro` 的物理页计算 `pdf_page_offset = 1 - intro_page`，回填 `pdf.toc[].page = article_page + pdf_page_offset` 并重新渲染 `pdf.style` 与 HTML，再次打印 PDF。解析失败时保留第一遍产物（目录页码为空、目录锚点仍可跳转）。目录页码列在首遍即占位固定宽度，避免第二遍排版位移。
+
+- `style.css` 与 `fonts.css` 先以配置 JSON 单独渲染（可使用 `{{ build.version }}`、`{{ site.title }}` 等配置变量），再分别作为 `pdf.style` / `pdf.fonts` 字符串插入 `page.html`；`page.html` 自身以「配置 JSON + `pdf` 对象」渲染。插入的样式内容不会被二次解析。第二遍打印前会再以更新后的 `pdf_page_offset` 重新渲染一次 `pdf.style`。
 - `body` 的字体定义默认位于 `fonts.css`，`style.css` 只保留颜色、行高等打印样式。`fonts.css` 中的自定义字体示例默认被注释：将 ttf 放入 `theme/pdf/fonts/`，取消 `@font-face` 与 `body` 覆盖注释即可启用。
 - `theme/pdf/fonts/` 存在时会在写 `dist/pdf/index.html` 前递归复制到 `dist/pdf/fonts/`，因此 `url("fonts/<file>.ttf")` 相对 `dist/pdf/index.html` 可正常加载；该目录缺失时跳过复制。
 - 默认模板生成的 HTML 结构、封面/扉页/目录/文章分页样式与原硬编码版本一致；用户可整体替换 `page.html`，或只覆盖 `style.css` / `fonts.css` / `fonts/`。

@@ -9,34 +9,32 @@
 </style>
 </head>
 <body>
+<a class="pdf-anchor-link" href="#pdf-intro" aria-hidden="true"></a>
 <section class="pdf-cover">
-<div class="pdf-cover__eyebrow">{{ pdf.cover.eyebrow }}</div>
 <h1 class="pdf-cover__title">{{ pdf.cover.title }}</h1>
 <p class="pdf-cover__subtitle">{{ pdf.cover.subtitle }}</p>
-<p class="pdf-cover__desc">{{ pdf.cover.description }}</p>
-<div class="pdf-cover__meta">{{ pdf.cover.meta }}</div>
 </section>
 <section class="pdf-title-page">
 <div class="pdf-title-page__inner">
 <h1 class="pdf-title-page__title">{{ pdf.title_page.title }}</h1>
 <p class="pdf-title-page__subtitle">{{ pdf.title_page.subtitle }}</p>
+<p class="pdf-title-page__desc">{{ pdf.title_page.description }}</p>
 <hr class="pdf-title-page__rule">
 <dl class="pdf-meta">
-<dt>文章数</dt><dd>{{ pdf.meta.article_count }}</dd>
-<dt>生成日期</dt><dd>{{ pdf.meta.generated_at }}</dd>
-<dt>站点</dt><dd>{{ pdf.meta.domain }}</dd>
-<dt>版本</dt><dd>v{{ pdf.meta.version }}</dd>
+<dt>Generated</dt><dd>{{ pdf.meta.generated_at }}</dd>
+<dt>Site</dt><dd>{{ pdf.meta.domain }}</dd>
+<dt>Version</dt><dd>v{{ pdf.meta.version }}</dd>
 </dl>
 </div>
 </section>
 <section class="pdf-toc">
-<h2 class="pdf-toc__heading">目录</h2>
+<h2 class="pdf-toc__heading">Contents</h2>
 <ol class="pdf-toc__list">
-{% for item in pdf.toc %}<li class="pdf-toc__item"><a class="pdf-toc__link" href="#{{ item.anchor }}"><span class="pdf-toc__num">{{ item.number }}</span><span class="pdf-toc__title">{{ item.title }}</span><span class="pdf-toc__tags">{{ item.tags }}</span></a></li>
+{% for item in pdf.toc %}<li class="pdf-toc__item"><a class="pdf-toc__link" href="#{{ item.anchor }}"><span class="pdf-toc__num">{{ item.number }}</span><span class="pdf-toc__title">{{ item.title }}</span><span class="pdf-toc__tags">{{ item.tags }}</span><span class="pdf-toc__page">{{ item.page }}</span></a></li>
 {% endfor %}</ol>
 </section>
 <main>
-<section class="pdf-intro">
+<section id="pdf-intro" class="pdf-intro">
 {{ pdf.intro }}
 </section>
 {% for article in pdf.articles %}<section id="{{ article.anchor }}" class="pdf-article">
