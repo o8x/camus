@@ -10,6 +10,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 - 目录树与目录索引页、统计页、友链页、`sitemap.xml`、`meta.json` 生成。
 - 可选 PDF 输出：把全部可见文章合并为单个 Markdown，经 cmark-gfm 转 HTML 后调用 Chrome/Edge 无头模式打印为 PDF；PDF 的 HTML 模板、打印样式、字体样式与自定义字体位于 `theme/pdf/`，同样支持本地覆盖。
 - `-W` 监听模式：轮询文件变化并自动重建，同时提供本地 HTTP 服务。
+- `--open`：构建成功后用 VS Code 打开工作目录；`--open runtime` 用系统文件管理器打开数据目录。
 - `private` 目录：源目录下任意名为 `private` 的子目录不参与扫描与生成，也不能作为目录页路由。
 
 当前版本见 `docs/PRD.md` 项目表（与 `CMakeLists.txt` 的 `project(... VERSION ...)` 保持一致），本文档不写死具体版本号。

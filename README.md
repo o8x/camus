@@ -53,6 +53,8 @@ mkdir my-site && cd my-site
 | `camus -i` | Install example `camus.yaml`, `posts` (with `catalog.yaml`) and `.gitignore` |
 | `camus -c` | Copy the complete bundled resources into `./.camus` |
 | `camus -c -f` | Force re-copy `./.camus` |
+| `camus --open` | Build, then open the workdir in VS Code |
+| `camus --open runtime` | Build, then open the data directory in the file manager |
 
 ## Configuration
 

@@ -8,7 +8,7 @@
 camus [选项] [--workdir <目录>]
 ```
 
-所有选项均为可选；唯一带值选项是 `-w/--workdir`。
+所有选项均为可选；带值选项为 `-w/--workdir` 与 `--open`（`--open` 的值可省略，裸写时等价 `--open project`）。
 
 ## 2.2 选项表
 
@@ -23,6 +23,7 @@ camus [选项] [--workdir <目录>]
 | `-W` | `--watch` | 无 | 监听文件变化并自动重建，同时启动本地服务 | `main.cpp:11` |
 | `-D` | `--dryrun` | 无 | 干跑：不写任何输出文件 | `main.cpp:12` |
 | `-I` | `--inspect` | 无 | 打印当前配置并执行一次干跑构建、打印目录树 | `main.cpp:13` |
+|  | `--open` | 可选值：`project`（默认）/`runtime` | 构建成功后打开目录：`project` 用 VS Code 打开工作目录，`runtime` 用系统文件管理器打开数据目录；未知值打印 WARN 并按 `project` 处理 | `main.cpp` |
 | `-w` | `--workdir` | 目录字符串，默认 `.` | 工作目录 | `main.cpp:14` |
 
 > 资源来源：主题、默认资源与示例模板由安装包放到平台数据目录。`-i` 只安装工作目录根部的示例文件，`-c` 才把完整资源复制到 `.camus`；复制后资源查找优先 `.camus`，未复制时使用数据目录（见 §8）。
@@ -34,6 +35,7 @@ camus [选项] [--workdir <目录>]
 - 未知长/短选项会被记录为错误；解析失败或存在 `-h` 时，输出 `error_full()` + `usage()` 并返回 **1**。
 - 非选项位置参数被收集到 `rest()`，当前主程序**未使用**。
 - 解析成功后，`-d` 或编译期 `WORK_ON_DEBUG=true`（Debug/RelWithDebInfo 构建）会把日志级别设为 DEBUG。
+- `--open` 的值可省略：解析前会把裸 `--open` 归一化为 `--open=project`；若下一参数不以 `-` 开头（如 `--open runtime`），则作为其值消费。`--open=value` 写法直接按值解析。
 
 ## 2.4 模式与执行流程
 
@@ -57,8 +59,12 @@ flowchart TD
     Q -->|是| INSP[inspect, 退出 0]
     Q -->|否| WD[chdir workdir]
     WD --> B[build]
-    B -->|未指定 -W| RET[返回 build 退出码]
-    B -->|指定 -W| WA[watch 循环]
+    B --> O{--open 且 build 成功?}
+    O -->|是| OP[open_target: project/runtime]
+    O -->|否| RET
+    OP -->|未指定 -W| RET[返回 build 退出码 / 打开失败码]
+    OP -->|指定 -W| WA[watch 循环]
+    RET -->|指定 -W| WA
 ```
 
 要点：
@@ -69,6 +75,8 @@ flowchart TD
 - `-f` 仅在 `-c` 时生效：先清空 `<workdir>/.camus`（受 §6.1 文件数保护）再重新复制，工作目录已有文件不会被覆盖。
 - `-I` 在构建前执行，`inspect()` 内部把 dryrun 置为 true，因此不会写文件。
 - `-W` 时即使首次 `build()` 返回非 0，也会进入 `watch()` 循环继续等待变化。
+- `--open` 仅在 `build()` 返回 0 时执行，且只执行一次：非 watch 模式在打开后按结果退出，watch 模式先打开再进入监听循环。
+- `--open project` 依次尝试 `code <workdir>` 与 macOS 的 `open -a "Visual Studio Code" <workdir>`；`--open runtime` 在 macOS 使用 `open <数据目录>`，其它平台使用 `xdg-open <数据目录>`。打开失败打印错误并返回 1（watch 模式不退出）。
 
 ## 2.5 版本输出
 
@@ -98,6 +106,7 @@ Build Time: 2025-07-24 15:44:00 hash=<40 位 git hash>
 | 参数解析失败 | 1 | `main.cpp:102` |
 | 无文章（目录树为空） | 1 | `writer.cpp:812`（非 watch 模式） |
 | 安装/复制失败（数据目录无资源或复制异常） | 1 | `install_templates` / `copy_resources` 返回 1 |
+| `--open` 打开失败 | 1 | `open_target` 返回 1（仅非 watch 模式退出） |
 | 致命错误（配置缺失、渲染失败、输出目录文件过多等） | 127 | `logging::fatal` → `std::exit(127)` |
 | 未捕获异常 | 127 | catch 中 `logging::fatal` 退出 |
 
@@ -113,4 +122,6 @@ camus -Ww mysite          # 监听 mysite 并自动重建
 camus -I                  # 打印配置 + 干跑构建 + 打印目录树
 camus -D -v               # 版本信息（-D 对 -v 无影响）
 camus -dw /tmp/site       # 调试日志 + 构建
+camus --open              # 构建后在 VS Code 打开工作目录
+camus --open runtime      # 构建后用文件管理器打开数据目录
 ```

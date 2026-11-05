@@ -53,6 +53,8 @@ mkdir my-site && cd my-site
 | `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `catalog.yaml`）与 `.gitignore` |
 | `camus -c` | 把完整内置资源复制到 `./.camus` |
 | `camus -c -f` | 强制重装 `./.camus` |
+| `camus --open` | 构建后在 VS Code 中打开工作目录 |
+| `camus --open runtime` | 构建后用文件管理器打开数据目录 |
 
 ## 配置
 

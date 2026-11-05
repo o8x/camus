@@ -1,11 +1,42 @@
 #include <iostream>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include "build/build.h"
 #include "common/cmdline/cmdline.h"
 #include "common/filesystem/filesystem.h"
 #include "install.h"
+#include "open.h"
 #include "writer.h"
+
+namespace
+{
+	// cmdline 的带值选项会强制消费下一个参数，这里把裸 --open 归一化为 --open=project，
+	// 同时允许 --open runtime 这种可选值写法。
+	std::vector<std::string> normalize_open_args(const int argc, char **argv)
+	{
+		std::vector<std::string> args;
+		for (int i = 0; i < argc; i++) {
+			if (const std::string current = argv[i]; current != "--open") {
+				args.push_back(current);
+				continue;
+			}
+
+			std::string target = CAMUS_OPEN_TARGET_PROJECT;
+			if (i + 1 < argc) {
+				if (const std::string next = argv[i + 1]; !next.empty() && next.front() != '-') {
+					target = next;
+					i++;
+				}
+			}
+
+			args.push_back("--open=" + target);
+		}
+
+		return args;
+	}
+} // namespace
 
 int main(const int argc, char **argv)
 {
@@ -20,9 +51,17 @@ int main(const int argc, char **argv)
 	arg.add("watch", 'W', "automate building when changes occur");
 	arg.add("dryrun", 'D', "dry run");
 	arg.add("inspect", 'I', "inspect current configure");
+	arg.add<std::string>(
+		"open",
+		0,
+		"open workdir in VS Code; use 'runtime' to open the data directory",
+		false,
+		CAMUS_OPEN_TARGET_PROJECT
+	);
 	arg.add<std::string>("workdir", 'w', "work dir", false, ".");
 
-	if (const bool parse_result = arg.parse(argc, argv); !parse_result || arg.exist("help")) {
+	const std::vector<std::string> args = normalize_open_args(argc, argv);
+	if (const bool parse_result = arg.parse(args); !parse_result || arg.exist("help")) {
 		std::cout << arg.error_full() << std::endl << arg.usage();
 		return 1;
 	}
@@ -66,7 +105,15 @@ int main(const int argc, char **argv)
 		std::filesystem::current_path(cmd.workdir);
 		logging::info("enter work directory: {}", cmd.workdir.string());
 
-		if (const int code = c->build(); !arg.exist("watch")) {
+		const int code = c->build();
+		if (arg.exist("open") && code == 0) {
+			if (const int opened = camus::open_target(arg.get<std::string>("open"), cmd.workdir);
+				opened != 0 && !arg.exist("watch")) {
+				return opened;
+			}
+		}
+
+		if (!arg.exist("watch")) {
 			return code;
 		}
 
