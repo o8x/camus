@@ -12,7 +12,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 - `-W` 监听模式：轮询文件变化并自动重建，同时提供本地 HTTP 服务。
 - `private` 目录：源目录下任意名为 `private` 的子目录不参与扫描与生成，也不能作为目录页路由。
 
-当前版本：**11.2.0**（来源：`CMakeLists.txt` 的 `project(... VERSION 11.2.0)`）。
+当前版本见 `docs/PRD.md` 项目表（与 `CMakeLists.txt` 的 `project(... VERSION ...)` 保持一致），本文档不写死具体版本号。
 
 ## 1.2 技术栈与依赖
 
@@ -91,7 +91,7 @@ flowchart TD
 
 | 项 | 值 | 来源 |
 |---|---|---|
-| 版本号 | 11.2.0 | `CMakeLists.txt` |
-| 主版本 | 11 | `PROJECT_VERSION_MAJOR` |
-| 版本输出示例 | `v11.2.0 Release with CMake 3.28.3 and C++ 23` | `camus/main.cpp:110` |
+| 版本号 | 以 `docs/PRD.md` 项目表与 `CMakeLists.txt` 为准 | `PROJECT_VERSION` |
+| 主版本 | 由项目版本自动拆分 | `PROJECT_VERSION_MAJOR` |
+| 版本输出示例 | `v{PROJECT_VERSION} Release with CMake 3.28.3 and C++ 23` | `camus/main.cpp:110` |
 | 构建信息 | `Build Time: <时间> hash=<git 40 位 hash>` | `config.h.in` + `camus/main.cpp:113` |
