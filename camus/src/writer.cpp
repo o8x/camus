@@ -1121,6 +1121,8 @@ namespace camus
 			error::panic("work directory not exists name={}", cmd_.workdir.string());
 		}
 
+		conf_.set_watch_mode(cmd_.watch);
+
 		inja_.add_callback("format_datetime", 1, [](const inja::Arguments &args) {
 			const int unix_ts = args.at(0)->get<int>();
 			return functions::format_time_t(unix_ts);

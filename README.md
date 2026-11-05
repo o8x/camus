@@ -104,7 +104,7 @@ build:
 
 `public_url` accepts with or without a protocol. Missing protocols default to `https://`; a trailing slash is normalized away. It drives absolute links, the sitemap, and PDF cover data.
 
-`cdn_url` is optional and empty by default. When set, `with_cdn(path)` returns `cdn_url + with_prefix(path)`; when empty it returns `path` unchanged.
+`cdn_url` is optional and empty by default. When set, `with_cdn(path)` returns `cdn_url + with_prefix(path)`; when empty it returns `path` unchanged. In watch mode (`-W`), both `public_url` and `cdn_url` are ignored so local builds use root-relative paths.
 
 ### Directory metadata (`README.md`)
 

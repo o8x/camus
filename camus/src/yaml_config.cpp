@@ -238,6 +238,11 @@ namespace camus::config
 	{
 	}
 
+	void yaml_config::set_watch_mode(const bool enabled)
+	{
+		watch_mode_ = enabled;
+	}
+
 	void yaml_config::reload()
 	{
 		if (!std::filesystem::exists(filename_)) {
@@ -372,6 +377,12 @@ namespace camus::config
 				}
 				continue;
 			}
+		}
+
+		// 监听模式由本地服务访问，公网地址无意义，按未配置处理
+		if (watch_mode_) {
+			camus_.public_url = {};
+			camus_.cdn_url.clear();
 		}
 
 		if (std::filesystem::is_directory("src")) {

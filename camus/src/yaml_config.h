@@ -134,10 +134,14 @@ namespace camus::config
 
 		const std::string filename_;
 
+		// 监听模式：本地访问时 public_url / cdn_url 无效，解析后清空
+		bool watch_mode_ = false;
+
 		void supplement_other_vars();
 
 	  public:
 		explicit yaml_config(const std::string &filename);
+		void set_watch_mode(bool enabled);
 		void reload();
 
 		[[nodiscard]] camus_conf camus() const;

@@ -82,6 +82,7 @@ int main(const int argc, char **argv)
 		const camus::cmdline cmd{
 			.workdir = filesystem::path_abs(arg.get<std::string>("workdir")),
 			.dryrun = arg.exist("dryrun"),
+			.watch = arg.exist("watch"),
 		};
 
 		if (arg.exist("install")) {

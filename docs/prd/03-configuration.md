@@ -36,11 +36,11 @@
 | `meta` | bool | 默认 `true` | 是否输出 `meta.json` | `yaml_config.cpp` |
 | `sitemap` | bool | 默认 `true` | 是否输出 `sitemap.xml` | `yaml_config.cpp` |
 | `filename_case` | 字符串 | 默认 `keep` | `uuid` 时文章 `display_name` 生成 UUID 并输出到 `/s/<uuid>.html` 风格短链 | `yaml_config.cpp` |
-| `public_url` | 字符串 | 可选 | 站点对外访问地址，自动拆解为下方三项 | `yaml_config.cpp` `parse_public_url()` |
+| `public_url` | 字符串 | 可选 | 站点对外访问地址，自动拆解为下方三项；`-W` 监听模式下忽略（按空处理） | `yaml_config.cpp` `parse_public_url()` |
 | `protocol` | 字符串（只读派生） | 默认 `https://` | `public_url` 的协议部分，含 `://` | 同上 |
 | `domain_name` | 字符串（只读派生） | 空 | `public_url` 的域名部分（含端口，去除空格） | 同上 |
 | `path_prefix` | 字符串（只读派生） | 空 | `public_url` 的路径部分，以 `/` 开头且不带尾斜杠 | 同上 |
-| `cdn_url` | 字符串 | 空 | `with_cdn()` 使用的 CDN 基地址；为空时 `with_cdn(path)` 原样返回 `path`，末尾多余 `/` 会被去除 | `yaml_config.cpp` |
+| `cdn_url` | 字符串 | 空 | `with_cdn()` 使用的 CDN 基地址；为空时 `with_cdn(path)` 原样返回 `path`，末尾多余 `/` 会被去除；`-W` 监听模式下忽略（按空处理） | `yaml_config.cpp` |
 | `theme` | 字符串 | 默认 `default` | 主题目录名 | `yaml_config.cpp` |
 | `markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp` |
 | `pdf_engine` | 字符串 | 可选 | PDF 引擎：`chromium`/`chrome`/`edge`，或可执行文件路径；非空且不为 `disable` 时启用 PDF 生成 | `yaml_config.cpp` |
@@ -56,6 +56,8 @@
 | `http://localhost:8080/blog/` | `http://` | `localhost:8080` | `/blog` | `http://localhost:8080/blog` |
 
 `public_url_conf::full_prefix()` = `protocol + domain_name + path_prefix`，用于绝对链接与 sitemap。
+
+`-W` 监听模式由本地服务访问，`public_url` 与 `cdn_url` 在解析后被清空（`path_prefix` 随之为空），构建产物使用根相对路径。
 
 ### 3.3.1 PDF 引擎与参数
 

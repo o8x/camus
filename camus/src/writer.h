@@ -12,6 +12,8 @@ namespace camus
 		std::filesystem::path workdir;
 		// 空转
 		bool dryrun;
+		// 监听模式：忽略 public_url / cdn_url，避免生成外网绝对地址
+		bool watch;
 	};
 
 	struct article_stats {
