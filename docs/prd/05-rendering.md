@@ -64,9 +64,9 @@ flowchart TD
 | `format_datetime` | `format_datetime(unix_ts)` → string | UTC `%Y-%m-%d %H:%M:%S` | `{{ format_datetime(page.write_time) }}` |
 | `format_date` | `format_date(unix_ts)` → string | UTC `%Y-%m-%d` | `{{ format_date(page.write_time) }}` |
 | `with_prefix` | `with_prefix(path)` → string | `clean_path(path, public_url.path_prefix)` | `{{ with_prefix("index.html") }}` |
-| `with_cdn` | `with_cdn(path)` → string | 拼接 `public_url.protocol + public_url.domain_name + with_prefix(path)` 的完整 URL | `{{ with_cdn("css/a.css") }}` |
+| `with_cdn` | `with_cdn(path)` → string | `cdn_url` 非空时返回 `cdn_url + with_prefix(path)`；`cdn_url` 为空时原样返回 `path`（不做任何替换） | `{{ with_cdn("css/a.css") }}` |
 
-`with_cdn` 仅依赖 `public_url` 配置拼接 URL，不再读取任何环境变量。
+`with_cdn` 仅依赖 `cdn_url` 与 `public_url.path_prefix` 配置，不再读取任何环境变量。
 
 ## 5.5 文章页渲染数据
 

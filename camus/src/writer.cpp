@@ -1138,13 +1138,15 @@ namespace camus
 
 		inja_.add_callback("with_cdn", 1, [&](const inja::Arguments &args) {
 			const std::string name = args.at(0)->get<std::string>();
-			const auto public_url = conf_.camus().public_url;
+			const auto camus = conf_.camus();
+			if (camus.cdn_url.empty()) {
+				return name;
+			}
 
 			return std::format(
-				"{}{}{}",
-				public_url.protocol,
-				public_url.domain_name,
-				filesystem::clean_path(name, public_url.path_prefix)
+				"{}{}",
+				camus.cdn_url,
+				filesystem::clean_path(name, camus.public_url.path_prefix)
 			);
 		});
 	}

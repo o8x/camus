@@ -40,6 +40,7 @@
 | `protocol` | 字符串（只读派生） | 默认 `https://` | `public_url` 的协议部分，含 `://` | 同上 |
 | `domain_name` | 字符串（只读派生） | 空 | `public_url` 的域名部分（含端口，去除空格） | 同上 |
 | `path_prefix` | 字符串（只读派生） | 空 | `public_url` 的路径部分，以 `/` 开头且不带尾斜杠 | 同上 |
+| `cdn_url` | 字符串 | 空 | `with_cdn()` 使用的 CDN 基地址；为空时 `with_cdn(path)` 原样返回 `path`，末尾多余 `/` 会被去除 | `yaml_config.cpp` |
 | `theme` | 字符串 | 默认 `default` | 主题目录名 | `yaml_config.cpp` |
 | `markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp` |
 | `pdf_engine` | 字符串 | 可选 | PDF 引擎：`chromium`/`chrome`/`edge`，或可执行文件路径；非空且不为 `disable` 时启用 PDF 生成 | `yaml_config.cpp` |
@@ -176,7 +177,7 @@ transfer:
 
 | 顶层键 | 结构 | 说明 |
 |---|---|---|
-| `camus` | 对象 | 兼容保留的聚合对象：`source_dir`、`assets_dir`、`site`、`meta`、`sitemap`、`filename_case`、`public_url`、`protocol`、`domain_name`、`path_prefix`、`render`、`friends`；`render.options` 为选项展示串 |
+| `camus` | 对象 | 兼容保留的聚合对象：`source_dir`、`assets_dir`、`site`、`meta`、`sitemap`、`filename_case`、`public_url`、`protocol`、`domain_name`、`path_prefix`、`cdn_url`、`render`、`friends`；`render.options` 为选项展示串 |
 | `source_dir` | 字符串 | 解析后的源目录绝对路径（`src`→`posts` 探测） |
 | `assets_dir` | 字符串 | 解析后的资源目录绝对路径 |
 | `meta` | bool | 是否输出 `meta.json` |
@@ -186,6 +187,7 @@ transfer:
 | `protocol` | 字符串 | `public_url` 的协议部分（`https://`） |
 | `domain_name` | 字符串 | `public_url` 的域名部分 |
 | `path_prefix` | 字符串 | `public_url` 的路径前缀 |
+| `cdn_url` | 字符串 | CDN 基地址（默认空） |
 | `render` | 对象 | 模板兼容聚合对象（`theme_name`、`html_engine`、`markdown_engine`、`pdf_engine`、`pdf_options`）；对应配置项在 `camus.yaml` 顶层，此对象仅用于模板数据 |
 | `friends` | 数组 | 友情链接 |
 | `site` | 对象 | 根路由（`path/title/subtitle/description/transfers`） |

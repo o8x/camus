@@ -100,6 +100,8 @@ namespace camus::config
 		output_conf output;
 		// 对外访问地址（自动拆解为 protocol/domain_name/path_prefix）
 		public_url_conf public_url;
+		// CDN 地址，为空时 with_cdn 原样返回
+		std::string cdn_url;
 		// 渲染
 		render_conf render;
 		// 友情链接

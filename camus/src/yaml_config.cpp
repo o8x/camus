@@ -182,6 +182,7 @@ namespace camus::config
 		public_config_["protocol"] = camus_.public_url.protocol;
 		public_config_["domain_name"] = camus_.public_url.domain_name;
 		public_config_["path_prefix"] = camus_.public_url.path_prefix;
+		public_config_["cdn_url"] = camus_.cdn_url;
 		public_config_["render"] = camus_.render;
 		public_config_["friends"] = camus_.friends;
 
@@ -361,6 +362,14 @@ namespace camus::config
 
 			if (key == "public_url") {
 				camus_.public_url = parse_public_url(get_string(it.second));
+				continue;
+			}
+
+			if (key == "cdn_url") {
+				camus_.cdn_url = strings::trim_space(get_string(it.second));
+				while (camus_.cdn_url.size() > 1 && camus_.cdn_url.ends_with('/')) {
+					camus_.cdn_url.pop_back();
+				}
 				continue;
 			}
 		}
@@ -606,6 +615,7 @@ namespace camus::config
 		camus_json["protocol"] = camus_.public_url.protocol;
 		camus_json["domain_name"] = camus_.public_url.domain_name;
 		camus_json["path_prefix"] = camus_.public_url.path_prefix;
+		camus_json["cdn_url"] = camus_.cdn_url;
 		camus_json["render"] = camus_.render;
 		camus_json["friends"] = camus_.friends;
 		camus_json["render"]["options"] =

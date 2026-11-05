@@ -74,6 +74,9 @@ filename_case: keep        # keep | uuid
 # https://stdout.com.cn/camus -> https:// + stdout.com.cn + /camus
 public_url: https://stdout.com.cn/camus
 
+# 可选的 CDN 地址，供 with_cdn() 使用；默认空，为空时 with_cdn(path) 原样返回 path
+cdn_url: ''                # 例如 https://cdn.stdout.com.cn/camus
+
 theme: terminal
 pdf_engine: chrome         # 设为 disable 时跳过 PDF 生成
 pdf_options:
@@ -98,7 +101,9 @@ friends:
     desc: What's past is prologue.
 ```
 
-`public_url` 可带协议也可省略：省略时默认 `https://`，末尾多余的 `/` 会被归一化。它用于绝对链接、sitemap、PDF 封面信息以及 `with_cdn()` 函数。
+`public_url` 可带协议也可省略：省略时默认 `https://`，末尾多余的 `/` 会被归一化。它用于绝对链接、sitemap 与 PDF 封面信息。
+
+`cdn_url` 可选、默认空。设置后 `with_cdn(path)` 返回 `cdn_url + with_prefix(path)`；为空时原样返回 `path`。
 
 ### 目录元信息（`README.md`）
 
@@ -184,7 +189,7 @@ visibility: open
 | 函数 | 说明 |
 |---|---|
 | `{{ with_prefix("/css/site.css") }}` | 为路径加上 `path_prefix` |
-| `{{ with_cdn("/css/site.css") }}` | 用 `protocol + domain_name + path_prefix` 拼接绝对 URL |
+| `{{ with_cdn("/css/site.css") }}` | 用 `cdn_url + path_prefix` 拼接；`cdn_url` 为空时原样返回路径 |
 
 ## 输出
 

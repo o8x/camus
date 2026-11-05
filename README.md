@@ -74,6 +74,10 @@ filename_case: keep        # keep | uuid
 # https://stdout.com.cn/camus -> https:// + stdout.com.cn + /camus
 public_url: https://stdout.com.cn/camus
 
+# Optional CDN base URL used by with_cdn(). Empty by default; when empty,
+# with_cdn(path) returns path unchanged.
+cdn_url: ''                # e.g. https://cdn.stdout.com.cn/camus
+
 theme: terminal
 pdf_engine: chrome         # use "disable" to skip PDF generation
 pdf_options:
@@ -98,7 +102,9 @@ friends:
     desc: What's past is prologue.
 ```
 
-`public_url` accepts with or without a protocol. Missing protocols default to `https://`; a trailing slash is normalized away. It drives absolute links, the sitemap, PDF cover data, and the `with_cdn()` helper.
+`public_url` accepts with or without a protocol. Missing protocols default to `https://`; a trailing slash is normalized away. It drives absolute links, the sitemap, and PDF cover data.
+
+`cdn_url` is optional and empty by default. When set, `with_cdn(path)` returns `cdn_url + with_prefix(path)`; when empty it returns `path` unchanged.
 
 ### Directory metadata (`README.md`)
 
@@ -184,7 +190,7 @@ Themes contain `home.html`, `page.html`, `stats.html` and `friends.html`, loaded
 | Helper | Description |
 |---|---|
 | `{{ with_prefix("/css/site.css") }}` | Prefix a path with `path_prefix` |
-| `{{ with_cdn("/css/site.css") }}` | Build an absolute URL from `protocol + domain_name + path_prefix` |
+| `{{ with_cdn("/css/site.css") }}` | Prefix with `cdn_url` plus `path_prefix`; returns the path unchanged when `cdn_url` is empty |
 
 ## Output
 
