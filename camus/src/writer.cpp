@@ -1,5 +1,6 @@
 #include "writer.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <ctime>
@@ -8,6 +9,7 @@
 #include <ranges>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <build/build.h>
@@ -1164,8 +1166,26 @@ namespace camus
 			watch_server_.listen("0.0.0.0", server_port);
 		});
 
-		const std::filesystem::path watch_path = cmd_.workdir;
-		logging::info("watch directory: {}", conf_.camus().dest_dir().string());
+		const std::filesystem::path watch_path = std::filesystem::weakly_canonical(cmd_.workdir);
+		// 输出目录与 PDF 目录都是构建产物，必须排除；规范化路径避免工作目录经符号链接
+		// （如 macOS 的 /tmp -> /private/tmp）时前缀匹配失败，导致产物参与 hash 反复触发编译
+		const std::filesystem::path dest_dir = std::filesystem::weakly_canonical(conf_.camus().dest_dir());
+		const std::filesystem::path pdf_dir = std::filesystem::weakly_canonical(conf_.camus().pdf_dir());
+
+		const auto is_generated = [&](const std::filesystem::path &path) {
+			const auto within = [](const std::filesystem::path &p, const std::filesystem::path &dir) {
+				const std::filesystem::path relative = p.lexically_relative(dir);
+				if (relative.empty()) {
+					return false;
+				}
+
+				return *relative.begin() != "..";
+			};
+
+			return within(path, dest_dir) || within(path, pdf_dir);
+		};
+
+		logging::info("watch directory: {}", dest_dir.string());
 		logging::info("watch server listen on http://localhost:{} or http://{}:{}", server_port, server_addr, server_port);
 
 		while (true) {
@@ -1178,30 +1198,45 @@ namespace camus
 				continue;
 			}
 
-			// 忽略 pdf
-			const std::string dist_prefix = conf_.camus().dest_dir().string() + "/";
-			std::stringstream buffer;
+			// 按路径排序后再汇总，避免目录遍历顺序变化造成 hash 抖动而反复编译
+			std::vector<std::pair<std::string, uint64_t>> files;
 			for (auto it = std::filesystem::recursive_directory_iterator(watch_path);
 				 it != std::filesystem::recursive_directory_iterator();
 				 ++it) {
 				const auto &entry = *it;
-				if (entry.path().string().starts_with(dist_prefix)) {
+				const std::filesystem::path path = entry.path().lexically_normal();
+				if (is_generated(path)) {
 					if (entry.is_directory()) {
 						it.disable_recursion_pending();
 					}
 					continue;
 				}
 
-				if (const auto ext = entry.path().extension();
-					ext == ".md" || ext == ".yaml" || ext == ".json" ||
-					entry.path().string().find("/theme/") != std::string::npos) {
-					buffer << filesystem::read_file(entry.path());
+				if (entry.is_directory()) {
+					continue;
+				}
+
+				const std::string path_name = path.string();
+				const auto ext = path.extension();
+				const bool is_theme = path_name.find("/theme/") != std::string::npos;
+				if (ext == ".md" || ext == ".yaml" || ext == ".json" || is_theme) {
+					files.emplace_back(path_name, strings::make_hash(filesystem::read_file(path_name)));
 				}
 			}
 
+			std::ranges::sort(files, {}, &std::pair<std::string, uint64_t>::first);
+
+			std::string signature;
+			for (const auto &[path, hash] : files) {
+				signature += path;
+				signature += ':';
+				signature += std::to_string(hash);
+				signature += '\n';
+			}
+
 			// 如果文件 hash 不同，就重新编译一遍
-			static uint64_t current_hash = strings::make_hash(buffer.str());
-			if (const uint64_t hash = strings::make_hash(buffer.str()); current_hash != hash) {
+			static uint64_t current_hash = strings::make_hash(signature);
+			if (const uint64_t hash = strings::make_hash(signature); current_hash != hash) {
 				current_hash = hash;
 				std::ignore = build();
 			}
