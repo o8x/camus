@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <ranges>
@@ -117,6 +118,35 @@ namespace
 		return "'" + strings::replace(value, "'", "'\\''") + "'";
 	}
 
+	std::string html_escape(const std::string &value)
+	{
+		std::string out;
+		out.reserve(value.size());
+		for (const char c : value) {
+			switch (c) {
+			case '&':
+				out += "&amp;";
+				break;
+			case '<':
+				out += "&lt;";
+				break;
+			case '>':
+				out += "&gt;";
+				break;
+			case '"':
+				out += "&quot;";
+				break;
+			case '\'':
+				out += "&#39;";
+				break;
+			default:
+				out += c;
+			}
+		}
+
+		return out;
+	}
+
 	constexpr std::string_view pdf_html_style = R"(
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 @page { size: A4; margin: 20mm 18mm; }
@@ -146,6 +176,30 @@ table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9rem
 th, td { padding: 0.4em 0.6em; border-bottom: 1px solid #e0e0e0; text-align: left; }
 th { background: #f4f4f4; font-weight: 600; }
 hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.5em 0; }
+.pdf-cover, .pdf-title-page, .pdf-toc { page-break-after: always; break-after: page; }
+.pdf-cover { display: flex; flex-direction: column; justify-content: center; min-height: 235mm; text-align: center; }
+.pdf-cover__eyebrow { font-size: 0.85rem; letter-spacing: 0.35em; text-transform: uppercase; color: #8d8d8d; margin-bottom: 2.2em; }
+.pdf-cover__title { font-size: 2.8rem; line-height: 1.25; margin: 0 0 0.5em; }
+.pdf-cover__subtitle { font-size: 1.2rem; color: #525252; margin: 0 auto 1.6em; max-width: 80%; }
+.pdf-cover__desc { font-size: 0.95rem; color: #6f6f6f; margin: 0 auto; max-width: 72%; }
+.pdf-cover__meta { margin-top: 3em; font-size: 0.9rem; color: #8d8d8d; letter-spacing: 0.12em; }
+.pdf-title-page { display: flex; flex-direction: column; justify-content: center; min-height: 235mm; }
+.pdf-title-page__inner { margin: 0 auto; max-width: 78%; }
+.pdf-title-page__title { font-size: 2.2rem; margin: 0 0 0.4em; }
+.pdf-title-page__subtitle { font-size: 1.05rem; color: #525252; margin: 0 0 2em; }
+.pdf-title-page__rule { border: none; border-top: 2px solid #161616; width: 4.5em; margin: 0 0 2em; }
+.pdf-meta { display: grid; grid-template-columns: auto 1fr; gap: 0.55em 1.6em; font-size: 0.92rem; }
+.pdf-meta dt { color: #8d8d8d; }
+.pdf-meta dd { color: #262626; }
+.pdf-toc__heading { font-size: 1.9rem; margin: 0 0 1.4em; padding-bottom: 0.4em; border-bottom: 2px solid #161616; }
+.pdf-toc__list { list-style: none; margin: 0; padding: 0; }
+.pdf-toc__item { margin: 0; padding: 0; border-bottom: 1px dotted #d0d0d0; }
+.pdf-toc__link { display: flex; align-items: baseline; gap: 1em; padding: 0.55em 0; color: #262626; }
+.pdf-toc__num { flex: none; width: 2.4em; color: #8d8d8d; font-variant-numeric: tabular-nums; }
+.pdf-toc__title { flex: 1; }
+.pdf-toc__tags { flex: none; color: #8d8d8d; font-size: 0.82rem; }
+.pdf-intro { page-break-after: always; break-after: page; }
+.pdf-article { page-break-before: always; break-before: page; }
 )";
 } // namespace
 
@@ -794,9 +848,12 @@ namespace camus
 			return;
 		}
 
-		std::vector<std::string> sections;
-		sections.push_back(std::format("# {}\n\n{}\n", conf_.camus().site.title, conf_.camus().site.description));
+		struct pdf_article {
+			const catalog::catalog_node *node;
+			std::string markdown;
+		};
 
+		std::vector<pdf_article> articles;
 		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
 			if (node.path.extension() != ".md" || node.property.visibility == catalog::hidden) {
 				return;
@@ -808,15 +865,95 @@ namespace camus
 				markdown = strings::replace(markdown, "{{env." + k + "}}", v);
 			}
 
-			sections.push_back(std::format("## {}\n\n{}", node.property.display_name, markdown));
+			articles.push_back({&node, std::move(markdown)});
 		});
 
-		if (sections.size() <= 1) {
+		if (articles.empty()) {
 			logging::debug("skip pdf generation: no articles");
 			return;
 		}
 
-		const std::string markdown = strings::string_join(sections, "\n\n---\n\n");
+		const std::string &site_title = conf_.camus().site.title;
+		const std::string cover_title = html_escape(site_title.empty() ? "Camus" : site_title);
+		const std::string cover_subtitle = html_escape(conf_.camus().site.subtitle);
+		const std::string cover_desc = html_escape(conf_.camus().site.description);
+		const std::string generated_at = functions::format_time_t(std::time(nullptr), "%Y-%m-%d");
+		const std::string domain = html_escape(conf_.camus().deploy.domain_name);
+
+		std::string markdown = std::format("# {}\n\n{}\n", site_title, conf_.camus().site.description);
+		std::string toc_items;
+		std::string body;
+
+		body += "<section class=\"pdf-intro\">\n";
+		body += render::render_markdown(
+			markdown.c_str(),
+			conf_.camus().render.markdown_engine,
+			conf_.camus().render.markdown_options
+		);
+		body += "\n</section>\n";
+
+		int index = 0;
+		for (const auto &article : articles) {
+			++index;
+
+			const std::string label = article.node->property.display_name;
+			markdown += std::format("\n\n---\n\n## {}\n\n{}", label, article.markdown);
+
+			std::string tags;
+			for (const auto &tag : article.node->property.tags) {
+				if (!tags.empty()) {
+					tags += " · ";
+				}
+
+				tags += html_escape(tag);
+			}
+
+			toc_items += std::format(
+				"<li class=\"pdf-toc__item\"><a class=\"pdf-toc__link\" href=\"#pdf-article-{}\">"
+				"<span class=\"pdf-toc__num\">{:02}</span><span class=\"pdf-toc__title\">{}</span>"
+				"<span class=\"pdf-toc__tags\">{}</span></a></li>\n",
+				index,
+				index,
+				html_escape(label),
+				tags
+			);
+
+			const std::string article_markdown = std::format("## {}\n\n{}", label, article.markdown);
+			body += std::format(
+				"<section id=\"pdf-article-{}\" class=\"pdf-article\">\n{}\n</section>\n",
+				index,
+				render::render_markdown(
+					article_markdown.c_str(),
+					conf_.camus().render.markdown_engine,
+					conf_.camus().render.markdown_options
+				)
+			);
+		}
+
+		const std::string front = std::format(
+			"<section class=\"pdf-cover\">\n<div class=\"pdf-cover__eyebrow\">Camus</div>\n"
+			"<h1 class=\"pdf-cover__title\">{}</h1>\n<p class=\"pdf-cover__subtitle\">{}</p>\n"
+			"<p class=\"pdf-cover__desc\">{}</p>\n<div class=\"pdf-cover__meta\">{}</div>\n</section>\n"
+			"<section class=\"pdf-title-page\">\n<div class=\"pdf-title-page__inner\">\n"
+			"<h1 class=\"pdf-title-page__title\">{}</h1>\n<p class=\"pdf-title-page__subtitle\">{}</p>\n"
+			"<hr class=\"pdf-title-page__rule\">\n<dl class=\"pdf-meta\">\n"
+			"<dt>文章数</dt><dd>{}</dd>\n<dt>生成日期</dt><dd>{}</dd>\n"
+			"<dt>站点</dt><dd>{}</dd>\n<dt>版本</dt><dd>v{}</dd>\n</dl>\n</div>\n</section>\n"
+			"<section class=\"pdf-toc\">\n<h2 class=\"pdf-toc__heading\">目录</h2>\n"
+			"<ol class=\"pdf-toc__list\">\n{}</ol>\n</section>\n",
+			cover_title,
+			cover_subtitle,
+			cover_desc,
+			generated_at,
+			cover_title,
+			cover_subtitle,
+			articles.size(),
+			generated_at,
+			domain,
+			PROJECT_VERSION,
+			toc_items
+		);
+
 		const std::filesystem::path dest_dir = conf_.camus().dest_dir();
 		const std::filesystem::path html_dir = dest_dir / "pdf";
 		const std::filesystem::path markdown_path = dest_dir / "index.md";
@@ -826,18 +963,13 @@ namespace camus
 		std::filesystem::create_directories(html_dir);
 		filesystem::write_file(markdown_path, markdown);
 
-		const std::string body = render::render_markdown(
-			markdown.c_str(),
-			conf_.camus().render.markdown_engine,
-			conf_.camus().render.markdown_options
-		);
-
 		const std::string html = std::format(
 			"<!DOCTYPE html>\n<html lang=\"{}\">\n<head>\n<meta charset=\"utf-8\">\n"
-			"<title>{}</title>\n<style>{}</style>\n</head>\n<body>\n<main>\n{}\n</main>\n</body>\n</html>\n",
-			conf_.camus().site.title.empty() ? "en" : "zh-CN",
-			conf_.camus().site.title,
+			"<title>{}</title>\n<style>{}</style>\n</head>\n<body>\n{}\n<main>\n{}\n</main>\n</body>\n</html>\n",
+			site_title.empty() ? "en" : "zh-CN",
+			cover_title,
 			pdf_html_style,
+			front,
 			body
 		);
 
