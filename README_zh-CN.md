@@ -87,18 +87,18 @@ markdown_options:
   - SMART
   - FOOTNOTES
 
-# 目录搬运规则：把 path 目录的内容映射到 target 输出路径
-transfer:
-  - path: /introduction
-    transfers:
-      - source: .
-        target: /intro/Well-known
-
 friends:
   - title: Alex
     link_url: https://github.com/o8x/camus
     image_url: https://stdout.com.cn/logo.png
     desc: What's past is prologue.
+
+# 目录搬运规则：把 path 目录的内容映射到 target 输出路径
+build:
+  - path: /introduction
+    transfers:
+      - source: .
+        target: /intro/Well-known
 ```
 
 `public_url` 可带协议也可省略：省略时默认 `https://`，末尾多余的 `/` 会被归一化。它用于绝对链接、sitemap 与 PDF 封面信息。
@@ -128,7 +128,7 @@ subtitle: 可选的简短摘要
 
 ### 搬运规则
 
-`camus.yaml` 的 `transfer` 段把某个目录的内容映射到另一个输出位置。每项包含 `path` 与 `transfers` 列表：
+`camus.yaml` 的 `build` 段把某个目录的内容映射到另一个输出位置（旧键 `transfer` 仍兼容）。每项包含 `path` 与 `transfers` 列表：
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
@@ -139,7 +139,7 @@ subtitle: 可选的简短摘要
 示例：
 
 ```yaml
-transfer:
+build:
   # posts/introduction/** -> /intro/Well-known/**
   - path: /introduction
     transfers:

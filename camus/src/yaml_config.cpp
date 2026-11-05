@@ -501,8 +501,8 @@ namespace camus::config
 			apply_readme(path);
 		}
 
-		// transfer 段：{ path, transfers: [{ source, target }] }
-		if (const YAML::Node transfer_data = root["transfer"]; transfer_data) {
+		// build 段（兼容旧键 transfer）：{ path, transfers: [{ source, target }] }
+		if (const YAML::Node transfer_data = root["build"] ? root["build"] : root["transfer"]; transfer_data) {
 			if (!transfer_data.IsSequence()) {
 				logging::warn("ignore invalid transfer config reason=not a sequence");
 			} else {

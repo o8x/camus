@@ -88,18 +88,18 @@ markdown_options:
   - SMART
   - FOOTNOTES
 
-# Move directory contents to another output path
-transfer:
-  - path: /introduction
-    transfers:
-      - source: .
-        target: /intro/Well-known
-
 friends:
   - title: Alex
     link_url: https://github.com/o8x/camus
     image_url: https://stdout.com.cn/logo.png
     desc: What's past is prologue.
+
+# Move directory contents to another output path
+build:
+  - path: /introduction
+    transfers:
+      - source: .
+        target: /intro/Well-known
 ```
 
 `public_url` accepts with or without a protocol. Missing protocols default to `https://`; a trailing slash is normalized away. It drives absolute links, the sitemap, and PDF cover data.
@@ -127,9 +127,9 @@ Parsing rules:
 - Unset fields inherit from the root route; the root `README.md` (`posts/README.md` or `src/README.md`) defines the site title/subtitle/description.
 - Newlines in metadata become `<br />`.
 
-### Transfer rules
+### Build rules
 
-`transfer` in `camus.yaml` maps directory content to a different output location. Each item has a `path` plus a list of `transfers`:
+`build` in `camus.yaml` maps directory content to a different output location (the legacy key `transfer` is still accepted). Each item has a `path` plus a list of `transfers`:
 
 | Field | Required | Description |
 |---|---|---|
@@ -140,7 +140,7 @@ Parsing rules:
 Examples:
 
 ```yaml
-transfer:
+build:
   # posts/introduction/** -> /intro/Well-known/**
   - path: /introduction
     transfers:

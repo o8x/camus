@@ -131,9 +131,9 @@ subtitle: Optional summary
 2. Mozart!
 ```
 
-### 3.5.2 `transfer` 段
+### 3.5.2 `build` 段
 
-`camus.yaml` 顶层 `transfer` 为序列，每项包含 `path` 与 `transfers`：
+`camus.yaml` 顶层 `build` 为序列，每项包含 `path` 与 `transfers`；旧的顶层键 `transfer` 仍兼容（同时存在时 `build` 优先）：
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
@@ -151,7 +151,7 @@ subtitle: Optional summary
 示例：
 
 ```yaml
-transfer:
+build:
   - path: /introduction
     transfers:
       - source: .
