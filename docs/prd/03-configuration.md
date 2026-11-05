@@ -178,7 +178,7 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 | `build_type` | CMake 构建类型 |
 | `cmake_version` | CMake 版本 |
 | `cxx_standard` | C++ 标准号（23） |
-| `version` | 项目版本（11.1.0） |
+| `version` | 项目版本（11.2.0） |
 | `version_major` | 主版本号（11） |
 | `compiler` | 编译器版本字符串 |
 | `powered_by` | 预渲染的页脚 HTML 片段 |

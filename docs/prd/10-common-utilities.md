@@ -103,7 +103,7 @@
 
 | 宏 | 值/来源 | 含义 |
 |---|---|---|
-| `PROJECT_VERSION` | `11.1.0` | 版本 |
+| `PROJECT_VERSION` | `11.2.0` | 版本 |
 | `PROJECT_VERSION_MAJOR/MINOR/PATCH` | `10/0/0` | 版本分段 |
 | `CMAKE_VERSION` | CMake 版本 | 构建工具版本 |
 | `BUILD_TIMESTAMP` | 配置时间 | 构建时间 |

@@ -8,10 +8,10 @@
 |---|---|
 | 项目名称 | Camus |
 | 项目描述 | 使用 C++23 编写的静态站点生成器，将 Markdown 渲染为静态 HTML |
-| 当前版本 | 11.1.0 |
+| 当前版本 | 11.2.0 |
 | 语言标准 | C++23 |
 | 构建系统 | CMake 3.28.3+ / Ninja / Make |
-| 版本来源 | `CMakeLists.txt` 中 `project(Camus VERSION 11.1.0 ...)` |
+| 版本来源 | `CMakeLists.txt` 中 `project(Camus VERSION 11.2.0 ...)` |
 | 许可证 | 见仓库根目录 `LICENSE` |
 | 仓库地址 | https://github.com/o8x/camus |
 

@@ -72,10 +72,10 @@ v{PROJECT_VERSION} {BUILD_TYPE} with CMake {CMAKE_VERSION} and C++ {CXX_STANDARD
 Build Time: {BUILD_TIMESTAMP} hash={GIT_COMMIT_HASH}
 ```
 
-示例（当前版本 11.1.0）：
+示例（当前版本 11.2.0）：
 
 ```text
-v11.1.0 Release with CMake 3.28.3 and C++ 23
+v11.2.0 Release with CMake 3.28.3 and C++ 23
 Build Time: 2025-07-24 15:44:00 hash=<40 位 git hash>
 ```
 
