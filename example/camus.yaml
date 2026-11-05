@@ -7,7 +7,7 @@ filename_case: keep                         # 转换md的输出文件名：keep 
 #   https://stdout.com.cn/camus -> protocol=https:// domain_name=stdout.com.cn path_prefix=/camus
 public_url: https://stdout.com.cn/camus
 # 页面渲染配置
-theme: terminal                             # 加载 theme/name/*.html
+theme: pixel                             # 加载 theme/name/*.html
 pdf_engine: chrome                          # PDF 引擎：chromium/chrome/edge（Linux 自动按 PATH 查找）；disable 时不生成 PDF
 pdf_options:
     - --headless
