@@ -20,7 +20,7 @@
 | 字段 | 说明 |
 |---|---|
 | `path` | 相对源根目录的路径；根为 `/` |
-| `path_prefix` | 输出路径前缀，等于 `deploy.path_prefix` |
+| `path_prefix` | 输出路径前缀，等于 `public_url.path_prefix` |
 | `contents` | 文件行内容；目录无意义 |
 | `property` | 见下表 |
 | `render_data_` | 渲染期数据（stats/page/nav） |
@@ -45,11 +45,11 @@
 
 `resolve_directory_routes()`（`writer.cpp:82`）先序遍历目录节点：
 
-1. 目录默认：`path_prefix = deploy.path_prefix`，`external_path = node.path`，`display_name = 目录名`。
-2. 若命中 `catalog` 路由（`match_route`），用路由的 `title/subtitle/description` 覆盖；若 `match_transfer` 命中搬运，则覆盖 `external_path`。
+1. 目录默认：`path_prefix = public_url.path_prefix`，`external_path = node.path`，`display_name = 目录名`。
+2. 若命中 `catalog.yaml` 路由（`match_route`），用路由的 `title/subtitle/description` 覆盖；若 `match_transfer` 命中搬运，则覆盖 `external_path`。
 3. 把当前目录的 `external_path` 写给其**直接子节点**。
 
-> `catalog` 路由的 `path` 中只要包含名为 `private` 的路径段，该路由会在配置解析阶段被忽略并打印 WARN（`yaml_config.cpp`），因此 `private` 不能作为目录页路由使用。
+> `catalog.yaml` 路由的 `path` 中只要包含名为 `private` 的路径段，该路由会在配置解析阶段被忽略并打印 WARN（`yaml_config.cpp`），因此 `private` 不能作为目录页路由使用。
 
 因此文件节点的 `external_path` 来自其父目录；目录的最终输出前缀由路由/搬运决定。
 
@@ -116,7 +116,7 @@ flowchart TD
 
 `short-path: auto` 的生成规则（`writer.cpp:211-214`）：对节点相对路径做 FNV-1a 64 位 hash，再取 `hash % (UINT16_MAX * 2)`（即 `% 131070`），格式化为小写十六进制。短链固定输出到 `/s/<short_path>.html`。
 
-`output.filename_case: uuid` 时，`display_name` 直接生成 UUID v4（与文件名无关），因此普通输出路径也是 `/s/...` 之外的 UUID 文件名；`short-path` 仍可另行启用。
+`filename_case: uuid` 时，`display_name` 直接生成 UUID v4（与文件名无关），因此普通输出路径也是 `/s/...` 之外的 UUID 文件名；`short-path` 仍可另行启用。
 
 ## 4.6 可见性语义（以代码为准）
 
@@ -169,7 +169,7 @@ link_url():
   - 目录空的 `subtitle/description/display_name` 分别回退到 `site` 的对应字段；
   - 递归移除 `invalid()` 的文件节点（`display_name` 为空），即隐藏文章与非 `.md` 文件。
 - TOC 排序：目录优先，然后按 `write_time` 降序。
-- 上一篇/下一篇（`fill_article_nav`）：在降序文章列表中，`prev` 指向更新的一篇（索引 - 1），`next` 指向更旧的一篇（索引 + 1）；路径会去掉 `deploy.path_prefix`。
+- 上一篇/下一篇（`fill_article_nav`）：在降序文章列表中，`prev` 指向更新的一篇（索引 - 1），`next` 指向更旧的一篇（索引 + 1）；路径会去掉 `public_url.path_prefix`。
 
 ## 4.10 字数与阅读时长
 

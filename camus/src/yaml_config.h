@@ -69,22 +69,23 @@ namespace camus::config
 	};
 
 	struct output_conf {
-		bool meta;
-		bool sitemap;
+		bool meta = true;
+		bool sitemap = true;
 		std::string filename_case = "keep";
 		std::filesystem::path dest_dir = "dist/html";
 
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(output_conf, meta, sitemap, filename_case, dest_dir);
 	};
 
-	struct deploy_conf {
+	struct public_url_conf {
+		std::string url;
 		std::string protocol;
 		std::string domain_name;
 		std::string path_prefix;
 
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(deploy_conf, protocol, domain_name, path_prefix);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(public_url_conf, url, protocol, domain_name, path_prefix);
 
-		std::string full_prefix()
+		[[nodiscard]] std::string full_prefix() const
 		{
 			return std::format("{}{}{}", protocol, domain_name, path_prefix);
 		}
@@ -97,14 +98,12 @@ namespace camus::config
 		route_conf site;
 		// 输出
 		output_conf output;
-		// 部署配置
-		deploy_conf deploy;
+		// 对外访问地址（自动拆解为 protocol/domain_name/path_prefix）
+		public_url_conf public_url;
 		// 渲染
 		render_conf render;
 		// 友情链接
 		std::vector<friend_link_conf> friends;
-
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(camus_conf, source_dir, assets_dir, site, output, deploy, render, friends);
 
 		[[nodiscard]] std::filesystem::path dest_dir() const
 		{

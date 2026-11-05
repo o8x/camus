@@ -19,4 +19,5 @@
 #define CAMUS_DATA_DIR_MACOS "Library/Application Support/Camus"
 #define CAMUS_DATA_DIR_LINUX "/var/lib/camus"
 #define CAMUS_CONF_NAME "camus.yaml"
+#define CAMUS_CATALOG_NAME "catalog.yaml"
 #define CAMUS_PRIVATE_DIR "private"

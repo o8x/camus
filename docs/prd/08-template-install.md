@@ -26,6 +26,7 @@
 ├── assets/                    # 默认静态资源（css/js/fonts/robots.txt 等）
 ├── posts/                     # 示例文章
 ├── camus.yaml                 # 示例配置
+├── catalog.yaml               # 示例目录路由与搬运规则
 └── .gitignore                 # 示例忽略规则
 ```
 
@@ -40,7 +41,7 @@ flowchart TD
     B -->|否| D[创建 .camus 并复制全部文件]
     B -->|是且无 -f| W[WARN 已安装, 可继续构建]
     B -->|是且有 -f| C[empty_path .camus 后复制]
-    D --> S[补齐工作目录 posts/camus.yaml/.gitignore]
+    D --> S[补齐工作目录 posts/camus.yaml/catalog.yaml/.gitignore]
     C --> S
     W --> S
     S --> OK[返回 0, 继续构建]
@@ -48,7 +49,7 @@ flowchart TD
 
 - `.camus` 已存在且非空、未指定 `-f`：打印 WARN、仅补齐工作目录根部的示例文件，不覆盖 `.camus`。
 - `-f`：先删除 `.camus`（受 §6.1 的 >200 文件保护），再复制。
-- 复制完成后，对 `posts`、`camus.yaml`、`.gitignore`：仅当工作目录根部不存在同名路径时才从 `.camus` 复制。
+- 复制完成后，对 `posts`、`camus.yaml`、`catalog.yaml`、`.gitignore`：仅当工作目录根部不存在同名路径时才从 `.camus` 复制。
 - 安装结果持久于磁盘；`-i` 成功后不会退出，主程序继续构建（见 §2.4）。
 
 ## 8.3 资源查找顺序
@@ -70,7 +71,7 @@ flowchart TD
 
 ## 8.4 安装位置（CPack）
 
-`camus/CMakeLists.txt` 安装 `example/` 下的 `theme/`、`assets/`、`posts/`、`camus.yaml` 与 `.gitignore`：
+`camus/CMakeLists.txt` 安装 `example/` 下的 `theme/`、`assets/`、`posts/`、`camus.yaml`、`catalog.yaml` 与 `.gitignore`：
 
 | 平台 / 生成器 | 资源安装目标 |
 |---|---|

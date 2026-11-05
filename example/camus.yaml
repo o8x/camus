@@ -1,13 +1,11 @@
-# 文件输出相关配置（固定输出到 ./dist/html 与 ./dist/pdf）
-output:
-    meta: true                              # 是否生成元信息 /meta.json，其内容会因构建类型不同而不同
-    sitemap: true                           # 自动生成 sitemap.xml
-    filename_case: keep                     # 转换md的输出文件名：keep 不转换，uuid 自动转换为 /uuid.html
-# 部署配置
-deploy:
-    protocol: https://                        # 协议
-    domain_name: /stdout.com.cn/              # 域名
-    path_prefix: /camus                       # 路径前缀，实际访问路径为 https://stdout.com.cn/camus/xxx.html
+# 输出相关配置
+meta: true                                  # 是否生成元信息 /meta.json，其内容会因构建类型不同而不同
+sitemap: true                               # 自动生成 sitemap.xml
+filename_case: keep                         # 转换md的输出文件名：keep 不转换，uuid 自动转换为 /uuid.html
+# 对外访问地址，构建产物中的链接会以此为前缀
+# 自动拆解为 protocol / domain_name / path_prefix：
+#   https://stdout.com.cn/camus -> protocol=https:// domain_name=stdout.com.cn path_prefix=/camus
+public_url: https://stdout.com.cn/camus
 # 页面渲染配置
 render:
     theme: terminal                         # 加载 theme/name/*.html
@@ -44,34 +42,4 @@ friends:
         image_url: https://i.loli.net/2020/02/07/kDIUWCQpKEdFTP8.png
         desc: 一言网（hitokoto.cn）创立于 2016 年，隶属于萌创团队，目前网站主要提供一句话服务。
 
-# path 必填
-# title subtitle description 会自动继承根目录相同的属性
-catalog:
-    -   path: /
-        transfers: # 根目录 transfers 无效
-        title: Musicals
-        subtitle: Musical theatre is a form of theatrical performance that combines songs, spoken dialogue, acting and dance.
-        description: |
-            The story and emotional content of a musical – humor, pathos, love, anger – are communicated through words, music, movement and technical aspects of the entertainment as an integrated whole. Although musical theatre overlaps with other theatrical forms like opera and dance, it may be distinguished by the equal importance given to the music as compared with the dialogue, movement and other elements. Since the early 20th century, musical theatre stage works have generally been called, simply, musicals.
-
-    -   path: /introduction                       # 指定源目录
-        transfers:
-            -   source: .                         # 文件搬运映射，./... 搬运到 /dir0/first-dir/...
-                target: /intro/Well-known  # 不设置则保留原文件夹，也可以指定为搬运文件
-        title: Well-known musicals                # 该级目录页面标题
-        subtitle:                                 # 该级目录 subtitle
-        description: |                            # 该级目录简介
-            1. Man of la Mancha
-            2. Mozart!
-            3. The Phantom of the Opera
-
-
-    -   path: /Don Juan
-        transfers:
-            -   source: .
-                target: /M
-        title: Don Juan
-        subtitle: |
-            Don Juan , also known as Don Giovanni (Italian), is a legendary fictional Spanish libertine who devotes his life to seducing women.
-        description: |
-            The original version of the story of Don Juan appears in the 1630 play El burlador de Sevilla y convidado de piedra (The Trickster of Seville and the Stone Guest) by Tirso de Molina. The play includes most of the elements found and later adapted in subsequent works, including the setting (Seville), the characters (Don Juan, his servant, his love interest, and her father, whom he kills), moralistic themes (honor, violence and seduction, vice and retribution), and the dramatic ending in which Don Juan dines with and is then dragged down to hell by the stone statue of the father he had previously slain. Tirso de Molina's play was subsequently adapted into numerous plays and poems, of which the most famous include a 1665 play, Dom Juan, by Molière; a 1787 opera, Don Giovanni, with music by Mozart and a libretto by Lorenzo da Ponte largely adapting Tirso de Molina's play; a satirical and epic poem, Don Juan, by Lord Byron; and Don Juan Tenorio, a romantic play by José Zorrilla.
+# 目录路由与文件搬运规则见同目录下的 catalog.yaml

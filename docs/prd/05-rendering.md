@@ -56,10 +56,10 @@ flowchart TD
 |---|---|---|---|
 | `format_datetime` | `format_datetime(unix_ts)` → string | UTC `%Y-%m-%d %H:%M:%S` | `{{ format_datetime(page.write_time) }}` |
 | `format_date` | `format_date(unix_ts)` → string | UTC `%Y-%m-%d` | `{{ format_date(page.write_time) }}` |
-| `with_prefix` | `with_prefix(path)` → string | `clean_path(path, deploy.path_prefix)` | `{{ with_prefix("index.html") }}` |
-| `with_cdn` | `with_cdn(path)` → string | 拼接 `deploy.protocol + deploy.domain_name + with_prefix(path)` 的完整 URL | `{{ with_cdn("css/a.css") }}` |
+| `with_prefix` | `with_prefix(path)` → string | `clean_path(path, public_url.path_prefix)` | `{{ with_prefix("index.html") }}` |
+| `with_cdn` | `with_cdn(path)` → string | 拼接 `public_url.protocol + public_url.domain_name + with_prefix(path)` 的完整 URL | `{{ with_cdn("css/a.css") }}` |
 
-`with_cdn` 仅依赖 `deploy` 配置拼接 URL，不再读取任何环境变量。
+`with_cdn` 仅依赖 `public_url` 配置拼接 URL，不再读取任何环境变量。
 
 ## 5.5 文章页渲染数据
 
@@ -67,7 +67,7 @@ flowchart TD
 
 | 键 | 结构 | 说明 |
 |---|---|---|
-| `camus` / `source_dir` / `assets_dir` / `output` / `deploy` / `render` / `friends` / `site` / `route` / `git` / `build` | 见 §3.7 | 站点配置 |
+| `camus` / `source_dir` / `assets_dir` / `meta` / `sitemap` / `filename_case` / `public_url` / `protocol` / `domain_name` / `path_prefix` / `render` / `friends` / `site` / `route` / `git` / `build` | 见 §3.7 | 站点配置 |
 | `title` | 字符串 | 文章显示名（来自节点 `to_json`） |
 | `write_time` | 数字 | 文章时间戳 |
 | `path` | 字符串 | `real_url` 去掉前缀 |
@@ -99,7 +99,7 @@ flowchart TD
 | `parent.label` | 字符串 | 父目录显示名；父 URL 为 `/` 时固定为 `/` |
 | `items` | 数组 | 当前目录直接子节点（排序：目录优先，再按时间降序） |
 | `current` | 对象 | 当前目录节点 JSON（含 `render_data`） |
-| 其余键 | — | `conf_.json()` 的顶层键（`camus/source_dir/assets_dir/output/deploy/render/friends/site/route/git/build`）被合并进来 |
+| 其余键 | — | `conf_.json()` 的顶层键（`camus/source_dir/assets_dir/meta/sitemap/filename_case/public_url/protocol/domain_name/path_prefix/render/friends/site/route/git/build`）被合并进来 |
 
 注意：这些目录页数据是「父级 + 子项 + 当前目录」结构，不是完整递归树。
 

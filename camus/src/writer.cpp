@@ -270,7 +270,7 @@ namespace camus
 				return;
 			}
 
-			node.path_prefix = conf_.camus().deploy.path_prefix;
+			node.path_prefix = conf_.camus().public_url.path_prefix;
 			node.property.external_path = node.path;
 			node.property.display_name = node.path.filename();
 
@@ -297,7 +297,7 @@ namespace camus
 				return;
 			}
 
-			node.path_prefix = conf_.camus().deploy.path_prefix;
+			node.path_prefix = conf_.camus().public_url.path_prefix;
 
 			std::map<std::string, std::string> params;
 			for (int i = 0; i < node.contents.size(); ++i) {
@@ -431,13 +431,13 @@ namespace camus
 
 			if (i + 1 < articles.size()) {
 				node.render_data_.nav.next_path =
-					filesystem::clean_path(articles[i + 1]->link_url(), conf_.camus().deploy.path_prefix);
+					filesystem::clean_path(articles[i + 1]->link_url(), conf_.camus().public_url.path_prefix);
 				node.render_data_.nav.next_title = articles[i + 1]->property.display_name;
 			}
 
 			if (i > 0) {
 				node.render_data_.nav.prev_path =
-					filesystem::clean_path(articles[i - 1]->link_url(), conf_.camus().deploy.path_prefix);
+					filesystem::clean_path(articles[i - 1]->link_url(), conf_.camus().public_url.path_prefix);
 				node.render_data_.nav.prev_title = articles[i - 1]->property.display_name;
 			}
 		}
@@ -728,14 +728,14 @@ namespace camus
 
 			const std::string loc = std::format(
 				"<url><loc>{}</loc><lastmod>{}</lastmod></url>",
-				std::format("{}{}", conf_.camus().deploy.full_prefix(), node.link_url().string()),
+				std::format("{}{}", conf_.camus().public_url.full_prefix(), node.link_url().string()),
 				functions::format_time_t(node.property.write_time, "%Y-%m-%d")
 			);
 
 			items.push_back(loc);
 		});
 
-		logging::debug(std::format("make sitemap url={}/sitemap.xml", conf_.camus().deploy.full_prefix()));
+		logging::debug(std::format("make sitemap url={}/sitemap.xml", conf_.camus().public_url.full_prefix()));
 
 		add_write(
 			conf_.camus().dest_dir() / "sitemap.xml",
@@ -864,7 +864,7 @@ namespace camus
 		const std::string cover_subtitle = html_escape(conf_.camus().site.subtitle);
 		const std::string cover_desc = html_escape(conf_.camus().site.description);
 		const std::string generated_at = functions::format_time_t(std::time(nullptr), "%Y-%m-%d");
-		const std::string domain = html_escape(conf_.camus().deploy.domain_name);
+		const std::string domain = html_escape(conf_.camus().public_url.domain_name);
 
 		std::string markdown = std::format("# {}\n\n{}\n", site_title, conf_.camus().site.description);
 		std::string toc_items;
@@ -1068,18 +1068,18 @@ namespace camus
 
 		inja_.add_callback("with_prefix", 1, [&](const inja::Arguments &args) {
 			const std::string name = args.at(0)->get<std::string>();
-			return filesystem::clean_path(name, conf_.camus().deploy.path_prefix);
+			return filesystem::clean_path(name, conf_.camus().public_url.path_prefix);
 		});
 
 		inja_.add_callback("with_cdn", 1, [&](const inja::Arguments &args) {
 			const std::string name = args.at(0)->get<std::string>();
-			const auto deploy = conf_.camus().deploy;
+			const auto public_url = conf_.camus().public_url;
 
 			return std::format(
 				"{}{}{}",
-				deploy.protocol,
-				deploy.domain_name,
-				filesystem::clean_path(name, deploy.path_prefix)
+				public_url.protocol,
+				public_url.domain_name,
+				filesystem::clean_path(name, public_url.path_prefix)
 			);
 		});
 	}

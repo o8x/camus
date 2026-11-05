@@ -30,6 +30,42 @@ namespace camus::config
 
 			return false;
 		}
+
+		public_url_conf parse_public_url(const std::string &raw)
+		{
+			public_url_conf conf;
+			conf.url = strings::trim_space(raw);
+			if (conf.url.empty()) {
+				return conf;
+			}
+
+			std::string rest = conf.url;
+			if (const auto pos = rest.find("://"); pos != std::string::npos) {
+				conf.protocol = rest.substr(0, pos + 3);
+				rest = rest.substr(pos + 3);
+			} else {
+				conf.protocol = "https://";
+			}
+
+			const auto slash = rest.find('/');
+			if (slash == std::string::npos) {
+				conf.domain_name = rest;
+			} else {
+				conf.domain_name = rest.substr(0, slash);
+				conf.path_prefix = filesystem::clean_path(rest.substr(slash), "");
+				while (conf.path_prefix.size() > 1 && conf.path_prefix.ends_with('/')) {
+					conf.path_prefix.pop_back();
+				}
+
+				if (conf.path_prefix == "/") {
+					conf.path_prefix.clear();
+				}
+			}
+
+			conf.domain_name = strings::replace(conf.domain_name, " ", "");
+			conf.url = conf.full_prefix();
+			return conf;
+		}
 	} // namespace
 
 	void yaml_config::supplement_other_vars()
@@ -40,8 +76,13 @@ namespace camus::config
 		public_config_["route"] = routes_;
 		public_config_["source_dir"] = camus_.source_dir;
 		public_config_["assets_dir"] = camus_.assets_dir;
-		public_config_["output"] = camus_.output;
-		public_config_["deploy"] = camus_.deploy;
+		public_config_["meta"] = camus_.output.meta;
+		public_config_["sitemap"] = camus_.output.sitemap;
+		public_config_["filename_case"] = camus_.output.filename_case;
+		public_config_["public_url"] = camus_.public_url.url;
+		public_config_["protocol"] = camus_.public_url.protocol;
+		public_config_["domain_name"] = camus_.public_url.domain_name;
+		public_config_["path_prefix"] = camus_.public_url.path_prefix;
 		public_config_["render"] = camus_.render;
 		public_config_["friends"] = camus_.friends;
 
@@ -77,9 +118,9 @@ namespace camus::config
 		};
 
 		const std::string powered_by = R"(
-<a class="site-stats-link" href="{{ deploy.path_prefix }}/">Home</a> /
-<a class="site-stats-link" href="{{ deploy.path_prefix }}/friends.html">Friends</a> /
-<a class="site-stats-link" href="{{ deploy.path_prefix }}/stats.html">Stats</a> /
+<a class="site-stats-link" href="{{ path_prefix }}/">Home</a> /
+<a class="site-stats-link" href="{{ path_prefix }}/friends.html">Friends</a> /
+<a class="site-stats-link" href="{{ path_prefix }}/stats.html">Stats</a> /
 <a class="site-stats-link" href="{{ git.repo }}" target="_blank">GitHub</a>
 <br />
 <small>
@@ -178,33 +219,27 @@ namespace camus::config
 				continue;
 			}
 
-			if (key == "output") {
-				camus_.output.filename_case = get_string(it.second["filename_case"]);
-				camus_.output.sitemap = it.second["sitemap"].as<bool>();
-				camus_.output.meta = it.second["meta"].as<bool>();
+			if (key == "meta") {
+				if (it.second.IsScalar()) {
+					camus_.output.meta = it.second.as<bool>();
+				}
 				continue;
 			}
 
-			if (key == "deploy") {
-				camus_.deploy.protocol = get_string(it.second["protocol"]);
-				camus_.deploy.domain_name = get_string(it.second["domain_name"]);
-				camus_.deploy.path_prefix = get_string(it.second["path_prefix"]);
-
-				if (!camus_.deploy.protocol.empty()) {
-					if (!camus_.deploy.protocol.ends_with("://")) {
-						camus_.deploy.protocol = camus_.deploy.protocol + "://";
-					}
+			if (key == "sitemap") {
+				if (it.second.IsScalar()) {
+					camus_.output.sitemap = it.second.as<bool>();
 				}
+				continue;
+			}
 
-				if (!camus_.deploy.domain_name.empty()) {
-					camus_.deploy.protocol = camus_.deploy.protocol.empty() ? "https://" : camus_.deploy.protocol;
-					camus_.deploy.domain_name = strings::replace(camus_.deploy.domain_name, "/", "");
-					camus_.deploy.domain_name = strings::replace(camus_.deploy.domain_name, " ", "");
-				}
+			if (key == "filename_case") {
+				camus_.output.filename_case = get_string(it.second);
+				continue;
+			}
 
-				if (!camus_.deploy.path_prefix.empty()) {
-					camus_.deploy.path_prefix = filesystem::clean_path(camus_.deploy.path_prefix, "/");
-				}
+			if (key == "public_url") {
+				camus_.public_url = parse_public_url(get_string(it.second));
 				continue;
 			}
 		}
@@ -219,9 +254,22 @@ namespace camus::config
 
 		camus_.assets_dir = "assets";
 
-		public_config_["camus"] = camus_;
-		public_config_["camus"]["render"]["options"] =
+		nlohmann::json camus_json;
+		camus_json["source_dir"] = camus_.source_dir;
+		camus_json["assets_dir"] = camus_.assets_dir;
+		camus_json["site"] = camus_.site;
+		camus_json["meta"] = camus_.output.meta;
+		camus_json["sitemap"] = camus_.output.sitemap;
+		camus_json["filename_case"] = camus_.output.filename_case;
+		camus_json["public_url"] = camus_.public_url.url;
+		camus_json["protocol"] = camus_.public_url.protocol;
+		camus_json["domain_name"] = camus_.public_url.domain_name;
+		camus_json["path_prefix"] = camus_.public_url.path_prefix;
+		camus_json["render"] = camus_.render;
+		camus_json["friends"] = camus_.friends;
+		camus_json["render"]["options"] =
 			std::format("{}({})", camus_.render.markdown_options, strings::string_join(markdown_options, ","));
+		public_config_["camus"] = camus_json;
 
 		camus_.source_dir = filesystem::path_abs(camus_.source_dir);
 		camus_.output.dest_dir = filesystem::path_abs(camus_.output.dest_dir);
@@ -265,7 +313,15 @@ namespace camus::config
 		camus_.render.theme[CAMUS_THEME_TYPE_STATS] = read_theme(camus_.render.theme_name, "stats");
 		camus_.render.theme[CAMUS_THEME_TYPE_FRIENDS] = read_theme(camus_.render.theme_name, "friends");
 
-		const YAML::Node catalog_data = root["catalog"];
+		const std::filesystem::path catalog_file =
+			std::filesystem::path(filename_).parent_path() / CAMUS_CATALOG_NAME;
+		if (!std::filesystem::exists(catalog_file)) {
+			error::panic("catalog file not found name={}", catalog_file.string());
+		}
+
+		logging::info("load catalog: {}", filesystem::path_abs(catalog_file));
+
+		const YAML::Node catalog_data = YAML::LoadFile(catalog_file.string());
 		if (!catalog_data.IsSequence()) {
 			error::panic("parse catalog config failed");
 		}

@@ -73,7 +73,7 @@ namespace camus::catalog
 	struct catalog_node {
 		// 路径
 		std::filesystem::path path;
-		// 路径前缀，和主配置文件中 deploy.path_prefix 等同
+		// 路径前缀，和主配置文件中 public_url 的 path_prefix 等同
 		std::filesystem::path path_prefix;
 		// 内容
 		std::vector<std::string> contents;

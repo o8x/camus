@@ -39,7 +39,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 | macOS（回退） | `/Library/Application Support/Camus` | 安装到系统域（如 `installer -target /`）时的位置 |
 | Linux | `/var/lib/camus` | 由 deb 安装包写入 |
 
-目录内容为 `theme/`、`assets/`、`posts/`、`camus.yaml` 与 `.gitignore`。查找规则：
+目录内容为 `theme/`、`assets/`、`posts/`、`camus.yaml`、`catalog.yaml` 与 `.gitignore`。查找规则：
 
 - 主题：工作目录 `theme/{name}/{type}.html` → `.camus/theme/...` → 数据目录。
 - 静态资源：工作目录 `./assets` 优先；否则 `.camus/assets`，再否则数据目录 `assets/`。
@@ -52,7 +52,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 
 ```mermaid
 flowchart TD
-    A[reload 配置 camus.yaml] --> B[切换工作目录 workdir]
+    A[reload 配置 camus.yaml + catalog.yaml] --> B[切换工作目录 workdir]
     B --> C[扫描 source_dir（src/posts）构建目录树]
     C -->|空| W[WARN No articles found, 返回 1]
     C -->|非空| D[emit_article]
@@ -79,7 +79,7 @@ flowchart TD
 | pdf_dir | PDF 输出目录，固定 `./dist/pdf` |
 | assets_dir | 本地静态资源目录，固定 `./assets`；缺省时使用数据目录的 `assets/`，内容会被提升到输出根目录 |
 | catalog | 运行期内存中的目录树 `catalog_node` |
-| route | `camus.yaml` 中 `catalog` 段的目录配置，可设置标题/副标题/描述/搬运 |
+| route | `catalog.yaml` 中的目录配置，可设置标题/副标题/描述/搬运 |
 | transfer | 路由内的文件搬运映射，把源目录内容映射到另一输出路径 |
 | short-path | 文章短链接标识，输出到 `/s/{short_path}.html` |
 | hidden | 文章可见性：不渲染、不进入输出目录树 |

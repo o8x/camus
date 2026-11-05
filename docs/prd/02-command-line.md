@@ -59,7 +59,7 @@ flowchart TD
 要点：
 
 - `-i` 不会在安装后退出：安装成功后继续执行构建；`-i` 单独使用等于「安装 + 构建」。
-- `-f` 仅在 `-i` 时生效；`-f` 会清空并重装 `<workdir>/.camus`，工作目录已有的 `posts`、`camus.yaml`、`.gitignore` 不会被覆盖。
+- `-f` 仅在 `-i` 时生效；`-f` 会清空并重装 `<workdir>/.camus`，工作目录已有的 `posts`、`camus.yaml`、`catalog.yaml`、`.gitignore` 不会被覆盖。
 - `-I` 在构建前执行，`inspect()` 内部把 dryrun 置为 true，因此不会写文件。
 - `-W` 时即使首次 `build()` 返回非 0，也会进入 `watch()` 循环继续等待变化。
 

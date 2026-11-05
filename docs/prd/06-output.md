@@ -1,6 +1,6 @@
 # 6. 输出产物
 
-实现：`writer::build()` 各阶段（`camus/src/writer.cpp`）。输出目录固定：HTML 写入 `./dist/html`，PDF 写入 `./dist/pdf`（不再读取 `output.dest_dir`）。
+实现：`writer::build()` 各阶段（`camus/src/writer.cpp`）。输出目录固定：HTML 写入 `./dist/html`，PDF 写入 `./dist/pdf`（不可配置）。
 
 ## 6.1 输出目录清理与安全保护
 
@@ -33,8 +33,8 @@ dist/
 │   ├── <目录 real_url>/index.html  # 每个目录节点一页（含根目录 dist/html/index.html）
 │   ├── stats.html
 │   ├── friends.html
-│   ├── sitemap.xml                 # output.sitemap=true
-│   ├── meta.json                   # output.meta=true
+│   ├── sitemap.xml                 # sitemap=true
+│   ├── meta.json                   # meta=true
 │   └── <assets 内容提升到根>        # css/ js/ fonts/ robots.txt favicon.ico ...
 └── pdf/                            # 配置 pdf_engine 时
     ├── index.md                    # 合并后的 Markdown
@@ -48,8 +48,8 @@ dist/
 | 目录索引页 | 每个有子节点的目录节点（含根） | `writer.cpp:531-537` |
 | `stats.html` | 始终（除非 dryrun） | `writer.cpp:408` |
 | `friends.html` | 始终（除非 dryrun） | `writer.cpp:461` |
-| `sitemap.xml` | `output.sitemap: true` | `writer.cpp:555` |
-| `meta.json` | `output.meta: true` | `writer.cpp:540-545` |
+| `sitemap.xml` | `sitemap: true` | `writer.cpp:555` |
+| `meta.json` | `meta: true` | `writer.cpp:540-545` |
 | 静态资源 | 数据目录 `assets/` 或本地 `./assets` 非空 | `writer.cpp` `emit_assets()` |
 | `index.md` / `index.pdf` / `index.html`（均位于 `dist/pdf`） | `render.pdf_engine` 非空且引擎可用 | `writer.cpp` `emit_pdf()` |
 
@@ -92,7 +92,7 @@ dist/
 
 ## 6.7 `sitemap.xml`
 
-`emit_sitemap()`（`writer.cpp:553`）在 `output.sitemap` 为 true 时生成：
+`emit_sitemap()`（`writer.cpp:553`）在 `sitemap` 为 true 时生成：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -101,14 +101,14 @@ dist/
 </urlset>
 ```
 
-- `full_prefix = protocol + domain_name + path_prefix`。
+- `full_prefix = protocol + domain_name + path_prefix`（来自 public_url）。
 - 只包含非目录节点；条目间以换行 + 制表符分隔。
 - 使用 `link_url`：启用 `short-path` 时 `<loc>` 为短链地址。
 - 输出为 `dest_dir/sitemap.xml`。
 
 ## 6.8 `meta.json`
 
-`emit_toc()` 内当 `output.meta` 为 true 时生成（`writer.cpp:540-545`），内容为：
+`emit_toc()` 内当 `meta` 为 true 时生成（`writer.cpp:540-545`），内容为：
 
 ```json
 {
@@ -196,7 +196,7 @@ flowchart TD
   | 页面 | 内容 | 代码位置 |
   |---|---|---|
   | 封面页 | 站点标题（为空时回退 `Camus`）、`site.subtitle`、`site.description`、生成日期（`%Y-%m-%d`） | `emit_pdf()` |
-  | 扉页 | 站点标题、副标题、文章数、生成日期、站点域名（`deploy.domain_name`）、程序版本（`PROJECT_VERSION`） | `emit_pdf()` |
+  | 扉页 | 站点标题、副标题、文章数、生成日期、站点域名（`public_url.domain_name`）、程序版本（`PROJECT_VERSION`） | `emit_pdf()` |
   | 目录页 | 标题「目录」+ 按先序排列的文章序号、显示名、标签，条目链接到 `#pdf-article-{n}` | `emit_pdf()` |
 
 - 每篇文章渲染为 `<section id="pdf-article-{n}" class="pdf-article">`，并以 `page-break-before: always` 从新页开始；正文首段（`# site.title` + `site.description`）作为引导页单独占一页。

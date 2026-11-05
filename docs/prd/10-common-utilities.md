@@ -114,3 +114,4 @@
 | `CAMUS_DATA_DIR_MACOS` | `Library/Application Support/Camus` | macOS 用户数据目录（相对 `$HOME`） |
 | `CAMUS_DATA_DIR_LINUX` | `/var/lib/camus` | Linux 数据目录 |
 | `CAMUS_CONF_NAME` | `camus.yaml` | 主配置文件名 |
+| `CAMUS_CATALOG_NAME` | `catalog.yaml` | 目录路由与搬运配置文件名 |

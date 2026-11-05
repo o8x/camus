@@ -1,25 +1,26 @@
 # 3. 配置系统
 
-配置实现：`camus/src/yaml_config.h`、`camus/src/yaml_config.cpp`。主配置文件名固定为 `camus.yaml`（`config.h.in` 的 `CAMUS_CONF_NAME`），默认主题/资源从平台数据目录读取（见 §8）。
+配置实现：`camus/src/yaml_config.h`、`camus/src/yaml_config.cpp`。主配置文件名固定为 `camus.yaml`（`config.h.in` 的 `CAMUS_CONF_NAME`），目录路由与搬运规则放在同目录下的 `catalog.yaml`（`CAMUS_CATALOG_NAME`），默认主题/资源从平台数据目录读取（见 §8）。
 
 ## 3.1 配置文件与位置
 
 | 文件/目录 | 位置 | 作用 | 是否持久 |
 |---|---|---|---|
 | `camus.yaml` | 运行时当前工作目录 | 主配置 | 是 |
+| `catalog.yaml` | 与 `camus.yaml` 同目录 | 目录路由与文件搬运规则 | 是 |
 | `theme/{name}/*.html` | 工作目录 | 本地主题覆盖 | 是 |
 | `.camus/` | 工作目录 | `-i` 安装的本地主题、资源与示例模板 | 是 |
 | `<数据目录>/` | macOS `~/Library/Application Support/Camus`；Linux `/var/lib/camus` | 默认主题、静态资源与示例模板（由安装包写入） | 是 |
 
 - `build()` 先 `reload()` 再 `chdir(workdir)`（`writer.cpp:806-808`），因此**构建时**配置从 `-w` 指定的工作目录读取。
 - `inspect()` 在 `chdir` 之前执行（`main.cpp:135-140`），因此 **`-I` 从进程原始当前目录读取 `camus.yaml`**，与 `-w` 无关。
-- 每次 `reload()` 重新读取文件；热重载（watch）依赖此行为。
+- 每次 `reload()` 重新读取 `camus.yaml` 与 `catalog.yaml`；热重载（watch）依赖此行为。
 
 ## 3.2 解析总则
 
-- 根节点必须是映射，顶层直接包含 `output`、`deploy`、`render` 等配置段，否则 `error::panic("config file parse failed")`（退出 127）。
-- `catalog` 必须是序列，否则 `panic("parse catalog config failed")`。
-- 字符串值会做 `trim_space`；`catalog` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
+- 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`render`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。
+- `catalog.yaml` 必须存在且根节点为序列，否则 `panic("catalog file not found ...")` / `panic("parse catalog config failed")`。
+- 字符串值会做 `trim_space`；`catalog.yaml` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
 - 源目录、资源目录与输出目录不再可配置：
   - 源目录固定按 `src` → `posts` 顺序探测，存在即使用，否则回退 `src`（随后若不存在则报错）；
   - 本地资源目录固定为 `./assets`，不存在时回退 `.camus/assets`，再回退数据目录的 `assets/`；
@@ -31,18 +32,28 @@
 
 | 字段 | 类型 | 默认/必填 | 说明 | 代码位置 |
 |---|---|---|---|---|
-| `output.meta` | bool | 必填 | 是否输出 `meta.json` | `yaml_config.cpp:184` |
-| `output.sitemap` | bool | 必填 | 是否输出 `sitemap.xml` | `yaml_config.cpp:183` |
-| `output.filename_case` | 字符串 | 默认 `keep` | `uuid` 时文章 `display_name` 生成 UUID 并输出到 `/s/<uuid>.html` 风格短链 | `yaml_config.cpp:182` |
-| `deploy.protocol` | 字符串 | 可选 | 自动补 `://`；有域名而无协议时默认 `https://` | `yaml_config.cpp:190-204` |
-| `deploy.domain_name` | 字符串 | 可选 | 去除 `/` 与空格 | 同上 |
-| `deploy.path_prefix` | 字符串 | 可选 | 归一化为以 `/` 开头的前缀 | `yaml_config.cpp:206-208` |
+| `meta` | bool | 默认 `true` | 是否输出 `meta.json` | `yaml_config.cpp` |
+| `sitemap` | bool | 默认 `true` | 是否输出 `sitemap.xml` | `yaml_config.cpp` |
+| `filename_case` | 字符串 | 默认 `keep` | `uuid` 时文章 `display_name` 生成 UUID 并输出到 `/s/<uuid>.html` 风格短链 | `yaml_config.cpp` |
+| `public_url` | 字符串 | 可选 | 站点对外访问地址，自动拆解为下方三项 | `yaml_config.cpp` `parse_public_url()` |
+| `protocol` | 字符串（只读派生） | 默认 `https://` | `public_url` 的协议部分，含 `://` | 同上 |
+| `domain_name` | 字符串（只读派生） | 空 | `public_url` 的域名部分（含端口，去除空格） | 同上 |
+| `path_prefix` | 字符串（只读派生） | 空 | `public_url` 的路径部分，以 `/` 开头且不带尾斜杠 | 同上 |
 | `render.theme` | 字符串 | 默认 `default` | 主题目录名 | `yaml_config.cpp:129` |
 | `render.markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp:144-175` |
 | `render.pdf_engine` | 字符串 | 可选 | PDF 引擎：`chromium`/`chrome`/`edge`，或可执行文件路径；非空时启用 PDF 生成 | `yaml_config.cpp:127-136` |
 | `render.pdf_options` | 字符串数组 | 可选 | Chrome/Edge 启动参数；`--print-to-pdf=` 会替换为实际输出路径 | 同上 |
 
-`deploy.full_prefix()` = `protocol + domain_name + path_prefix`。示例配置产物为 `https://stdout.com.cn/camus`。
+`public_url` 拆解规则（`parse_public_url()`）：
+
+| 输入 | `protocol` | `domain_name` | `path_prefix` | `url`（归一化） |
+|---|---|---|---|---|
+| `https://stdout.com.cn/camus` | `https://` | `stdout.com.cn` | `/camus` | `https://stdout.com.cn/camus` |
+| `stdout.com.cn` | `https://` | `stdout.com.cn` | 空 | `https://stdout.com.cn` |
+| `https://stdout.com.cn/` | `https://` | `stdout.com.cn` | 空 | `https://stdout.com.cn` |
+| `http://localhost:8080/blog/` | `http://` | `localhost:8080` | `/blog` | `http://localhost:8080/blog` |
+
+`public_url_conf::full_prefix()` = `protocol + domain_name + path_prefix`，用于绝对链接与 sitemap。
 
 ### 3.3.1 PDF 引擎与参数
 
@@ -83,9 +94,9 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 
 顶层配置 `render.markdown_options` 在模板 JSON 的 `camus.render.options` 会显示为 `"{数值}({名称1,名称2,...})"`（`yaml_config.cpp:225-226`）。
 
-## 3.5 `catalog` 段（路由）
+## 3.5 `catalog.yaml`（路由与搬运）
 
-`catalog` 为序列，每项生成一个 `route_conf`（`route_conf` 序列化字段：`path`、`title`、`subtitle`、`description`、`transfers`）。
+`catalog.yaml` 与 `camus.yaml` 同目录，根节点为序列，每项生成一个 `route_conf`（`route_conf` 序列化字段：`path`、`title`、`subtitle`、`description`、`transfers`）。`catalog.yaml` 缺失或非序列会导致解析失败。
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
@@ -102,17 +113,16 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 - 所有路由的空 `title/subtitle/description` 最终继承 `site`。
 - 路由匹配使用 `filesystem::path_equal(..., clean_check=true)`（`yaml_config.cpp:408`），即按清理后的路径比较。
 
-示例：
+示例（`catalog.yaml` 根节点直接是序列）：
 
 ```yaml
-catalog:
-  - path: /
-    title: Musicals
-  - path: /introduction
-    transfers:
-      - source: .
-        target: /intro/Well-known
-    title: Well-known musicals
+- path: /
+  title: Musicals
+- path: /introduction
+  transfers:
+    - source: .
+      target: /intro/Well-known
+  title: Well-known musicals
 ```
 
 ## 3.6 `friends` 段
@@ -134,11 +144,16 @@ catalog:
 
 | 顶层键 | 结构 | 说明 |
 |---|---|---|
-| `camus` | 对象 | 兼容保留的聚合对象：`source_dir`、`assets_dir`、`site`、`output`、`deploy`、`render`、`friends`；`render.options` 为选项展示串 |
+| `camus` | 对象 | 兼容保留的聚合对象：`source_dir`、`assets_dir`、`site`、`meta`、`sitemap`、`filename_case`、`public_url`、`protocol`、`domain_name`、`path_prefix`、`render`、`friends`；`render.options` 为选项展示串 |
 | `source_dir` | 字符串 | 解析后的源目录绝对路径（`src`→`posts` 探测） |
 | `assets_dir` | 字符串 | 解析后的资源目录绝对路径 |
-| `output` | 对象 | 输出配置（`meta`、`sitemap`、`filename_case`、`dest_dir`） |
-| `deploy` | 对象 | 部署配置（`protocol`、`domain_name`、`path_prefix`），用于拼接完整 URL |
+| `meta` | bool | 是否输出 `meta.json` |
+| `sitemap` | bool | 是否输出 `sitemap.xml` |
+| `filename_case` | 字符串 | 输出文件名策略（`keep` / `uuid`） |
+| `public_url` | 字符串 | 归一化后的站点对外地址 |
+| `protocol` | 字符串 | `public_url` 的协议部分（`https://`） |
+| `domain_name` | 字符串 | `public_url` 的域名部分 |
+| `path_prefix` | 字符串 | `public_url` 的路径前缀 |
 | `render` | 对象 | 渲染配置（`theme_name`、`html_engine`、`markdown_engine`、`pdf_engine`、`pdf_options`） |
 | `friends` | 数组 | 友情链接 |
 | `site` | 对象 | 根路由（`path/title/subtitle/description/transfers`） |
@@ -164,7 +179,7 @@ catalog:
 示例（inja）：
 
 ```html
-<a href="{{ deploy.protocol }}{{ deploy.domain_name }}{{ deploy.path_prefix }}">Site</a>
+<a href="{{ public_url }}">Site</a>
 <a href="{{ git.repo }}">{{ git.repo }}</a>
 <span>{{ build.version }} / {{ git.commit_hash }}</span>
 ```
@@ -172,7 +187,7 @@ catalog:
 ## 3.8 持久性与重载
 
 - 配置本身持久于磁盘；运行期不写回配置。
-- `reload()` 每次全量重读 `camus.yaml`。
+- `reload()` 每次全量重读 `camus.yaml` 与 `catalog.yaml`。
 - 当前实现中 `routes_`、`camus_.friends` 在 `reload()` 前**不会清空**，多次热重载会导致内部路由/友链列表累积；`public_config_` 为覆盖写入，模板 JSON 的 `route` 也随 `routes_` 累积。
 - 路由/友链的新增在下次构建生效。
 

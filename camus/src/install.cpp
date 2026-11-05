@@ -13,7 +13,7 @@ namespace
 {
 	void scaffold_workdir(const std::filesystem::path &workdir, const std::filesystem::path &local_dir)
 	{
-		for (const auto &name : std::vector<std::string>{"posts", "camus.yaml", ".gitignore"}) {
+		for (const auto &name : std::vector<std::string>{"posts", "camus.yaml", "catalog.yaml", ".gitignore"}) {
 			const std::filesystem::path source = local_dir / name;
 			const std::filesystem::path target = workdir / name;
 
