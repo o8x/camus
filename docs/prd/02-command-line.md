@@ -16,13 +16,15 @@ camus [选项] [--workdir <目录>]
 |---|---|---|---|---|
 | `-h` | `--help` | 无 | 打印帮助并退出（注意退出码为 1） | `main.cpp:90` |
 | `-v` | `--version` | 无 | 打印版本、构建信息与 git hash 后退出 0 | `main.cpp:91` |
-| `-d` | `--debug` | 无 | 开启调试日志 | `main.cpp:10` |
+| `-i` | `--install` | 无 | 从平台数据目录把资源安装到 `<workdir>/.camus`，随后继续构建 | `main.cpp:9` |
+| `-f` | `--force` | 无 | 安装时覆盖已有 `.camus` | `main.cpp:10` |
+| `-d` | `--debug` | 无 | 开启调试日志 | `main.cpp:11` |
 | `-W` | `--watch` | 无 | 监听文件变化并自动重建，同时启动本地服务 | `main.cpp:11` |
 | `-D` | `--dryrun` | 无 | 干跑：不写任何输出文件 | `main.cpp:12` |
 | `-I` | `--inspect` | 无 | 打印当前配置并执行一次干跑构建、打印目录树 | `main.cpp:13` |
 | `-w` | `--workdir` | 目录字符串，默认 `.` | 工作目录 | `main.cpp:14` |
 
-> 自包含安装已移除：不再提供 `-i/--install` 与 `-f/--force`；主题、默认资源与示例模板由安装包放到平台数据目录（见 §8）。
+> 资源来源：主题、默认资源与示例模板由安装包放到平台数据目录；`-i` 会把它们复制到工作目录 `.camus`。安装后资源查找优先 `.camus`，未安装时使用数据目录（见 §8）。
 
 ## 2.3 解析规则
 
@@ -41,7 +43,11 @@ flowchart TD
     P[parse argv] -->|失败或 -h| H[打印错误/usage, 退出 1]
     P -->|成功| V{-v?}
     V -->|是| VO[打印版本, 退出 0]
-    V -->|否| C[构造 writer]
+    V -->|否| I{-i?}
+    I -->|是| INS[install_resources 到 .camus]
+    INS -->|失败| IF[返回 1]
+    INS -->|成功| C[构造 writer]
+    I -->|否| C
     C --> Q{-I?}
     Q -->|是| INSP[inspect, 退出 0]
     Q -->|否| WD[chdir workdir]
@@ -52,6 +58,8 @@ flowchart TD
 
 要点：
 
+- `-i` 不会在安装后退出：安装成功后继续执行构建；`-i` 单独使用等于「安装 + 构建」。
+- `-f` 仅在 `-i` 时生效；`-f` 会清空并重装 `<workdir>/.camus`，工作目录已有的 `posts`、`camus.yaml`、`.gitignore` 不会被覆盖。
 - `-I` 在构建前执行，`inspect()` 内部把 dryrun 置为 true，因此不会写文件。
 - `-W` 时即使首次 `build()` 返回非 0，也会进入 `watch()` 循环继续等待变化。
 
@@ -82,12 +90,15 @@ Build Time: 2025-07-24 15:44:00 hash=<40 位 git hash>
 | 帮助 | 1 | `main.cpp:102` |
 | 参数解析失败 | 1 | `main.cpp:102` |
 | 无文章（目录树为空） | 1 | `writer.cpp:812`（非 watch 模式） |
+| 安装失败（数据目录无资源或复制异常） | 1 | `install_resources` 返回 1 |
 | 致命错误（配置缺失、渲染失败、输出目录文件过多等） | 127 | `logging::fatal` → `std::exit(127)` |
 | 未捕获异常 | 127 | catch 中 `logging::fatal` 退出 |
 
 ## 2.7 常用示例
 
 ```bash
+camus -iw mysite          # 安装资源到 mysite/.camus 并构建
+camus -ifw mysite         # 强制重装 .camus 并构建
 camus -w mysite           # 构建 mysite
 camus -Ww mysite          # 监听 mysite 并自动重建
 camus -I                  # 打印配置 + 干跑构建 + 打印目录树

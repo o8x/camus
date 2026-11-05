@@ -28,6 +28,11 @@ namespace camus::paths
 #endif
 	}
 
+	std::filesystem::path local_data_dir()
+	{
+		return CAMUS_LOCAL_DATA_DIR;
+	}
+
 	std::filesystem::path find(const std::filesystem::path &relative_path)
 	{
 		for (const auto &root : data_dirs()) {
@@ -41,13 +46,41 @@ namespace camus::paths
 		return {};
 	}
 
-	std::filesystem::path default_assets_dir()
+	std::filesystem::path find_resource(const std::filesystem::path &relative_path)
+	{
+		if (const std::filesystem::path local = local_data_dir() / relative_path; std::filesystem::exists(local)) {
+			return local;
+		}
+
+		return find(relative_path);
+	}
+
+	std::filesystem::path source_data_dir()
 	{
 		for (const auto &root : data_dirs()) {
-			const std::filesystem::path candidate = root / "assets";
 			std::error_code ec;
-			if (std::filesystem::is_directory(candidate, ec) && !ec && !std::filesystem::is_empty(candidate, ec) &&
-				!ec) {
+			if (std::filesystem::is_directory(root / "theme", ec) && !ec &&
+				std::filesystem::is_directory(root / "assets", ec) && !ec) {
+				return root;
+			}
+		}
+
+		return {};
+	}
+
+	std::filesystem::path default_assets_dir()
+	{
+		const auto non_empty_dir = [](const std::filesystem::path &path) {
+			std::error_code ec;
+			return std::filesystem::is_directory(path, ec) && !ec && !std::filesystem::is_empty(path, ec) && !ec;
+		};
+
+		if (const std::filesystem::path local = local_data_dir() / "assets"; non_empty_dir(local)) {
+			return local;
+		}
+
+		for (const auto &root : data_dirs()) {
+			if (const std::filesystem::path candidate = root / "assets"; non_empty_dir(candidate)) {
 				return candidate;
 			}
 		}

@@ -4,6 +4,7 @@
 #include "build/build.h"
 #include "common/cmdline/cmdline.h"
 #include "common/filesystem/filesystem.h"
+#include "install.h"
 #include "writer.h"
 
 int main(const int argc, char **argv)
@@ -12,6 +13,8 @@ int main(const int argc, char **argv)
 	arg.set_program_name("Great writer Camus");
 	arg.add("help", 'h', "print this help and exit");
 	arg.add("version", 'v', "print version and exit");
+	arg.add("install", 'i', "install resources into .camus from data dir");
+	arg.add("force", 'f', "overwrite existing .camus when installing");
 	arg.add("debug", 'd', "enable debugging");
 	arg.add("watch", 'W', "automate building when changes occur");
 	arg.add("dryrun", 'D', "dry run");
@@ -40,6 +43,12 @@ int main(const int argc, char **argv)
 			.workdir = filesystem::path_abs(arg.get<std::string>("workdir")),
 			.dryrun = arg.exist("dryrun"),
 		};
+
+		if (arg.exist("install")) {
+			if (const int installed = camus::install_resources(cmd.workdir, arg.exist("force")); installed != 0) {
+				return installed;
+			}
+		}
 
 		const auto c = new camus::writer(cmd);
 		if (arg.exist("inspect")) {

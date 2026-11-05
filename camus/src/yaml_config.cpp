@@ -249,7 +249,7 @@ namespace camus::config
 				std::filesystem::exists(replace_theme)) {
 				home_file = replace_theme;
 			} else {
-				home_file = paths::find(std::filesystem::path("theme") / name / std::format("{}.html", type));
+				home_file = paths::find_resource(std::filesystem::path("theme") / name / std::format("{}.html", type));
 			}
 
 			if (home_file.empty() || !std::filesystem::exists(home_file)) {

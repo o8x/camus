@@ -46,6 +46,7 @@ jobs:
                     dpkg -i *.deb
                     camus -v
                     camus -dw "$GITHUB_WORKSPACE/example"
+                    camus -iw /tmp/site
 
             -   name: Upload
                 uses: actions/upload-artifact@v4
@@ -77,6 +78,7 @@ jobs:
                     sudo installer -pkg *.pkg -target /
                     camus -v
                     camus -dw "$GITHUB_WORKSPACE/example"
+                    camus -iw /tmp/site
 
             -   name: Upload artifact
                 uses: actions/upload-artifact@v4

@@ -27,14 +27,14 @@
 `camus/CMakeLists.txt`：
 
 - 静态库 `camus`（`src/*`）+ 可执行文件 `Camus`，输出名为 `camus`，目录 `${CMAKE_BINARY_DIR}/bin`。
-- 安装 `example/` 的 `theme/`、`assets/`、`posts/` 与 `camus.yaml` 到平台数据目录（Linux `var/lib/camus`，macOS `Library/Application Support/Camus`，见 §8.4）。
+- 安装 `example/` 的 `theme/`、`assets/`、`posts/`、`camus.yaml` 与 `.gitignore` 到平台数据目录（Linux `var/lib/camus`，macOS `Library/Application Support/Camus`，见 §8.4）。
 - 注册 CTest `build-test-site`：在源码根目录执行 `${CMAKE_BINARY_DIR}/bin/camus -d site`，超时 10 秒。
 - CPack 配置见 §9.5。
 
 `common/CMakeLists.txt`：
 
 - 收集 `common/common/*` 源文件与 `cpp-httplib`，不再依赖 `libarchive`。
-- 生成 `build/build.h`（由 `config.h.in` 配置），包含版本、CMake 版本、构建时间、构建类型、C++ 标准、Git 信息与 `CAMUS_DATA_DIR_MACOS="Library/Application Support/Camus"`、`CAMUS_DATA_DIR_LINUX="/var/lib/camus"`、`CAMUS_CONF_NAME="camus.yaml"`、`CAMUS_PRIVATE_DIR="private"`。
+- 生成 `build/build.h`（由 `config.h.in` 配置），包含版本、CMake 版本、构建时间、构建类型、C++ 标准、Git 信息与 `CAMUS_LOCAL_DATA_DIR=".camus"`、`CAMUS_DATA_DIR_MACOS="Library/Application Support/Camus"`、`CAMUS_DATA_DIR_LINUX="/var/lib/camus"`、`CAMUS_CONF_NAME="camus.yaml"`、`CAMUS_PRIVATE_DIR="private"`。
 
 ## 9.3 Makefile 目标
 
@@ -78,8 +78,8 @@
 
 | Job | Runner | 主要步骤 | 产物 |
 |---|---|---|---|
-| `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `mold`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` | `build/release/packages` |
-| `build-macos` | `macos-14` | brew 安装依赖 → submodule → `make package` → `sudo installer -pkg *.pkg -target /` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` | `build/release/packages` |
+| `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `mold`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` | `build/release/packages` |
+| `build-macos` | `macos-14` | brew 安装依赖 → submodule → `make package` → `sudo installer -pkg *.pkg -target /` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` | `build/release/packages` |
 | `release` | `ubuntu-24.04` | 下载并合并产物；仅在 tag 上通过 `softprops/action-gh-release` 发布（匹配 `*.dmg/*.pkg/*.rpm/*.deb/*.exe`） | GitHub Release |
 | `pages` | `ubuntu-24.04` 容器 | 安装 deb → `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |
 

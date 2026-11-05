@@ -54,7 +54,8 @@ if (APPLE)
         install(DIRECTORY "${CMAKE_SOURCE_DIR}/example/theme" "${CMAKE_SOURCE_DIR}/example/assets"
                 "${CMAKE_SOURCE_DIR}/example/posts"
                 DESTINATION "${CAMUS_RESOURCE_DIR}")
-        install(FILES "${CMAKE_SOURCE_DIR}/example/camus.yaml" DESTINATION "${CAMUS_RESOURCE_DIR}")
+        install(FILES "${CMAKE_SOURCE_DIR}/example/camus.yaml" "${CMAKE_SOURCE_DIR}/example/.gitignore"
+                DESTINATION "${CAMUS_RESOURCE_DIR}")
     elseif (CPACK_GENERATOR MATCHES "productbuild")
         # pkgutil --pkgs
         # pkgutil --pkg-info cn.com.stdout.Camus.Runtime
@@ -65,7 +66,7 @@ if (APPLE)
         install(DIRECTORY "${CMAKE_SOURCE_DIR}/example/theme" "${CMAKE_SOURCE_DIR}/example/assets"
                 "${CMAKE_SOURCE_DIR}/example/posts"
                 DESTINATION "${CAMUS_RESOURCE_DIR}" COMPONENT Resources)
-        install(FILES "${CMAKE_SOURCE_DIR}/example/camus.yaml"
+        install(FILES "${CMAKE_SOURCE_DIR}/example/camus.yaml" "${CMAKE_SOURCE_DIR}/example/.gitignore"
                 DESTINATION "${CAMUS_RESOURCE_DIR}" COMPONENT Resources)
 
         set(CPACK_COMPONENTS_ALL Runtime Resources)
@@ -87,7 +88,8 @@ elseif (UNIX)
     install(DIRECTORY "${CMAKE_SOURCE_DIR}/example/theme" "${CMAKE_SOURCE_DIR}/example/assets"
             "${CMAKE_SOURCE_DIR}/example/posts"
             DESTINATION "${CAMUS_RESOURCE_DIR}")
-    install(FILES "${CMAKE_SOURCE_DIR}/example/camus.yaml" DESTINATION "${CAMUS_RESOURCE_DIR}")
+    install(FILES "${CMAKE_SOURCE_DIR}/example/camus.yaml" "${CMAKE_SOURCE_DIR}/example/.gitignore"
+                DESTINATION "${CAMUS_RESOURCE_DIR}")
 
     set(CPACK_GENERATOR "DEB")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "https://github.com/o8x")

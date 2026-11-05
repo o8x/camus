@@ -4,7 +4,7 @@
 
 Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章与主题模板，生成静态 HTML 站点。核心特性：
 
-- 外部资源安装：主题、默认静态资源与示例模板由安装包放到平台数据目录，运行期从该目录读取。
+- 外部资源安装：主题、默认静态资源与示例模板由安装包放到平台数据目录；`-i` 可把它们复制到工作目录 `.camus`，安装后优先使用 `.camus`。
 - Markdown（cmark-gfm）渲染，支持 Front Matter 与隐藏片段。
 - 多主题：数据目录内置 `default`、`document`、`pixel`、`terminal` 等主题，本地 `theme/` 可覆盖或自定义。
 - 目录树与目录索引页、统计页、友链页、`sitemap.xml`、`meta.json` 生成。
@@ -39,12 +39,12 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 | macOS（回退） | `/Library/Application Support/Camus` | 安装到系统域（如 `installer -target /`）时的位置 |
 | Linux | `/var/lib/camus` | 由 deb 安装包写入 |
 
-目录内容为 `theme/`、`assets/`、`posts/` 与 `camus.yaml` 示例模板。查找规则：
+目录内容为 `theme/`、`assets/`、`posts/`、`camus.yaml` 与 `.gitignore`。查找规则：
 
-- 主题：工作目录 `theme/{name}/{type}.html` 优先，其次数据目录同名文件。
-- 静态资源：工作目录 `./assets` 优先，缺失或为空时使用数据目录 `assets/`。
+- 主题：工作目录 `theme/{name}/{type}.html` → `.camus/theme/...` → 数据目录。
+- 静态资源：工作目录 `./assets` 优先；否则 `.camus/assets`，再否则数据目录 `assets/`。
 
-构建不再向可执行文件追加模板，也不再提供 `-i`/`-f` 选项（详见 §8）。
+构建不再向可执行文件追加模板。`-i` 从数据目录复制资源到 `.camus`，`-f` 覆盖已有 `.camus`（详见 §8）。
 
 ## 1.4 构建流水线
 

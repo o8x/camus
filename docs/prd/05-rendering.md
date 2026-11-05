@@ -16,8 +16,9 @@
 加载顺序（`yaml_config.cpp:244-264`）：
 
 1. 若本地存在 `theme/{theme_name}/{type}.html`，优先使用本地覆盖。
-2. 否则在平台数据目录中查找 `theme/{theme_name}/{type}.html`（macOS `~/Library/Application Support/Camus`，Linux `/var/lib/camus`）。
-3. 文件不存在时 `logging::fatal("read theme content failed ...")`，进程退出 127。
+2. 否则查找 `.camus/theme/{theme_name}/{type}.html`（`-i` 安装）。
+3. 仍未找到时在平台数据目录中查找同名文件（macOS `~/Library/Application Support/Camus`，Linux `/var/lib/camus`）。
+4. 文件不存在时 `logging::fatal("read theme content failed ...")`，进程退出 127。
 
 `theme_name` 默认 `default`；示例站点使用 `terminal`。HTML 引擎固定为 `default`（inja），不再从配置读取，`theme_name` 也不会再拼接引擎子路径。
 

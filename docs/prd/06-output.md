@@ -134,11 +134,11 @@ dist/
 
 ```mermaid
 flowchart TD
-    A[检查数据目录 assets/ 与本地 ./assets] --> B{两者都不可用/为空?}
+    A[检查 .camus/assets、数据目录 assets/ 与本地 ./assets] --> B{两者都不可用/为空?}
     B -->|是| Z[记录 debug 并跳过]
     B -->|否| C[创建 dist/html]
     C --> D{默认资源可用?}
-    D -->|是| E[复制数据目录 assets/ -> dist/html/assets]
+    D -->|是| E[复制默认 assets -> dist/html/assets]
     D -->|否| F
     E --> F{本地 ./assets 可用?}
     F -->|是| G[覆盖复制 ./assets -> dist/html/assets]
@@ -148,7 +148,7 @@ flowchart TD
     I --> J[删除临时 dist/html/assets]
 ```
 
-- 默认资源来自平台数据目录的 `assets/`（macOS `~/Library/Application Support/Camus`，Linux `/var/lib/camus`），**不依赖工作目录存在 `./assets`**。
+- 默认资源优先使用 `.camus/assets`（`-i` 安装），否则使用平台数据目录的 `assets/`（macOS `~/Library/Application Support/Camus`，Linux `/var/lib/camus`），**不依赖工作目录存在 `./assets`**。
 - 本地资源目录固定为 `./assets`；存在且非空时整体覆盖默认同名文件，不存在或为空时仅使用默认资源。
 - 仅 `.css`、`.js`、`.txt`、`.json` 会做 inja 变量替换，其它文件原样复制。
 - 最终资源被**提升到输出根目录**（如 `dist/html/css/...`、`dist/html/robots.txt`），不保留 `assets/` 前缀。
