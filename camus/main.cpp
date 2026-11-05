@@ -44,7 +44,7 @@ int main(const int argc, char **argv)
 	arg.set_program_name("Great writer Camus");
 	arg.add("help", 'h', "print this help and exit");
 	arg.add("version", 'v', "print version and exit");
-	arg.add("install", 'i', "install camus.yaml, catalog.yaml, posts and .gitignore from data dir");
+	arg.add("install", 'i', "install camus.yaml, posts and .gitignore from data dir");
 	arg.add("copy", 'c', "copy full resources into .camus from data dir");
 	arg.add("force", 'f', "overwrite existing .camus when copying");
 	arg.add("debug", 'd', "enable debugging");

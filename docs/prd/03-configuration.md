@@ -20,7 +20,7 @@
 ## 3.2 解析总则
 
 - 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`theme`、`pdf_engine`、`pdf_options`、`markdown_options`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。不再接受 `render` 嵌套段；出现时打印 WARN 并忽略其内容。
-- `README.md` 与 `catalog.yaml`（旧版遗留）在目录扫描时都会跳过，不进入文章树；`catalog.yaml` 不再被读取为配置。
+- `README.md` 在目录扫描时跳过，不进入文章树。
 - 字符串值会做 `trim_space`；`README.md` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
 - 源目录、资源目录与输出目录不再可配置：
   - 源目录固定按 `src` → `posts` 顺序探测，存在即使用，否则回退 `src`（随后若不存在则报错）；

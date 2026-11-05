@@ -116,7 +116,6 @@
 | `CAMUS_DATA_DIR_MACOS` | `Library/Application Support/Camus` | macOS 用户数据目录（相对 `$HOME`） |
 | `CAMUS_DATA_DIR_LINUX` | `/var/lib/camus` | Linux 数据目录 |
 | `CAMUS_CONF_NAME` | `camus.yaml` | 主配置文件名 |
-| `CAMUS_CATALOG_NAME` | `catalog.yaml` | 旧版目录路由文件名（仅扫描时跳过，不再读取） |
 | `CAMUS_README_NAME` | `README.md` | 目录元信息文件名（源目录及子目录，扫描时跳过文章树） |
 | `CAMUS_OPEN_TARGET_PROJECT` | `project` | `--open` 默认目标：VS Code 打开工作目录 |
 | `CAMUS_OPEN_TARGET_RUNTIME` | `runtime` | `--open` 目标：文件管理器打开数据目录 |

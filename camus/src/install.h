@@ -4,7 +4,7 @@
 
 namespace camus
 {
-	// 从平台数据目录安装 camus.yaml、catalog.yaml、posts 与 .gitignore 到工作目录；
+	// 从平台数据目录安装 camus.yaml、posts 与 .gitignore 到工作目录；
 	// 已存在的同名路径不会被覆盖。返回 0 表示成功，非 0 表示失败
 	int install_templates(const std::filesystem::path &workdir);
 
