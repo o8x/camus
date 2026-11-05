@@ -11,7 +11,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 - 可选 PDF 输出：把全部可见文章合并为单个 Markdown，经 cmark-gfm 转 HTML 后调用 Chrome/Edge 无头模式打印为 PDF。
 - `-W` 监听模式：轮询文件变化并自动重建，同时提供本地 HTTP 服务。
 
-当前版本：**10.0.0**（来源：`CMakeLists.txt` 的 `project(... VERSION 10.0.0)`）。
+当前版本：**11.1.0**（来源：`CMakeLists.txt` 的 `project(... VERSION 11.1.0)`）。
 
 ## 1.2 技术栈与依赖
 
@@ -83,7 +83,7 @@ flowchart TD
 
 | 项 | 值 | 来源 |
 |---|---|---|
-| 版本号 | 10.0.0 | `CMakeLists.txt` |
+| 版本号 | 11.1.0 | `CMakeLists.txt` |
 | 主版本 | 10 | `PROJECT_VERSION_MAJOR` |
-| 版本输出示例 | `v10.0.0 Release with CMake 3.28.3 and C++ 23` | `camus/main.cpp:110` |
+| 版本输出示例 | `v11.1.0 Release with CMake 3.28.3 and C++ 23` | `camus/main.cpp:110` |
 | 构建信息 | `Build Time: <时间> hash=<git 40 位 hash>` | `config.h.in` + `camus/main.cpp:113` |

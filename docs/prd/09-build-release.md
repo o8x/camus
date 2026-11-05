@@ -20,7 +20,7 @@
 
 根 `CMakeLists.txt`：
 
-- `project(Camus VERSION 10.0.0 ...)`，`CMAKE_CXX_STANDARD 23`。
+- `project(Camus VERSION 11.1.0 ...)`，`CMAKE_CXX_STANDARD 23`。
 - 通过 Git 获取 `GIT_COMMIT_LONG`、`GIT_BRANCH`；未找到 Git 时为 `unknown`。
 - Release 构建追加：`-O3 -ffast-math -falign-functions=64 -flto=auto`；macOS 加 `-march=native`；Linux 加 `-march=x86-64-v3 -fuse-ld=mold -fno-semantic-interposition`，链接选项 `--hash-style=gnu,--as-needed,--gc-sections,--print-gc-sections`。
 - `WORK_ON_DEBUG`：Debug/RelWithDebInfo 为 `true`，Release 为 `false`。
@@ -64,7 +64,7 @@
 | 变量 | 值 |
 |---|---|
 | `CPACK_PACKAGE_NAME` | `Camus` |
-| `CPACK_PACKAGE_VERSION` | `10.0.0` |
+| `CPACK_PACKAGE_VERSION` | `11.1.0` |
 | `CPACK_PACKAGE_VENDOR` / `CONTACT` | `https://github.com/o8x` 相关地址 |
 | `CPACK_OUTPUT_FILE_PREFIX` | `${CMAKE_BINARY_DIR}/packages` |
 | `CPACK_PACKAGE_FILE_NAME` | `${NAME}-v${VERSION}_${OS_NAME}${OS_RELEASE}-${PROCESSOR}`，整体转小写 |
@@ -72,7 +72,7 @@
 - Linux：安装到 `./usr/local/bin`，生成 DEB。
 - macOS `productbuild`：安装到 `./usr/local/bin`，组件 `Runtime`，identifier `cn.com.stdout.Camus`。
 - macOS `DragNDrop` 分支存在但当前 Makefile 默认用 `productbuild`。
-- 产物命名示例：`camus-v10.0.0_ubuntu24.04-x86_64.deb`（实际 `OS_RELEASE` 由主机决定）。
+- 产物命名示例：`camus-v11.1.0_ubuntu24.04-x86_64.deb`（实际 `OS_RELEASE` 由主机决定）。
 
 ## 9.6 CI 工作流
 
@@ -89,7 +89,7 @@
 
 ## 9.7 版本变更
 
-- 版本号来源于 `CMakeLists.txt` 的 `project(... VERSION ...)`；当前 **10.0.0**。
+- 版本号来源于 `CMakeLists.txt` 的 `project(... VERSION ...)`；当前 **11.1.0**。
 - 修改版本号后需同步：
   - `docs/PRD.md` 项目表；
   - `docs/prd/01-overview.md` 版本信息、`02-command-line.md` 示例、`08-template-install.md` 示例；

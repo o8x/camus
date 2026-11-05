@@ -43,7 +43,7 @@ flowchart TD
 关键行为：
 
 - `.camus` 已存在且非空时：
-  - 无 `force`：读取 `.camus/.version`，若首行版本与当前 `PROJECT_VERSION`（10.0.0）不同则告警；随后**直接返回 0**，不做任何安装。
+  - 无 `force`：读取 `.camus/.version`，若首行版本与当前 `PROJECT_VERSION`（11.1.0）不同则告警；随后**直接返回 0**，不做任何安装。
   - 有 `force`（或 Debug/RelWithDebInfo 构建）：整目录清空后重新解压；清空同样受「>200 文件需人工删除」保护（见 §6.1）。
 - `.camus` 不存在或为空：直接解压。
 - 解压失败：尝试删除 `.camus`（`std::filesystem::remove` 仅能删除空目录），返回 1。
@@ -69,7 +69,7 @@ flowchart TD
 格式（`main.cpp:70-73`）：
 
 ```text
-10.0.0
+11.1.0
 2026-11-05 05:00:00
 ```
 
