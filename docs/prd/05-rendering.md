@@ -137,16 +137,18 @@ flowchart TD
 
 PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为独立资源放在 `theme/pdf/`（常量 `CAMUS_PDF_THEME_DIR`，`config.h.in`）：
 
-| 文件 | 常量 | 作用 |
+| 文件/目录 | 常量 | 作用 |
 |---|---|---|
 | `theme/pdf/page.html` | `CAMUS_PDF_TEMPLATE_NAME` | 完整 PDF 中间 HTML 文档模板（inja） |
 | `theme/pdf/style.css` | `CAMUS_PDF_STYLE_NAME` | 打印样式，由模板通过 `{{ pdf.style }}` 内联到 `<style>` |
+| `theme/pdf/fonts.css` | `CAMUS_PDF_FONTS_NAME` | 字体样式（`@font-face` 与 `body` 的 `font-family`），通过 `{{ pdf.fonts }}` 内联 |
+| `theme/pdf/fonts/` | `CAMUS_PDF_FONTS_DIR` | 自定义字体文件目录；构建时整体复制到 `dist/pdf/fonts/` |
 
 加载顺序（`writer::emit_pdf()` → `read_pdf_theme_file()`，`writer.cpp`）：
 
 1. 工作目录 `theme/pdf/<file>`（显式本地覆盖）。
 2. `paths::find_resource("theme/pdf/<file>")`：先 `.camus/theme/pdf/<file>`（`-i` 安装），再平台数据目录。
-3. 均不存在时 `logging::fatal("read pdf theme content failed name=...")`，退出 127。
+3. `page.html` / `style.css` 均不存在时 `logging::fatal("read pdf theme content failed name=...")`，退出 127；`fonts.css` 可选，缺失时 `pdf.fonts` 为空串并继续生成。
 
 `page.html` 使用 inja 渲染，上下文为 §3.7 的配置 JSON 加上 `pdf` 对象：
 
@@ -155,6 +157,7 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 | `pdf.lang` | 字符串 | 站点标题非空时为 `zh-CN`，否则为 `en` |
 | `pdf.title` | 字符串 | 已 HTML 转义的封面标题（站点标题为空时回退 `Camus`） |
 | `pdf.style` | 字符串 | `style.css` 经配置 JSON 渲染后的内容（可写 inja 配置变量） |
+| `pdf.fonts` | 字符串 | `fonts.css` 经配置 JSON 渲染后的内容；文件缺失时为空串 |
 | `pdf.intro` | 字符串 | 引导页 Markdown（`# site.title` + `site.description`）渲染后的 HTML，**未转义** |
 | `pdf.cover` | 对象 | `eyebrow`、`title`、`subtitle`、`description`、`meta`（生成日期），均按模板需要预转义 |
 | `pdf.title_page` | 对象 | `title`、`subtitle` |
@@ -162,8 +165,10 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 | `pdf.toc` | 数组 | 每项 `anchor`、`index`、`number`（两位序号）、`title`、`tags`；`title`/`tags` 已转义 |
 | `pdf.articles` | 数组 | 每项 `anchor`、`index`、`number`、`title`、`tags`、`content`；`content` 为渲染后的文章 HTML，**未转义** |
 
-- `style.css` 先以配置 JSON 单独渲染（可使用 `{{ build.version }}`、`{{ site.title }}` 等配置变量），再作为 `pdf.style` 字符串插入 `page.html`；`page.html` 自身以「配置 JSON + `pdf` 对象」渲染。插入的样式内容不会被二次解析。
-- 默认模板生成的 HTML 结构、封面/扉页/目录/文章分页样式与原硬编码版本一致；用户可整体替换 `page.html`，或只覆盖 `style.css`。
+- `style.css` 与 `fonts.css` 先以配置 JSON 单独渲染（可使用 `{{ build.version }}`、`{{ site.title }}` 等配置变量），再分别作为 `pdf.style` / `pdf.fonts` 字符串插入 `page.html`；`page.html` 自身以「配置 JSON + `pdf` 对象」渲染。插入的样式内容不会被二次解析。
+- `body` 的字体定义默认位于 `fonts.css`，`style.css` 只保留颜色、行高等打印样式。`fonts.css` 中的自定义字体示例默认被注释：将 ttf 放入 `theme/pdf/fonts/`，取消 `@font-face` 与 `body` 覆盖注释即可启用。
+- `theme/pdf/fonts/` 存在时会在写 `dist/pdf/index.html` 前递归复制到 `dist/pdf/fonts/`，因此 `url("fonts/<file>.ttf")` 相对 `dist/pdf/index.html` 可正常加载；该目录缺失时跳过复制。
+- 默认模板生成的 HTML 结构、封面/扉页/目录/文章分页样式与原硬编码版本一致；用户可整体替换 `page.html`，或只覆盖 `style.css` / `fonts.css` / `fonts/`。
 - 输出 `dist/pdf/index.html` 是模板渲染结果；`dist/pdf/index.md` 仍由程序生成，不受模板影响。
-- 页面写入成功与否只影响 PDF 阶段；模板缺失属于配置错误，会以致命错误退出（与普通主题缺失一致）。
-- 模板/样式源文件持久于工作目录 `theme/pdf`、`.camus` 或数据目录；生成的 `dist/pdf` 产物可随时重建。
+- 页面写入成功与否只影响 PDF 阶段；`page.html`/`style.css` 缺失属于配置错误，会以致命错误退出（与普通主题缺失一致）。
+- 模板/样式/字体源文件持久于工作目录 `theme/pdf`、`.camus` 或数据目录；生成的 `dist/pdf` 产物可随时重建。

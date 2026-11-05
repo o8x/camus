@@ -9,7 +9,7 @@
 | `camus.yaml` | 运行时当前工作目录 | 主配置 | 是 |
 | `catalog.yaml` | 与 `camus.yaml` 同目录 | 目录路由与文件搬运规则 | 是 |
 | `theme/{name}/*.html` | 工作目录 | 本地主题覆盖 | 是 |
-| `theme/pdf/{page.html,style.css}` | 工作目录 | 本地 PDF 模板/样式覆盖 | 是 |
+| `theme/pdf/{page.html,style.css,fonts.css,fonts/}` | 工作目录 | 本地 PDF 模板/样式/字体覆盖 | 是 |
 | `.camus/` | 工作目录 | `-i` 安装的本地主题、PDF 模板、资源与示例模板 | 是 |
 | `<数据目录>/` | macOS `~/Library/Application Support/Camus`；Linux `/var/lib/camus` | 默认主题、静态资源与示例模板（由安装包写入） | 是 |
 
@@ -72,7 +72,7 @@
   - `--print-to-pdf={{dest_dir}}/docs/book.pdf`：输出到 `<dest_dir>/docs/book.pdf`；
   - `--print-to-pdf=book.pdf`：相对路径按 `<dest_dir>/book.pdf` 解析。
 - 未显式提供 `--headless` 时自动追加；始终追加临时 `--user-data-dir`（构建结束删除），避免污染用户浏览器配置。
-- PDF 中间 HTML 使用 `theme/pdf/page.html` 模板与 `theme/pdf/style.css` 样式；该目录不通过 `camus.yaml` 配置，查找顺序与可用模板变量见 §5.10、§8.3。
+- PDF 中间 HTML 使用 `theme/pdf/page.html` 模板、`theme/pdf/style.css` 样式与 `theme/pdf/fonts.css` 字体样式；自定义字体放在 `theme/pdf/fonts/`。该目录不通过 `camus.yaml` 配置，查找顺序与可用模板变量见 §5.10、§8.3。
 
 ### 3.4 markdown_options 映射
 

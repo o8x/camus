@@ -154,16 +154,45 @@ namespace
 		return out;
 	}
 
-	std::string read_pdf_theme_file(const std::string &name)
+	std::filesystem::path find_pdf_theme_path(const std::string &name)
+	{
+		return camus::paths::find_local_or_resource(std::filesystem::path(CAMUS_PDF_THEME_DIR) / name);
+	}
+
+	std::string read_pdf_theme_file(const std::string &name, const bool required = true)
 	{
 		const std::filesystem::path relative = std::filesystem::path(CAMUS_PDF_THEME_DIR) / name;
-		const std::filesystem::path path = camus::paths::find_local_or_resource(relative);
+		const std::filesystem::path path = find_pdf_theme_path(name);
 		if (path.empty()) {
-			logging::fatal("read pdf theme content failed name={}", relative.string());
+			if (required) {
+				logging::fatal("read pdf theme content failed name={}", relative.string());
+			}
+
+			logging::debug("pdf theme content not found, skip name={}", relative.string());
+			return "";
 		}
 
 		logging::debug("load pdf theme content name={}", relative.string());
 		return filesystem::read_file(path);
+	}
+
+	void copy_pdf_theme_fonts(const std::filesystem::path &dest_dir)
+	{
+		const std::filesystem::path source = find_pdf_theme_path(CAMUS_PDF_FONTS_DIR);
+		std::error_code ec;
+		if (source.empty() || !std::filesystem::is_directory(source, ec) || ec) {
+			logging::debug("pdf theme fonts not found, skip copy");
+			return;
+		}
+
+		const std::filesystem::path target = dest_dir / CAMUS_PDF_FONTS_DIR;
+		std::filesystem::copy(
+			source,
+			target,
+			std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
+		);
+
+		logging::debug("copy pdf theme fonts from={} to={}", source.string(), target.string());
 	}
 } // namespace
 
@@ -887,6 +916,7 @@ namespace camus
 
 		const std::string template_source = read_pdf_theme_file(CAMUS_PDF_TEMPLATE_NAME);
 		const std::string style_source = read_pdf_theme_file(CAMUS_PDF_STYLE_NAME);
+		const std::string fonts_source = read_pdf_theme_file(CAMUS_PDF_FONTS_NAME, false);
 
 		nlohmann::json view = conf_.json();
 		std::string markdown = std::format("# {}\n\n{}\n", site_title, conf_.camus().site.description);
@@ -895,6 +925,7 @@ namespace camus
 		pdf["lang"] = site_title.empty() ? "en" : "zh-CN";
 		pdf["title"] = cover_title;
 		pdf["style"] = render::inja_render(inja_, style_source, view);
+		pdf["fonts"] = fonts_source.empty() ? "" : render::inja_render(inja_, fonts_source, view);
 		pdf["intro"] = render::render_markdown(
 			markdown.c_str(),
 			conf_.camus().render.markdown_engine,
@@ -977,6 +1008,7 @@ namespace camus
 
 		std::filesystem::create_directories(pdf_dir);
 		filesystem::write_file(markdown_path, markdown);
+		copy_pdf_theme_fonts(pdf_dir);
 
 		view["pdf"] = std::move(pdf);
 

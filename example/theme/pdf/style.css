@@ -2,7 +2,6 @@
 @page { size: A4; margin: 20mm 18mm; }
 html { font-size: 16px; }
 body {
-    font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
     color: #262626;
     line-height: 1.7;
     -webkit-print-color-adjust: exact;

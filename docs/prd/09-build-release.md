@@ -34,7 +34,7 @@
 `common/CMakeLists.txt`：
 
 - 收集 `common/common/*` 源文件与 `cpp-httplib`，不再依赖 `libarchive`。
-- 生成 `build/build.h`（由 `config.h.in` 配置），包含版本、CMake 版本、构建时间、构建类型、C++ 标准、Git 信息与 `CAMUS_LOCAL_DATA_DIR=".camus"`、`CAMUS_DATA_DIR_MACOS="Library/Application Support/Camus"`、`CAMUS_DATA_DIR_LINUX="/var/lib/camus"`、`CAMUS_CONF_NAME="camus.yaml"`、`CAMUS_CATALOG_NAME="catalog.yaml"`、`CAMUS_PRIVATE_DIR="private"`、`CAMUS_PDF_THEME_DIR="theme/pdf"`、`CAMUS_PDF_TEMPLATE_NAME="page.html"`、`CAMUS_PDF_STYLE_NAME="style.css"`。
+- 生成 `build/build.h`（由 `config.h.in` 配置），包含版本、CMake 版本、构建时间、构建类型、C++ 标准、Git 信息与 `CAMUS_LOCAL_DATA_DIR=".camus"`、`CAMUS_DATA_DIR_MACOS="Library/Application Support/Camus"`、`CAMUS_DATA_DIR_LINUX="/var/lib/camus"`、`CAMUS_CONF_NAME="camus.yaml"`、`CAMUS_CATALOG_NAME="catalog.yaml"`、`CAMUS_PRIVATE_DIR="private"`、`CAMUS_PDF_THEME_DIR="theme/pdf"`、`CAMUS_PDF_TEMPLATE_NAME="page.html"`、`CAMUS_PDF_STYLE_NAME="style.css"`、`CAMUS_PDF_FONTS_NAME="fonts.css"`、`CAMUS_PDF_FONTS_DIR="fonts"`。
 
 ## 9.3 Makefile 目标
 

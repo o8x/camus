@@ -24,3 +24,5 @@
 #define CAMUS_PDF_THEME_DIR "theme/pdf"
 #define CAMUS_PDF_TEMPLATE_NAME "page.html"
 #define CAMUS_PDF_STYLE_NAME "style.css"
+#define CAMUS_PDF_FONTS_NAME "fonts.css"
+#define CAMUS_PDF_FONTS_DIR "fonts"

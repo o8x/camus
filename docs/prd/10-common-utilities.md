@@ -120,3 +120,5 @@
 | `CAMUS_PDF_THEME_DIR` | `theme/pdf` | PDF 模板与样式目录 |
 | `CAMUS_PDF_TEMPLATE_NAME` | `page.html` | PDF 中间 HTML 模板文件名 |
 | `CAMUS_PDF_STYLE_NAME` | `style.css` | PDF 打印样式文件名 |
+| `CAMUS_PDF_FONTS_NAME` | `fonts.css` | PDF 字体样式文件名 |
+| `CAMUS_PDF_FONTS_DIR` | `fonts` | PDF 自定义字体目录名 |

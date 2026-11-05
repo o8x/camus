@@ -23,7 +23,8 @@
 ```text
 <数据目录>/
 ├── theme/{default,document,pixel,terminal}/{home,page,stats,friends}.html
-├── theme/pdf/{page.html,style.css}   # PDF 中间 HTML 模板与打印样式
+├── theme/pdf/{page.html,style.css,fonts.css}   # PDF 模板、打印样式与字体样式
+├── theme/pdf/fonts/                    # 自定义 PDF 字体文件（构建时复制到 dist/pdf/fonts）
 ├── assets/                    # 默认静态资源（css/js/fonts/robots.txt 等）
 ├── posts/                     # 示例文章
 ├── camus.yaml                 # 示例配置
@@ -63,11 +64,12 @@ flowchart TD
 2. `paths::find_resource("theme/{theme_name}/{type}.html")`：先 `.camus/theme/...`，再数据目录。
 3. 均不存在时 `logging::fatal("read theme content failed name=...")`，退出 127。
 
-PDF 模板与样式（`writer.cpp` 的 `read_pdf_theme_file()`）：
+PDF 模板、样式与字体（`writer.cpp` 的 `read_pdf_theme_file()` / `copy_pdf_theme_fonts()`）：
 
-1. 工作目录 `theme/pdf/{page.html,style.css}`（显式本地覆盖，可只覆盖单个文件）。
+1. 工作目录 `theme/pdf/{page.html,style.css,fonts.css}`（显式本地覆盖，可只覆盖单个文件）。
 2. `paths::find_resource("theme/pdf/<file>")`：先 `.camus/theme/pdf/...`，再数据目录。
-3. 均不存在时 `logging::fatal("read pdf theme content failed name=...")`，退出 127。
+3. `page.html` / `style.css` 均不存在时 `logging::fatal("read pdf theme content failed name=...")`，退出 127；`fonts.css` 可选。
+4. `theme/pdf/fonts/` 按同一顺序查找，存在时递归复制到 `dist/pdf/fonts/`。
 
 静态资源（`writer::emit_assets()`）：
 
@@ -86,7 +88,7 @@ PDF 模板与样式（`writer.cpp` 的 `read_pdf_theme_file()`）：
 | macOS（productbuild，当前用户域） | `Library/Application Support/Camus` → `~/Library/Application Support/Camus` |
 | macOS（productbuild，系统域，如 `installer -target /`） | `Library/Application Support/Camus` → `/Library/Application Support/Camus` |
 
-- 安装 `example/theme` 的整个目录，因此包含 `theme/pdf/{page.html,style.css}`。
+- 安装 `example/theme` 的整个目录，因此包含 `theme/pdf/{page.html,style.css,fonts.css}` 与 `theme/pdf/fonts/`。
 - 可执行文件仍安装到 `/usr/local/bin/camus`。
 - macOS 通过 `CPACK_PRODUCTBUILD_DOMAINS` 同时启用用户域与系统域；用户域安装到 `~/Library/...`，系统域安装到 `/Library/...`，运行期按 §8.1 的顺序查找。
 

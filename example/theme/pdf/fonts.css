@@ -1,0 +1,19 @@
+body {
+    font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+}
+
+/*
+ * 自定义字体示例：把字体文件放到 theme/pdf/fonts/，取消下面的注释并按需修改字体名与文件名。
+ * 字体文件会随 PDF 构建复制到 dist/pdf/fonts/，因此 url() 使用相对 dist/pdf/index.html 的路径。
+ *
+ * @font-face {
+ *     font-family: "Camus Custom";
+ *     src: url("fonts/YourFont.ttf") format("truetype");
+ *     font-weight: 400;
+ *     font-style: normal;
+ * }
+ *
+ * body {
+ *     font-family: "Camus Custom", -apple-system, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+ * }
+ */
