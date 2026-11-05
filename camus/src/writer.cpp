@@ -1157,12 +1157,12 @@ namespace camus
 
 		std::thread server_thread([&]() {
 			watch_server_.set_mount_point("/", conf_.camus().dest_dir());
-			watch_server_.listen(server_addr, server_port);
+			watch_server_.listen("0.0.0.0", server_port);
 		});
 
 		const std::filesystem::path watch_path = cmd_.workdir;
 		logging::info("watch directory: {}", conf_.camus().dest_dir().string());
-		logging::info("watch server listen on http://{}:{}", server_addr, server_port);
+		logging::info("watch server listen on http://localhost:{} or http://{}:{}", server_port, server_addr, server_port);
 
 		while (true) {
 			if (quit_) {
@@ -1174,7 +1174,8 @@ namespace camus
 				continue;
 			}
 
-			const std::string dist_prefix = conf_.camus().dest_dir().parent_path().string() + "/";
+			// 忽略 pdf
+			const std::string dist_prefix = conf_.camus().dest_dir().string() + "/";
 			std::stringstream buffer;
 			for (auto it = std::filesystem::recursive_directory_iterator(watch_path);
 				 it != std::filesystem::recursive_directory_iterator();

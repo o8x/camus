@@ -7,11 +7,11 @@
 | 项 | 值 | 来源 |
 |---|---|---|
 | 端口 | `3001`（固定常量） | `writer.cpp:694` `constexpr uint16_t server_port = 3001` |
-| 监听地址 | 本机出口 IP | `net::get_local_addr()` |
+| 监听地址 | `0.0.0.0`（所有网卡） | `watch_server_.listen("0.0.0.0", server_port)` |
 | 文档根 | `./dist/html`（固定） | `watch_server_.set_mount_point("/", conf_.camus().dest_dir())` |
 | 框架 | cpp-httplib | `common/common/net` |
 
-`net::get_local_addr(dns_server="114.114.114.114")` 通过向 DNS 地址建立 UDP `connect`（不发送数据）并 `getsockname` 获取本机 IPv4 地址；失败返回空串，`watch()` 中 `assert(!server_addr.empty())`。
+`net::get_local_addr(dns_server="114.114.114.114")` 通过向 DNS 地址建立 UDP `connect`（不发送数据）并 `getsockname` 获取本机 IPv4 地址；失败返回空串，`watch()` 中 `assert(!server_addr.empty())`。服务实际绑定 `0.0.0.0`，`get_local_addr()` 得到的地址仅用于拼接日志中可直接访问的 URL（如 Clash fake-ip 网段 `198.18.x` / `198.19.x` 会回退为 `localhost`）。
 
 服务在线程中运行，主线程负责轮询。
 
@@ -36,7 +36,7 @@ flowchart TD
 - 参与 hash 的文件（递归遍历整个 `workdir`）：
   - 扩展名为 `.md`、`.yaml`、`.json`；
   - **或**路径字符串中包含 `/theme/` 的任意文件。
-- 遍历时跳过输出目录 `./dist`（不进入其子目录），避免构建产物变化触发自我重建。
+- 遍历时跳过输出目录 `conf_.camus().dest_dir()`（`./dist/html`，不进入其子目录），避免构建产物变化触发自我重建；输出目录之外的生成物（如 `./dist` 下的 PDF）因扩展名不匹配不会参与 hash。
 - 首次 hash 在进入循环前用当前内容初始化；只有内容 hash 变化才触发 `build()`。
 - 文件内容读取失败时返回错误字符串参与 hash（`filesystem::read_file` 行为）。
 
@@ -46,7 +46,7 @@ flowchart TD
 
 ```text
 watch directory: <dest_dir>
-watch server listen on http://<addr>:3001
+watch server listen on http://localhost:3001 or http://<addr>:3001
 ```
 
 工作目录不存在时循环内 `logging::fatal("watch directory not exists ...")`（进程退出 127）。
@@ -55,6 +55,6 @@ watch server listen on http://<addr>:3001
 
 - `quit_` 为 `std::atomic<bool>`，当前代码中**没有任何地方将其置为 true**，也没有注册信号处理；因此监听模式只能由外部终止进程（如 Ctrl+C）结束，`watch_server_.stop()` 分支实际上不可达。
 - 端口固定 3001，不支持配置；被占用时 `listen` 失败，服务线程退出，但主循环仍继续轮询。
-- 输出目录 `./dist` 已在哈希计算中排除，因此构建产物（含 `meta.json`）不会触发持续重建。
+- 输出目录 `./dist/html` 已在哈希计算中排除，因此构建产物（含 `meta.json`）不会触发持续重建。
 - 每次 `build()` 会重新 `reload()` 配置；注意配置重载的列表累积问题（§3.9）。
 - `-W` 下首次构建失败不会阻止进入监听循环。
