@@ -83,7 +83,7 @@
 | `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `xxd`、`mold`、`libarchive-dev`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus -iIw /tmp/site` + `camus -idw /tmp/site` | `build/release/packages` |
 | `build-macos` | `macos-14` | brew 安装依赖 → submodule → `make package` → `sudo installer -pkg *.pkg -target /` + 同样冒烟命令 | `build/release/packages` |
 | `release` | `ubuntu-24.04` | 下载并合并产物；仅在 tag 上通过 `softprops/action-gh-release` 发布（匹配 `*.dmg/*.pkg/*.rpm/*.deb/*.exe`） | GitHub Release |
-| `pages` | `ubuntu-24.04` 容器 | 安装 deb → 在 `example/.env` 追加构建上下文 → `camus -iIw example` + `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |
+| `pages` | `ubuntu-24.04` 容器 | 安装 deb → `camus -iIw example` + `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |
 
 工作流权限：`contents: write`、`pages: write`、`id-token: write`；`pages` concurrency。
 

@@ -166,14 +166,14 @@ link_url():
 - `collect_articles()`：收集所有 `.md` 且 `visibility != hidden` 的节点，按 `write_time` **降序**（新→旧）。
 - `finalize_directory_properties()`：
   - 目录 `write_time` 取直接子节点 `write_time` 的最大值（遍历为先序，深层目录的更新不会回传到已处理的父目录）；
-  - 目录空的 `subtitle/description/display_name` 分别回退到 `camus.site` 的对应字段；
+  - 目录空的 `subtitle/description/display_name` 分别回退到 `site` 的对应字段；
   - 递归移除 `invalid()` 的文件节点（`display_name` 为空），即隐藏文章与非 `.md` 文件。
 - TOC 排序：目录优先，然后按 `write_time` 降序。
 - 上一篇/下一篇（`fill_article_nav`）：在降序文章列表中，`prev` 指向更新的一篇（索引 - 1），`next` 指向更旧的一篇（索引 + 1）；路径会去掉 `deploy.path_prefix`。
 
 ## 4.10 字数与阅读时长
 
-`render_single_article` 在 Markdown 渲染前对替换过 `.env` 的 Markdown 文本计算（`str.cpp:294-371`）：
+`render_single_article` 在 Markdown 渲染前对 Markdown 文本计算（`str.cpp:294-371`）：
 
 - 有效长度 `effective_length = CJK 字符数 + (英文字母数 + 数字数) / 5`，向上取整；其它字符（标点、空格、emoji 等）不计入。
 - 阅读时长 `read_mins = (uint16_t)(effective_length / 300.0)`，向下截断；有效长度小于 300 时为 0。

@@ -48,7 +48,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 
 ```mermaid
 flowchart TD
-    A[reload 配置 camus.yaml/.env] --> B[切换工作目录 workdir]
+    A[reload 配置 camus.yaml] --> B[切换工作目录 workdir]
     B --> C[扫描 source_dir（src/posts）构建目录树]
     C -->|空| W[WARN No articles found, 返回 1]
     C -->|非空| D[emit_article]

@@ -133,7 +133,6 @@ jobs:
                     apt update -y
                     apt install -y libarchive-dev
                     dpkg -i packages/camus-*.deb
-                    echo "POWERED_BY_EXTRA=<br/><a href='https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}'>${RUNNER_NAME}</a>" >> example/.env
                     camus -iIw example
                     camus -dw example
 

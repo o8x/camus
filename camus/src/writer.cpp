@@ -510,10 +510,6 @@ namespace camus
 		}
 
 		std::string markdown = strings::string_join(node.contents, "\n");
-		for (const auto &[k, v] : conf_.camus().envs) {
-			markdown = strings::replace(markdown, "{{ env." + k + " }}", v);
-			markdown = strings::replace(markdown, "{{env." + k + "}}", v);
-		}
 
 		const size_t word_count = strings::estimate_effective_length(markdown);
 		const double read_mins = strings::estimate_reading_minutes(markdown);
@@ -853,10 +849,6 @@ namespace camus
 			}
 
 			std::string markdown = strings::string_join(node.contents, "\n");
-			for (const auto &[k, v] : conf_.camus().envs) {
-				markdown = strings::replace(markdown, "{{ env." + k + " }}", v);
-				markdown = strings::replace(markdown, "{{env." + k + "}}", v);
-			}
 
 			articles.push_back({&node, std::move(markdown)});
 		});
@@ -1080,16 +1072,13 @@ namespace camus
 
 		inja_.add_callback("with_cdn", 1, [&](const inja::Arguments &args) {
 			const std::string name = args.at(0)->get<std::string>();
-
-			// 退化为 with_prefix
-			if (!conf_.camus().envs.contains("with_cdn")) {
-				return filesystem::clean_path(name, conf_.camus().deploy.path_prefix);
-			}
+			const auto deploy = conf_.camus().deploy;
 
 			return std::format(
-				"{}/{}",
-				strings::trim_right(conf_.camus().envs.at("cdn_accelerate"), "/"),
-				strings::trim_left(filesystem::clean_path(name), "/")
+				"{}{}{}",
+				deploy.protocol,
+				deploy.domain_name,
+				filesystem::clean_path(name, deploy.path_prefix)
 			);
 		});
 	}

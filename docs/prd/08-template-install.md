@@ -36,7 +36,7 @@ flowchart TD
     I -->|失败| X[尝试删除 .camus, 返回 1]
     I -->|成功| J[INFO 安装成功]
     J --> K[写入 .camus/.version]
-    K --> L[对 posts/camus.yaml/.env/.gitignore: 仅当目标不存在时从 .camus 复制]
+    K --> L[对 posts/camus.yaml/.gitignore: 仅当目标不存在时从 .camus 复制]
     L --> M[返回 0]
 ```
 
@@ -47,7 +47,7 @@ flowchart TD
   - 有 `force`（或 Debug/RelWithDebInfo 构建）：整目录清空后重新解压；清空同样受「>200 文件需人工删除」保护（见 §6.1）。
 - `.camus` 不存在或为空：直接解压。
 - 解压失败：尝试删除 `.camus`（`std::filesystem::remove` 仅能删除空目录），返回 1。
-- 解压成功并复制完 `posts/camus.yaml/.env/.gitignore` 后，创建 `<source_dir>/private`，再继续构建。
+- 解压成功并复制完 `posts/camus.yaml/.gitignore` 后，创建 `<source_dir>/private`，再继续构建。
 - `-i` 成功后**不会退出**，主程序继续构建（见 §2.4）。
 
 ## 8.3 安装产物
@@ -58,7 +58,6 @@ flowchart TD
 | `.camus/.version` | 安装后写入 | 固定写入 `版本号\nUTC 时间` |
 | `./posts/` | `.camus/posts` | 仅当目标不存在时复制 |
 | `./camus.yaml` | `.camus/camus.yaml` | 仅当目标不存在时复制 |
-| `./.env` | `.camus/.env` | 仅当目标不存在时复制 |
 | `./.gitignore` | `.camus/.gitignore` | 仅当目标不存在时复制 |
 | `./<source_dir>/private/` | 安装时自动创建 | 源目录按 `src` → `posts` 探测；已存在时保留，不写入 `.gitignore` |
 
@@ -66,7 +65,7 @@ flowchart TD
 
 `private` 子目录由 `ensure_private_directory()`（`main.cpp`）在安装成功或检测到已安装模板后创建，用于存放不参与构建的私有内容（扫描与路由规则见 §4.1、§4.3）。安装流程**不会**把 `private` 加入 `.gitignore`，因此它可以正常纳入版本管理。
 
-`force` 只影响 `.camus` 目录的重装；工作目录下的 `posts/camus.yaml/.env/.gitignore` 即使 force 也**不会覆盖**已有文件。
+`force` 只影响 `.camus` 目录的重装；工作目录下的 `posts/camus.yaml/.gitignore` 即使 force 也**不会覆盖**已有文件。
 
 ## 8.4 `.version` 文件
 

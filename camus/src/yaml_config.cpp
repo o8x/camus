@@ -37,23 +37,12 @@ namespace camus::config
 
 		public_config_["site"] = camus_.site;
 		public_config_["route"] = routes_;
-
-		// 解析 ENV 文件
-		if (std::filesystem::exists(".env")) {
-			for (const auto &it : strings::split(filesystem::read_file(".env"), "\n")) {
-				std::vector<std::string> kv = strings::split(it, "=");
-				const std::string k = strings::trim_space(kv[0]);
-				if (kv.size() != 2 || k.empty()) {
-					continue;
-				}
-
-				const std::string key = strings::to_lower(k);
-				const std::string value = strings::trim_space(kv[1]);
-
-				public_config_["env"][key] = value;
-				camus_.envs[key] = value;
-			}
-		}
+		public_config_["source_dir"] = camus_.source_dir;
+		public_config_["assets_dir"] = camus_.assets_dir;
+		public_config_["output"] = camus_.output;
+		public_config_["deploy"] = camus_.deploy;
+		public_config_["render"] = camus_.render;
+		public_config_["friends"] = camus_.friends;
 
 		public_config_["git"] = std::unordered_map<std::string, std::string>{
 			{"repo", GIT_REPO},
@@ -87,10 +76,10 @@ namespace camus::config
 		};
 
 		const std::string powered_by = R"(
-<a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/">Home</a> /
-<a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/friends.html">Friends</a> /
-<a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/stats.html">Stats</a> /
-<a class="site-stats-link" href="{{ env.github_url }}" target="_blank">GitHub</a>
+<a class="site-stats-link" href="{{ deploy.path_prefix }}/">Home</a> /
+<a class="site-stats-link" href="{{ deploy.path_prefix }}/friends.html">Friends</a> /
+<a class="site-stats-link" href="{{ deploy.path_prefix }}/stats.html">Stats</a> /
+<a class="site-stats-link" href="{{ git.repo }}" target="_blank">GitHub</a>
 <br />
 <small>
 	<em>Powered by <a href="{{ git.repo }}/releases/tag/v{{ build.version }}" target="_blank" title="Camus v{{ build.version }}">
@@ -117,7 +106,7 @@ namespace camus::config
 
 		const YAML::Node root = YAML::LoadFile(filename_);
 
-		const YAML::Node camus_data = root["camus"];
+		const YAML::Node &camus_data = root;
 		if (!camus_data.IsMap()) {
 			error::panic("config file parse failed");
 		}

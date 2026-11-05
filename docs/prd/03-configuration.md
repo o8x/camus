@@ -7,7 +7,6 @@
 | 文件/目录 | 位置 | 作用 | 是否持久 |
 |---|---|---|---|
 | `camus.yaml` | 运行时当前工作目录 | 主配置 | 是 |
-| `.env` | 运行时当前工作目录 | 模板变量（键统一转小写） | 是 |
 | `theme/{name}/*.html` | 工作目录 | 本地主题覆盖 | 是 |
 | `.camus/` | 工作目录 | 内嵌主题与默认资源缓存（`-i` 生成） | 是 |
 
@@ -17,7 +16,7 @@
 
 ## 3.2 解析总则
 
-- 根节点必须包含 `camus` 映射，否则 `error::panic("config file parse failed")`（退出 127）。
+- 根节点必须是映射，顶层直接包含 `output`、`deploy`、`render` 等配置段，否则 `error::panic("config file parse failed")`（退出 127）。
 - `catalog` 必须是序列，否则 `panic("parse catalog config failed")`。
 - 字符串值会做 `trim_space`；`catalog` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
 - 源目录、资源目录与输出目录不再可配置：
@@ -25,9 +24,9 @@
   - 本地资源目录固定为 `./assets`，不存在时回退内嵌 `.camus/assets`；
   - HTML 输出固定为 `./dist/html`，PDF 输出固定为 `./dist/pdf`。
 - `render.html_engine` 固定为 `default`，`render.markdown_engine` 固定为 `cmark-gfm`，均不从配置读取。
-- 路径在解析后转为绝对路径供内部使用；模板 JSON 中保留解析后的值（见 §3.8）。
+- 路径在解析后转为绝对路径供内部使用；模板 JSON 中保留解析后的值（见 §3.7）。
 
-## 3.3 `camus` 段字段
+## 3.3 顶层配置字段
 
 | 字段 | 类型 | 默认/必填 | 说明 | 代码位置 |
 |---|---|---|---|---|
@@ -81,7 +80,7 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 | `TABLE_PREFER_STYLE_ATTRIBUTES` | `CMARK_OPT_TABLE_PREFER_STYLE_ATTRIBUTES` |
 | `FULL_INFO_STRING` | `CMARK_OPT_FULL_INFO_STRING` |
 
-模板 JSON 的 `camus.render.options` 会显示为 `"{数值}({名称1,名称2,...})"`（`yaml_config.cpp:225-226`）。
+顶层配置 `render.markdown_options` 在模板 JSON 的 `camus.render.options` 会显示为 `"{数值}({名称1,名称2,...})"`（`yaml_config.cpp:225-226`）。
 
 ## 3.5 `catalog` 段（路由）
 
@@ -90,17 +89,16 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 | 字段 | 必填 | 说明 |
 |---|---|---|
 | `path` | 是 | 源目录的相对路径；缺失时该条被忽略（debug 日志） |
-| `title` | 否 | 目录显示名；为空继承根路由 `title` |
-| `subtitle` | 否 | 目录副标题；为空继承根路由 |
+| `title` | 否 | 目录显示名；为空继承根路由 `title` || `subtitle` | 否 | 目录副标题；为空继承根路由 |
 | `description` | 否 | 目录描述；为空继承根路由 |
 | `transfers` | 否 | 仅当 `path != "/"` 且为序列时生效 |
 | `transfers[].source` | 是 | 源路径；`.` 或 `/` 表示路由自身路径，否则拼接到路由路径下 |
 | `transfers[].target` | 是 | 目标输出路径（作为该目录的外部路径） |
 
-- 根路由 `path: "/"` 决定 `camus.site`；根路由的 `transfers` 无效。
+- 根路由 `path: "/"` 决定 `site`；根路由的 `transfers` 无效。
 - `path` 中若包含名为 `private` 的路径段（常量 `CAMUS_PRIVATE_DIR`），该条路由在解析阶段被忽略并打印 WARN，不能作为目录页使用。
-- 若不存在 `path: "/"`，`camus.site` 默认 `{path: "/", title: "A mysterious site"}`。
-- 所有路由的空 `title/subtitle/description` 最终继承 `camus.site`。
+- 若不存在 `path: "/"`，`site` 默认 `{path: "/", title: "A mysterious site"}`。
+- 所有路由的空 `title/subtitle/description` 最终继承 `site`。
 - 路由匹配使用 `filesystem::path_equal(..., clean_check=true)`（`yaml_config.cpp:408`），即按清理后的路径比较。
 
 示例：
@@ -129,29 +127,21 @@ catalog:
 
 结果注入渲染数据 `friends` 数组，用于 `friends.html`。
 
-## 3.7 `.env` 解析规则
-
-- 仅当当前目录存在 `.env` 时解析。
-- 按行拆分，每行按 `=` 拆分为恰好两段才生效；空键或段数不为 2 的行被忽略（因此值中包含 `=` 的行会被忽略）。
-- 键做 `trim_space` 后转小写；值做 `trim_space`。
-- 结果同时写入 `camus_.envs`（用于 Markdown 变量替换）和模板 JSON 的 `env` 对象。
-- 示例：
-
-```dotenv
-GITHUB_URL = https://github.com/o8x/camus
-CDN_ACCELERATE = https://data-1252251443.cos.accelerate.myqcloud.com
-```
-
-## 3.8 模板可用配置数据（`conf_.json()`）
+## 3.7 模板可用配置数据（`conf_.json()`）
 
 模板 JSON 由 `supplement_other_vars()` 组装（`yaml_config.cpp:20-90`）：
 
 | 顶层键 | 结构 | 说明 |
 |---|---|---|
-| `camus` | 对象 | `source_dir`、`assets_dir`、`site`、`output`、`deploy`、`render`、`friends`；`render.options` 为选项展示串。`source_dir`/`assets_dir`/`output.dest_dir` 为解析后的绝对路径（`source_dir` 按 `src`→`posts` 探测，`output.dest_dir` 固定 `dist/html`） |
+| `camus` | 对象 | 兼容保留的聚合对象：`source_dir`、`assets_dir`、`site`、`output`、`deploy`、`render`、`friends`；`render.options` 为选项展示串 |
+| `source_dir` | 字符串 | 解析后的源目录绝对路径（`src`→`posts` 探测） |
+| `assets_dir` | 字符串 | 解析后的资源目录绝对路径 |
+| `output` | 对象 | 输出配置（`meta`、`sitemap`、`filename_case`、`dest_dir`） |
+| `deploy` | 对象 | 部署配置（`protocol`、`domain_name`、`path_prefix`），用于拼接完整 URL |
+| `render` | 对象 | 渲染配置（`theme_name`、`html_engine`、`markdown_engine`、`pdf_engine`、`pdf_options`） |
+| `friends` | 数组 | 友情链接 |
 | `site` | 对象 | 根路由（`path/title/subtitle/description/transfers`） |
 | `route` | 数组 | 全部路由（继承后） |
-| `env` | 对象 | `.env` 键值（键小写） |
 | `git` | 对象 | `repo`、`branch`、`commit_hash` |
 | `build` | 对象 | 见下表 |
 
@@ -173,18 +163,19 @@ CDN_ACCELERATE = https://data-1252251443.cos.accelerate.myqcloud.com
 示例（inja）：
 
 ```html
-<a href="{{ env.github_url }}">{{ env.github_url }}</a>
+<a href="{{ deploy.protocol }}{{ deploy.domain_name }}{{ deploy.path_prefix }}">Site</a>
+<a href="{{ git.repo }}">{{ git.repo }}</a>
 <span>{{ build.version }} / {{ git.commit_hash }}</span>
 ```
 
-## 3.9 持久性与重载
+## 3.8 持久性与重载
 
 - 配置本身持久于磁盘；运行期不写回配置。
-- `reload()` 每次全量重读 `camus.yaml` 与 `.env`。
+- `reload()` 每次全量重读 `camus.yaml`。
 - 当前实现中 `routes_`、`camus_.friends` 在 `reload()` 前**不会清空**，多次热重载会导致内部路由/友链列表累积；`public_config_` 为覆盖写入，模板 JSON 的 `route` 也随 `routes_` 累积。
 - 路由/友链的新增在下次构建生效。
 
-## 3.10 `inspect` 输出
+## 3.9 `inspect` 输出
 
 `writer::inspect()`（`writer.cpp:742`）会：
 

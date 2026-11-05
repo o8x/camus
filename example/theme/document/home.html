@@ -111,9 +111,9 @@
     </nav>
 
     <div class="sidebar-footer">
-        <a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/">Home</a> /<a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/friends.html">Friends</a> /
-        <a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/stats.html">Stats</a> /
-        <a class="site-stats-link" href="{{ env.github_url }}" target="_blank">GitHub</a>
+        <a class="site-stats-link" href="{{ deploy.path_prefix }}/">Home</a> /<a class="site-stats-link" href="{{ deploy.path_prefix }}/friends.html">Friends</a> /
+        <a class="site-stats-link" href="{{ deploy.path_prefix }}/stats.html">Stats</a> /
+        <a class="site-stats-link" href="{{ git.repo }}" target="_blank">GitHub</a>
         <br/>
         <small>
             <em>Powered by <a href="{{ git.repo }}/releases/tag/v{{ build.version }}" target="_blank" title="Camus v{{ build.version }}">

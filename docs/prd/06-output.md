@@ -179,7 +179,7 @@ flowchart TD
     A -->|否| B[解析 Chrome/Edge 可执行文件]
     B -->|未找到| W[WARN 并跳过]
     B -->|找到| C[按目录树先序收集 visibility != hidden 的 .md]
-    C --> D[替换 env 变量, 合并为单个 Markdown]
+    C --> D[合并为单个 Markdown]
     D --> E[写 dist/pdf/index.md]
     E --> F[逐篇 cmark-gfm 渲染为 HTML, 每篇包在带锚点的 section 中]
     F --> G[生成封面页 / 扉页 / 目录页 HTML]
@@ -201,7 +201,7 @@ flowchart TD
 
 - 每篇文章渲染为 `<section id="pdf-article-{n}" class="pdf-article">`，并以 `page-break-before: always` 从新页开始；正文首段（`# site.title` + `site.description`）作为引导页单独占一页。
 - 所有插入 HTML 的站点字段均做 HTML 转义（`html_escape`）。
-- 文章正文使用 Front Matter 解析后的内容，并替换 `.env` 变量；`hidden` 文章不参与，`hidden_in_toc` 参与。
+- 文章正文使用 Front Matter 解析后的内容；`hidden` 文章不参与，`hidden_in_toc` 参与。
 - PDF 输出路径默认 `dist/pdf/index.pdf`；`--print-to-pdf` 中可用 `{{dest_dir}}` 占位符自定义（占位符代表 `dist/pdf`），如 `--print-to-pdf={{dest_dir}}/docs/book.pdf`（相对路径按 `dist/pdf` 解析）。
 - PDF 中间产物 `index.md`、`index.html` 与最终 `index.pdf` 均位于 `dist/pdf`，与 HTML 站点目录分离。
 - PDF 生成失败只告警，不影响 HTML 站点构建结果与退出码。
