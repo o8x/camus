@@ -27,14 +27,6 @@ namespace
 
 			std::filesystem::copy(source, target, std::filesystem::copy_options::recursive);
 		}
-
-		// 兼容旧版数据目录：catalog.yaml 位于根部时安装到 posts/catalog.yaml
-		const std::filesystem::path legacy_catalog = source_dir / CAMUS_CATALOG_NAME;
-		const std::filesystem::path posts_catalog = workdir / "posts" / CAMUS_CATALOG_NAME;
-		if (std::filesystem::exists(legacy_catalog) && !std::filesystem::exists(posts_catalog)) {
-			std::filesystem::create_directories(posts_catalog.parent_path());
-			std::filesystem::copy_file(legacy_catalog, posts_catalog);
-		}
 	}
 
 	std::filesystem::path template_source_dir()

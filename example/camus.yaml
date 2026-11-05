@@ -29,6 +29,19 @@ markdown_options:                           # markdown 引擎参数
     #   - LIBERAL_HTML_TAG                  # 放宽对内联 HTML 标签的解析，允许更自由的标签格式
     #   - STRIKETHROUGH_DOUBLE_TILDE        # 仅当删除线由恰好2个波浪线包围时才解析，提高与 redcarpet 的兼容性
 
+# 目录搬运规则：把 path 目录的内容映射到 target 输出路径
+# 每个目录的 title / subtitle / description 来自该目录下的 README.md
+transfer:
+    -   path: /introduction                       # 指定源目录
+        transfers:
+            -   source: .                         # `.` 或 `/` 表示路由目录自身，否则拼接到 path 之下
+                target: /intro/Well-known         # 目标输出路径
+
+    -   path: /Don Juan
+        transfers:
+            -   source: .
+                target: /M
+
 # 友情链接
 friends:
     -   title: Alex                                # 站点标题

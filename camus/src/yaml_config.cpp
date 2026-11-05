@@ -33,6 +33,103 @@ namespace camus::config
 			return false;
 		}
 
+		struct directory_meta {
+			std::string title;
+			std::string subtitle;
+			std::string description;
+		};
+
+		std::string normalize_meta(std::string value)
+		{
+			value = strings::trim_space(value);
+			return strings::replace(value, "\n", "<br />");
+		}
+
+		// README.md 支持可选的 YAML Front Matter（title/subtitle/description）；
+		// 未提供 title 时回退到正文第一个一级标题，未提供 description 时回退到正文。
+		directory_meta read_readme_meta(const std::filesystem::path &dir)
+		{
+			directory_meta meta;
+
+			const std::filesystem::path readme = dir / CAMUS_README_NAME;
+			if (!std::filesystem::is_regular_file(readme)) {
+				return meta;
+			}
+
+			const std::string raw = filesystem::read_file(readme.string(), true);
+			if (raw.empty()) {
+				return meta;
+			}
+
+			std::vector<std::string> lines = strings::split(raw, "\n");
+			size_t body_start = 0;
+
+			if (!lines.empty() && strings::trim_space(lines.front()) == "---") {
+				size_t end = 0;
+				for (size_t i = 1; i < lines.size(); ++i) {
+					if (strings::trim_space(lines[i]) == "---") {
+						end = i;
+						break;
+					}
+				}
+
+				if (end > 0) {
+					const std::vector<std::string> front_lines(lines.begin() + 1, lines.begin() + end);
+					try {
+						if (const YAML::Node node = YAML::Load(strings::string_join(front_lines, "\n"));
+							node.IsMap()) {
+							const auto read = [&node](const char *key) -> std::string {
+								if (const YAML::Node value = node[key]; value && value.IsScalar()) {
+									return value.as<std::string>();
+								}
+
+								return "";
+							};
+
+							meta.title = read("title");
+							meta.subtitle = read("subtitle");
+							meta.description = read("description");
+						}
+					} catch (const std::exception &e) {
+						logging::warn(
+							"parse readme front matter failed path={} error={}",
+							filesystem::path_abs(readme),
+							e.what()
+						);
+					}
+
+					body_start = end + 1;
+				}
+			}
+
+			std::vector<std::string> body_lines(lines.begin() + static_cast<std::ptrdiff_t>(body_start), lines.end());
+			std::string heading;
+
+			if (meta.title.empty()) {
+				for (auto it = body_lines.begin(); it != body_lines.end(); ++it) {
+					const std::string line = strings::trim_space(*it);
+					if (line.starts_with("# ")) {
+						heading = strings::trim_space(line.substr(2));
+						body_lines.erase(it);
+						break;
+					}
+				}
+			}
+
+			if (meta.title.empty()) {
+				meta.title = heading;
+			}
+
+			if (meta.description.empty()) {
+				meta.description = strings::string_join(body_lines, "\n");
+			}
+
+			meta.title = normalize_meta(meta.title);
+			meta.subtitle = normalize_meta(meta.subtitle);
+			meta.description = normalize_meta(meta.description);
+			return meta;
+		}
+
 		public_url_conf parse_public_url(const std::string &raw)
 		{
 			public_url_conf conf;
@@ -149,6 +246,7 @@ namespace camus::config
 		// 允许重复 reload（watch / inspect / build），先重置上一轮状态，避免路由与友链累积
 		camus_ = camus_conf{};
 		routes_.clear();
+		transfers_.clear();
 		public_config_ = nlohmann::json{};
 
 		logging::info("load config: {}", filesystem::path_abs(filename_));
@@ -319,102 +417,149 @@ namespace camus::config
 		camus_.render.theme[CAMUS_THEME_TYPE_STATS] = read_theme(camus_.render.theme_name, "stats");
 		camus_.render.theme[CAMUS_THEME_TYPE_FRIENDS] = read_theme(camus_.render.theme_name, "friends");
 
-		std::filesystem::path catalog_file = camus_.source_dir / CAMUS_CATALOG_NAME;
-		if (!std::filesystem::exists(catalog_file)) {
-			// 兼容旧版：catalog.yaml 曾与 camus.yaml 放在同一目录
-			const std::filesystem::path legacy_catalog =
-				std::filesystem::path(filename_).parent_path() / CAMUS_CATALOG_NAME;
-			if (std::filesystem::exists(legacy_catalog)) {
-				logging::warn(
-					"load legacy catalog beside config, move it to source dir path={}",
-					legacy_catalog.string()
-				);
-				catalog_file = legacy_catalog;
-			}
-		}
-
-		if (!std::filesystem::exists(catalog_file)) {
-			error::panic("catalog file not found name={}", catalog_file.string());
-		}
-
-		logging::info("load catalog: {}", filesystem::path_abs(catalog_file));
-
-		const YAML::Node catalog_data = YAML::LoadFile(catalog_file.string());
-		if (!catalog_data.IsSequence()) {
-			error::panic("parse catalog config failed");
-		}
-
-		// 解析 TOC
-		for (const auto &item : catalog_data) {
-			route_conf c{};
-
-			if (item["title"]) {
-				c.title = strings::trim_space(item["title"].as<std::string>());
-				c.title = strings::replace(c.title, "\n", "<br />");
-			}
-
-			if (item["subtitle"]) {
-				c.subtitle = strings::trim_space(item["subtitle"].as<std::string>());
-				c.subtitle = strings::replace(c.subtitle, "\n", "<br />");
-			}
-
-			if (item["description"]) {
-				c.description = strings::trim_space(item["description"].as<std::string>());
-				c.description = strings::replace(c.description, "\n", "<br />");
-			}
-
-			if (item["path"]) {
-				c.path = filesystem::clean_path(item["path"].as<std::string>(), "/");
-			} else {
-				logging::debug(
-					"ignore catalog title={} subtitle={} description={}",
-					c.title,
-					c.subtitle,
-					c.description
-				);
-				continue;
-			}
-
-			if (path_contains_private(c.path)) {
-				logging::warn("ignore catalog using private directory path={}", c.path);
-				continue;
-			}
-
-			if (const YAML::Node transfers = item["transfers"]; transfers && c.path != "/" && transfers.IsSequence()) {
-				for (const auto &tr : transfers) {
-					if (!tr.IsMap() || !tr["source"] || !tr["target"]) {
-						logging::warn("ignore invalid catalog transfer path={} reason=missing source/target", c.path);
-						continue;
-					}
-
-					route_transfer_conf t{
-						.source = tr["source"].as<std::string>(),
-						.target = tr["target"].as<std::string>()
-					};
-
-					if (t.target.empty()) {
-						logging::warn("ignore invalid catalog transfer path={} reason=empty target", c.path);
-						continue;
-					}
-
-					if (t.source == "." || t.source == "/") {
-						t.source = c.path;
-					} else {
-						// 加上文件夹前缀，使文件名完整
-						t.source = c.path / t.source;
-					}
-
-					c.transfers.push_back(t);
+		// 目录元信息来自各目录下的 README.md，路由路径本身不再需要入口配置
+		auto find_route = [&](const std::string &path) -> route_conf * {
+			for (auto &route : routes_) {
+				if (route.path == path) {
+					return &route;
 				}
 			}
 
-			if (std::ranges::any_of(routes_, [&](const route_conf &r) { return r.path == c.path; })) {
-				logging::warn("duplicate catalog route ignored path={}", c.path);
+			return nullptr;
+		};
+
+		auto upsert_route = [&](const std::string &path) -> route_conf & {
+			if (route_conf *route = find_route(path)) {
+				return *route;
+			}
+
+			route_conf c{};
+			c.path = path;
+			routes_.push_back(c);
+			return routes_.back();
+		};
+
+		auto apply_readme = [&](const std::string &path) {
+			std::filesystem::path dir = camus_.source_dir;
+			if (path != "/") {
+				dir /= std::filesystem::path(path).relative_path();
+			}
+
+			const directory_meta meta = read_readme_meta(dir);
+			route_conf &route = upsert_route(path);
+
+			if (!meta.title.empty()) {
+				route.title = meta.title;
+			}
+
+			if (!meta.subtitle.empty()) {
+				route.subtitle = meta.subtitle;
+			}
+
+			if (!meta.description.empty()) {
+				route.description = meta.description;
+			}
+		};
+
+		// 扫描源目录（含根目录）中的 README.md，用于目录页元信息
+		for (auto it = std::filesystem::recursive_directory_iterator(camus_.source_dir);
+			 it != std::filesystem::recursive_directory_iterator(); ++it) {
+			if (it->is_symlink()) {
 				continue;
 			}
 
-			routes_.push_back(c);
+			if (it->is_directory()) {
+				if (it->path().filename() == CAMUS_PRIVATE_DIR) {
+					it.disable_recursion_pending();
+				}
+				continue;
+			}
+
+			if (!it->is_regular_file() || it->path().filename() != CAMUS_README_NAME) {
+				continue;
+			}
+
+			const std::filesystem::path relative_dir =
+				std::filesystem::relative(it->path().parent_path(), camus_.source_dir);
+			const std::string path = relative_dir.empty() || relative_dir == "."
+										? "/"
+										: filesystem::clean_path(relative_dir.generic_string(), "/");
+
+			if (path_contains_private(path)) {
+				continue;
+			}
+
+			apply_readme(path);
 		}
+
+		// transfer 段：{ path, transfers: [{ source, target }] }
+		if (const YAML::Node transfer_data = root["transfer"]; transfer_data) {
+			if (!transfer_data.IsSequence()) {
+				logging::warn("ignore invalid transfer config reason=not a sequence");
+			} else {
+				for (const auto &item : transfer_data) {
+					if (!item.IsMap() || !item["path"]) {
+						logging::warn("ignore invalid transfer config reason=missing path");
+						continue;
+					}
+
+					const std::string path = filesystem::clean_path(item["path"].as<std::string>(), "/");
+					if (path_contains_private(path)) {
+						logging::warn("ignore transfer using private directory path={}", path);
+						continue;
+					}
+
+					if (path == "/") {
+						logging::warn("ignore root transfer path=/");
+						continue;
+					}
+
+					const YAML::Node transfers = item["transfers"];
+					if (!transfers || !transfers.IsSequence()) {
+						continue;
+					}
+
+					for (const auto &tr : transfers) {
+						if (!tr.IsMap() || !tr["source"] || !tr["target"]) {
+							logging::warn("ignore invalid transfer path={} reason=missing source/target", path);
+							continue;
+						}
+
+						route_transfer_conf t{
+							.source = tr["source"].as<std::string>(),
+							.target = tr["target"].as<std::string>()
+						};
+
+						if (t.target.empty()) {
+							logging::warn("ignore invalid transfer path={} reason=empty target", path);
+							continue;
+						}
+
+						if (t.source == "." || t.source == "/") {
+							t.source = path;
+						} else {
+							// 加上文件夹前缀，使文件名完整
+							t.source = path / t.source;
+						}
+
+						transfers_.push_back(t);
+
+						if (route_conf *route = find_route(path)) {
+							route->transfers.push_back(t);
+						}
+					}
+				}
+			}
+		}
+
+		// 根路由优先，其余按 path 排序，保证 route / meta.json 输出稳定
+		std::ranges::sort(routes_, [](const route_conf &a, const route_conf &b) {
+			if (const bool a_root = a.path == "/", b_root = b.path == "/"; a_root != b_root) {
+				return a_root;
+			}
+
+			return a.path < b.path;
+		});
 
 		// 为空的继承根目录属性，如果根目录存在
 		camus_.site = {.path = "/", .title = "A mysterious site"};
@@ -423,6 +568,10 @@ namespace camus::config
 				camus_.site = c;
 				break;
 			}
+		}
+
+		if (camus_.site.title.empty()) {
+			camus_.site.title = "A mysterious site";
 		}
 
 		// 如果没出现，则不会自动继承属性。因此目录会出现为空的情况
@@ -532,9 +681,9 @@ namespace camus::config
 
 	std::filesystem::path yaml_config::match_transfer(const std::filesystem::path &path) const
 	{
-		for (const auto &route : routes_) {
-			if (const std::filesystem::path target = route.match_transfer(path); !target.empty()) {
-				return target;
+		for (const auto &transfer : transfers_) {
+			if (filesystem::path_equal(path, transfer.source, true)) {
+				return transfer.target;
 			}
 		}
 

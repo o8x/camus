@@ -45,8 +45,9 @@ namespace camus::catalog
 					node.children.push_back(child);
 				}
 			} else if (std::filesystem::is_regular_file(entry.path())) {
-				if (entry.path().filename() == CAMUS_CATALOG_NAME) {
-					logging::debug("skip catalog config name={}", filesystem::path_abs(entry.path()));
+				if (const std::filesystem::path filename = entry.path().filename();
+					filename == CAMUS_CATALOG_NAME || filename == CAMUS_README_NAME) {
+					logging::debug("skip metadata file name={}", filesystem::path_abs(entry.path()));
 					continue;
 				}
 

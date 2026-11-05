@@ -127,6 +127,8 @@ namespace camus::config
 
 		camus_conf camus_;
 		std::vector<route_conf> routes_;
+		// 展平后的搬运规则（source 已解析为完整源目录路径）
+		std::vector<route_transfer_conf> transfers_;
 
 		const std::string filename_;
 

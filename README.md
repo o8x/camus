@@ -35,7 +35,7 @@ Or create a new site in an empty directory:
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # install example camus.yaml, posts (with catalog.yaml) and .gitignore
+/path/to/camus -i      # install example camus.yaml, posts (with README.md) and .gitignore
 /path/to/camus         # build
 ```
 
@@ -50,7 +50,7 @@ mkdir my-site && cd my-site
 | `camus -W` | Watch for changes and serve locally |
 | `camus -D` | Dry run: parse and render without writing files |
 | `camus -I` | Inspect the parsed configuration and catalog tree |
-| `camus -i` | Install example `camus.yaml`, `posts` (with `catalog.yaml`) and `.gitignore` |
+| `camus -i` | Install example `camus.yaml`, `posts` (with `README.md`) and `.gitignore` |
 | `camus -c` | Copy the complete bundled resources into `./.camus` |
 | `camus -c -f` | Force re-copy `./.camus` |
 | `camus --open` | Build, then open the workdir in VS Code |
@@ -58,10 +58,10 @@ mkdir my-site && cd my-site
 
 ## Configuration
 
-A site uses two files:
+A site uses one main config file plus optional per-directory metadata:
 
-- `camus.yaml` — site, output, rendering and friends configuration
-- `catalog.yaml` — directory routes and file transfer rules (inside `src/` or `posts/`)
+- `camus.yaml` — site, output, rendering, friends and transfer configuration
+- `README.md` — optional metadata for a directory (`title`, `subtitle`, `description`)
 
 ### `camus.yaml`
 
@@ -84,6 +84,13 @@ markdown_options:
   - SMART
   - FOOTNOTES
 
+# Move directory contents to another output path
+transfer:
+  - path: /introduction
+    transfers:
+      - source: .
+        target: /intro/Well-known
+
 friends:
   - title: Alex
     link_url: https://github.com/o8x/camus
@@ -93,75 +100,67 @@ friends:
 
 `public_url` accepts with or without a protocol. Missing protocols default to `https://`; a trailing slash is normalized away. It drives absolute links, the sitemap, PDF cover data, and the `with_cdn()` helper.
 
-### `catalog.yaml`
+### Directory metadata (`README.md`)
 
-Place `catalog.yaml` in the source directory (`src/` or `posts/`).
+Every directory in the source tree may contain a `README.md` that describes it. `README.md` files are metadata only and are never rendered as articles.
 
-`catalog.yaml` lives in the source directory (`src/` or `posts/`) and is a YAML sequence. Each item describes a directory route:
+```markdown
+---
+title: Well-known musicals
+subtitle: Optional short summary
+---
 
-```yaml
-- path: /                     # required; route to the source directory
-  title: Musicals             # directory page title
-  subtitle: Musical theatre   # directory page subtitle
-  description: |              # directory page description
-    Musicals combine songs, dialogue, acting and dance.
-  transfers: []               # ignored for the root route
-
-- path: /introduction
-  transfers:
-    - source: .
-      target: /intro/Well-known
-  title: Well-known musicals
+Optional description shown on the directory page.
 ```
 
-Fields:
+Parsing rules:
 
-| Field | Required | Description |
-|---|---|---|
-| `path` | yes | Directory path relative to the source directory. Items without `path` are ignored. |
-| `title` | no | Display name / page title. Empty values inherit from the root route. |
-| `subtitle` | no | Page subtitle. Empty values inherit from the root route. |
-| `description` | no | Page description. Empty values inherit from the root route. |
-| `transfers` | no | File transfer rules. Only effective when `path != "/"`. |
+- `title`, `subtitle` and `description` may be provided in an optional YAML front matter block.
+- If `title` is missing, the first `# Heading` in the body is used.
+- If `description` is missing, the remaining body is used.
+- Unset fields inherit from the root route; the root `README.md` (`posts/README.md` or `src/README.md`) defines the site title/subtitle/description.
+- Newlines in metadata become `<br />`.
 
 ### Transfer rules
 
-`transfers` maps a directory's content to a different output location. Each rule has:
+`transfer` in `camus.yaml` maps directory content to a different output location. Each item has a `path` plus a list of `transfers`:
 
 | Field | Required | Description |
 |---|---|---|
-| `source` | yes | Source path. `.` or `/` means the route directory itself; anything else is joined under the route path. |
-| `target` | yes | Output directory used as the external path for this route. |
+| `path` | yes | Directory path relative to the source directory. |
+| `transfers[].source` | yes | Source path. `.` or `/` means the directory itself; anything else is joined under `path`. |
+| `transfers[].target` | yes | Output directory used as the external path for that directory. |
 
 Examples:
 
 ```yaml
-# posts/introduction/** -> /intro/Well-known/**
-- path: /introduction
-  transfers:
-    - source: .
-      target: /intro/Well-known
+transfer:
+  # posts/introduction/** -> /intro/Well-known/**
+  - path: /introduction
+    transfers:
+      - source: .
+        target: /intro/Well-known
 
-# posts/Don Juan/** -> /M/**
-- path: /Don Juan
-  transfers:
-    - source: .
-      target: /M
+  # posts/Don Juan/** -> /M/**
+  - path: /Don Juan
+    transfers:
+      - source: .
+        target: /M
 
-# Move only a subdirectory:
-# posts/guide/advanced/** -> /docs/advanced/**
-- path: /guide
-  transfers:
-    - source: advanced
-      target: /docs/advanced
+  # Move only a subdirectory:
+  # posts/guide/advanced/** -> /docs/advanced/**
+  - path: /guide
+    transfers:
+      - source: advanced
+        target: /docs/advanced
 ```
 
 Notes:
 
 - Transfers are whole-directory mappings. All files (including nested subdirectories) under the source directory are written below `target`.
 - Without a transfer rule, the directory keeps its original path.
-- The root route `path: "/"` defines the site title/subtitle/description and cannot use transfers.
-- A route whose path contains a `private` segment is ignored (with a warning); `private` directories are excluded from the source tree.
+- The root path `/` cannot use transfers.
+- A path that contains a `private` segment is ignored (with a warning); `private` directories are excluded from the source tree.
 
 ## Posts
 

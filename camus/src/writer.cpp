@@ -275,9 +275,17 @@ namespace camus
 			}
 
 			if (const auto route = conf_.match_route(node.path)) {
-				node.property.display_name = route->title;
-				node.property.subtitle = route->subtitle;
-				node.property.description = route->description;
+				if (!route->title.empty()) {
+					node.property.display_name = route->title;
+				}
+
+				if (!route->subtitle.empty()) {
+					node.property.subtitle = route->subtitle;
+				}
+
+				if (!route->description.empty()) {
+					node.property.description = route->description;
+				}
 			}
 
 			// transfers 在全部路由中匹配，从而支持 source 指向路由下的子目录

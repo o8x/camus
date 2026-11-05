@@ -40,13 +40,13 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 | macOS（回退） | `/Library/Application Support/Camus` | 安装到系统域（如 `installer -target /`）时的位置 |
 | Linux | `/var/lib/camus` | 由 deb 安装包写入 |
 
-目录内容为 `theme/`、`assets/`、`posts/`（含 `posts/catalog.yaml`）、`camus.yaml` 与 `.gitignore`。查找规则：
+目录内容为 `theme/`、`assets/`、`posts/`（含各目录的 `README.md`）、`camus.yaml` 与 `.gitignore`。查找规则：
 
 - 主题：工作目录 `theme/{name}/{type}.html` → `.camus/theme/...` → 数据目录。
 - PDF 模板/样式/字体：工作目录 `theme/pdf/{page.html,style.css,fonts.css,fonts/}` → `.camus/theme/pdf/...` → 数据目录。
 - 静态资源：工作目录 `./assets` 优先；否则 `.camus/assets`，再否则数据目录 `assets/`。
 
-构建不再向可执行文件追加模板。`-i` 从数据目录安装 `camus.yaml`、`posts`（含 `catalog.yaml`）、`.gitignore` 到工作目录根部；旧版数据目录根部的 `catalog.yaml` 会兼容安装到 `posts/catalog.yaml`。`-c` 复制完整资源到 `.camus`，`-f` 覆盖已有 `.camus`（详见 §8）。
+构建不再向可执行文件追加模板。`-i` 从数据目录安装 `camus.yaml`、`posts`（含各目录的 `README.md`）、`.gitignore` 到工作目录根部。`-c` 复制完整资源到 `.camus`，`-f` 覆盖已有 `.camus`（详见 §8）。
 
 ## 1.4 构建流水线
 
@@ -54,7 +54,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 
 ```mermaid
 flowchart TD
-    A[reload 配置 camus.yaml + catalog.yaml] --> B[切换工作目录 workdir]
+    A[reload camus.yaml 并扫描 README.md] --> B[切换工作目录 workdir]
     B --> C[扫描 source_dir（src/posts）构建目录树]
     C -->|空| W[WARN No articles found, 返回 1]
     C -->|非空| D[emit_article]
@@ -81,7 +81,7 @@ flowchart TD
 | pdf_dir | PDF 输出目录，固定 `./dist/pdf` |
 | assets_dir | 本地静态资源目录，固定 `./assets`；缺省时使用数据目录的 `assets/`，内容会被提升到输出根目录 |
 | catalog | 运行期内存中的目录树 `catalog_node` |
-| route | 源目录中 `catalog.yaml` 的目录配置，可设置标题/副标题/描述/搬运 |
+| route | 由各目录 `README.md` 生成的目录配置，含标题/副标题/描述与搬运 |
 | transfer | 路由内的文件搬运映射，把源目录内容映射到另一输出路径 |
 | short-path | 文章短链接标识，输出到 `/s/{short_path}.html` |
 | hidden | 文章可见性：不渲染、不进入输出目录树 |

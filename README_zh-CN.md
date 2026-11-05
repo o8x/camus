@@ -35,7 +35,7 @@ cd example
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # 安装示例 camus.yaml、posts（含 catalog.yaml）与 .gitignore
+/path/to/camus -i      # 安装示例 camus.yaml、posts（含 README.md）与 .gitignore
 /path/to/camus         # 构建
 ```
 
@@ -50,7 +50,7 @@ mkdir my-site && cd my-site
 | `camus -W` | 监听文件变化并启动本地服务 |
 | `camus -D` | 干跑：解析与渲染，但不写文件 |
 | `camus -I` | 打印解析后的配置与目录树 |
-| `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `catalog.yaml`）与 `.gitignore` |
+| `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `README.md`）与 `.gitignore` |
 | `camus -c` | 把完整内置资源复制到 `./.camus` |
 | `camus -c -f` | 强制重装 `./.camus` |
 | `camus --open` | 构建后在 VS Code 中打开工作目录 |
@@ -58,10 +58,10 @@ mkdir my-site && cd my-site
 
 ## 配置
 
-站点由两个文件驱动：
+站点由一个主配置文件与可选的目录元信息驱动：
 
-- `camus.yaml`：站点、输出、渲染与友链配置
-- `catalog.yaml`：目录路由与文件搬运规则（位于 `src/` 或 `posts/` 中）
+- `camus.yaml`：站点、输出、渲染、友链与搬运配置
+- `README.md`：可选的目录元信息（`title` / `subtitle` / `description`）
 
 ### `camus.yaml`
 
@@ -84,6 +84,13 @@ markdown_options:
   - SMART
   - FOOTNOTES
 
+# 目录搬运规则：把 path 目录的内容映射到 target 输出路径
+transfer:
+  - path: /introduction
+    transfers:
+      - source: .
+        target: /intro/Well-known
+
 friends:
   - title: Alex
     link_url: https://github.com/o8x/camus
@@ -93,75 +100,67 @@ friends:
 
 `public_url` 可带协议也可省略：省略时默认 `https://`，末尾多余的 `/` 会被归一化。它用于绝对链接、sitemap、PDF 封面信息以及 `with_cdn()` 函数。
 
-### `catalog.yaml`
+### 目录元信息（`README.md`）
 
-把 `catalog.yaml` 放在源目录（`src/` 或 `posts/`）中。
+源目录树中的任意目录都可以放置 `README.md` 来描述该目录。`README.md` 仅作为元信息，不会被当作文章渲染。
 
-`catalog.yaml` 位于源目录中，是一个 YAML 序列，每一项描述一个目录路由：
+```markdown
+---
+title: Well-known musicals
+subtitle: 可选的简短摘要
+---
 
-```yaml
-- path: /                     # 必填；指定源目录
-  title: Musicals             # 目录页标题
-  subtitle: Musical theatre   # 目录页副标题
-  description: |              # 目录页简介
-    Musicals combine songs, dialogue, acting and dance.
-  transfers: []               # 根目录的 transfers 无效
-
-- path: /introduction
-  transfers:
-    - source: .
-      target: /intro/Well-known
-  title: Well-known musicals
+可选的目录页简介。
 ```
 
-字段说明：
+解析规则：
 
-| 字段 | 必填 | 说明 |
-|---|---|---|
-| `path` | 是 | 相对于源目录的路径；缺失该项会被忽略。 |
-| `title` | 否 | 显示名 / 页面标题；为空时继承根路由。 |
-| `subtitle` | 否 | 页面副标题；为空时继承根路由。 |
-| `description` | 否 | 页面简介；为空时继承根路由。 |
-| `transfers` | 否 | 文件搬运规则；仅当 `path != "/"` 时生效。 |
+- `title` / `subtitle` / `description` 可写在可选的 YAML Front Matter 中。
+- 缺少 `title` 时使用正文中第一个 `# 标题`。
+- 缺少 `description` 时使用剩余正文。
+- 未设置的字段继承根目录；根目录的 `README.md`（`posts/README.md` 或 `src/README.md`）定义站点标题/副标题/简介。
+- 元信息中的换行会转换为 `<br />`。
 
 ### 搬运规则
 
-`transfers` 把某个目录的内容映射到另一个输出位置。每条规则包含：
+`camus.yaml` 的 `transfer` 段把某个目录的内容映射到另一个输出位置。每项包含 `path` 与 `transfers` 列表：
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
-| `source` | 是 | 源路径。`.` 或 `/` 表示路由目录自身；其它值拼接到路由 `path` 之下。 |
-| `target` | 是 | 目标输出目录，作为该目录的对外路径。 |
+| `path` | 是 | 相对于源目录的路径。 |
+| `transfers[].source` | 是 | 源路径。`.` 或 `/` 表示目录自身；其它值拼接到 `path` 之下。 |
+| `transfers[].target` | 是 | 目标输出目录，作为该目录的对外路径。 |
 
 示例：
 
 ```yaml
-# posts/introduction/** -> /intro/Well-known/**
-- path: /introduction
-  transfers:
-    - source: .
-      target: /intro/Well-known
+transfer:
+  # posts/introduction/** -> /intro/Well-known/**
+  - path: /introduction
+    transfers:
+      - source: .
+        target: /intro/Well-known
 
-# posts/Don Juan/** -> /M/**
-- path: /Don Juan
-  transfers:
-    - source: .
-      target: /M
+  # posts/Don Juan/** -> /M/**
+  - path: /Don Juan
+    transfers:
+      - source: .
+        target: /M
 
-# 只搬运子目录：
-# posts/guide/advanced/** -> /docs/advanced/**
-- path: /guide
-  transfers:
-    - source: advanced
-      target: /docs/advanced
+  # 只搬运子目录：
+  # posts/guide/advanced/** -> /docs/advanced/**
+  - path: /guide
+    transfers:
+      - source: advanced
+        target: /docs/advanced
 ```
 
 说明：
 
 - 搬运是整目录映射：源目录下的所有文件（含嵌套子目录）都会输出到 `target` 之下。
 - 不设置搬运时保留原目录路径。
-- 根路由 `path: "/"` 用于定义站点标题/副标题/简介，其 `transfers` 无效。
-- 路径中包含 `private` 段的路由会被忽略并打印警告；`private` 目录本身也不会进入源目录树。
+- 根路径 `/` 不能使用搬运。
+- 路径中包含 `private` 段会被忽略并打印警告；`private` 目录本身也不会进入源目录树。
 
 ## 文章
 
