@@ -23,6 +23,10 @@ build:
 	@cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -B $(BUILD_DIR) -S .
 	@cmake --build $(BUILD_DIR) --target all
 
+.PHONY: install
+install: build package
+	@sudo installer -pkg build/release/_CPack_Packages/Darwin/productbuild/camus-*-arm64.pkg -target /
+
 .PHONY: serve
 serve: build
 	@ctest --extra-verbose -R build-test-site --test-dir $(BUILD_DIR)
