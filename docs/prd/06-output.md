@@ -1,14 +1,14 @@
 # 6. 输出产物
 
-实现：`writer::build()` 各阶段（`camus/src/writer.cpp`）。默认 `destination` 为 `camus.yaml` 的 `output.dest_dir`（示例为 `html`）。
+实现：`writer::build()` 各阶段（`camus/src/writer.cpp`）。输出目录固定：HTML 写入 `./dist/html`，PDF 写入 `./dist/pdf`（不再读取 `output.dest_dir`）。
 
 ## 6.1 输出目录清理与安全保护
 
 `prepare_output_dir()`（`writer.cpp:220`）在渲染文章前执行：
 
 ```text
-empty_path(output.dest_dir, safe_check=true)
-empty_path(dest_dir(),       safe_check=true)   // 两者为同一路径
+empty_path(dest_dir(),  safe_check=true)   // ./dist/html
+empty_path(pdf_dir(),   safe_check=true)   // ./dist/pdf
 ```
 
 `empty_path(path, true)`（`filesystem.cpp:136`）规则：
@@ -23,21 +23,23 @@ empty_path(dest_dir(),       safe_check=true)   // 两者为同一路径
 
 ## 6.2 输出文件布局
 
-以示例站点（`dest_dir: html`、启用 sitemap/meta）为例：
+以示例站点（启用 sitemap/meta 与 PDF）为例：
 
 ```text
-html/
-├── <文章 real_url>                 # 如 html/introduction/M/Mozart!.html
-├── s/<short_path>.html             # 启用 short-path 时的短链副本
-├── <目录 real_url>/index.html      # 每个目录节点一页（含根目录 html/index.html）
-├── stats.html
-├── friends.html
-├── sitemap.xml                     # output.sitemap=true
-├── meta.json                       # output.meta=true
-├── index.md                        # 配置 pdf_engine 时：合并后的 Markdown
-├── index.pdf                       # 配置 pdf_engine 时：最终 PDF
-├── pdf/index.html                  # 配置 pdf_engine 时：PDF 中间 HTML
-└── <assets 内容提升到根>            # css/ js/ fonts/ robots.txt favicon.ico ...
+dist/
+├── html/                           # HTML 站点
+│   ├── <文章 real_url>             # 如 dist/html/introduction/M/Mozart!.html
+│   ├── s/<short_path>.html         # 启用 short-path 时的短链副本
+│   ├── <目录 real_url>/index.html  # 每个目录节点一页（含根目录 dist/html/index.html）
+│   ├── stats.html
+│   ├── friends.html
+│   ├── sitemap.xml                 # output.sitemap=true
+│   ├── meta.json                   # output.meta=true
+│   └── <assets 内容提升到根>        # css/ js/ fonts/ robots.txt favicon.ico ...
+└── pdf/                            # 配置 pdf_engine 时
+    ├── index.md                    # 合并后的 Markdown
+    ├── index.html                  # PDF 中间 HTML
+    └── index.pdf                   # 最终 PDF（可由 pdf_options 自定义路径）
 ```
 
 | 产物 | 触发条件 | 代码位置 |
@@ -47,9 +49,9 @@ html/
 | `stats.html` | 始终（除非 dryrun） | `writer.cpp:408` |
 | `friends.html` | 始终（除非 dryrun） | `writer.cpp:461` |
 | `sitemap.xml` | `output.sitemap: true` | `writer.cpp:555` |
-| `meta.json` | `output.meta: true` 且 `html_engine=default` | `writer.cpp:540-545` |
-| 静态资源 | 内嵌 `.camus/assets` 或本地 `assets_dir` 非空 | `writer.cpp` `emit_assets()` |
-| `index.md` / `index.pdf` / `pdf/index.html` | `render.pdf_engine` 非空且引擎可用 | `writer.cpp` `emit_pdf()` |
+| `meta.json` | `output.meta: true` | `writer.cpp:540-545` |
+| 静态资源 | 内嵌 `.camus/assets` 或本地 `./assets` 非空 | `writer.cpp` `emit_assets()` |
+| `index.md` / `index.pdf` / `index.html`（均位于 `dist/pdf`） | `render.pdf_engine` 非空且引擎可用 | `writer.cpp` `emit_pdf()` |
 
 ## 6.3 文章输出
 
@@ -62,7 +64,7 @@ html/
 
 `emit_toc()`（`writer.cpp:467`）：
 
-- 仅在 `render.html_engine == "default"` 时工作；其它引擎 `logging::fatal("html engine '...' not supported")`。
+- HTML 引擎固定为 `default`（inja 模板），不再从配置读取。
 - 遍历所有目录节点，为每个目录构造 §5.6 的目录页数据，用 `home.html` 渲染。
 - 输出路径：`dest_dir/{real_url}/index.html`（根目录为 `dest_dir/index.html`）。
 - 注意 `current` 为目录节点，`items` 为其直接子节点；深层目录通过各自的页面表达，不展开为完整递归树。
@@ -106,7 +108,7 @@ html/
 
 ## 6.8 `meta.json`
 
-`emit_toc()` 内当 `output.meta` 为 true 时、且 `html_engine=default` 时生成（`writer.cpp:540-545`），内容为：
+`emit_toc()` 内当 `output.meta` 为 true 时生成（`writer.cpp:540-545`），内容为：
 
 ```json
 {
@@ -132,24 +134,24 @@ html/
 
 ```mermaid
 flowchart TD
-    A[检查内嵌 .camus/assets 与本地 assets_dir] --> B{两者都不可用/为空?}
+    A[检查内嵌 .camus/assets 与本地 ./assets] --> B{两者都不可用/为空?}
     B -->|是| Z[记录 debug 并跳过]
-    B -->|否| C[创建 dest_dir]
+    B -->|否| C[创建 dist/html]
     C --> D{内嵌资源可用?}
-    D -->|是| E[复制 .camus/assets -> dest/assets]
+    D -->|是| E[复制 .camus/assets -> dist/html/assets]
     D -->|否| F
-    E --> F{本地 assets_dir 可用?}
-    F -->|是| G[覆盖复制本地 assets_dir -> dest/assets]
+    E --> F{本地 ./assets 可用?}
+    F -->|是| G[覆盖复制 ./assets -> dist/html/assets]
     F -->|否| H
-    G --> H[遍历 dest/assets: .css/.js/.txt/.json 用 inja 渲染]
-    H --> I[把 dest/assets 内容提升复制到 dest 根目录]
-    I --> J[删除临时 dest/assets]
+    G --> H[遍历 dist/html/assets: .css/.js/.txt/.json 用 inja 渲染]
+    H --> I[把 assets 内容提升复制到 dist/html 根目录]
+    I --> J[删除临时 dist/html/assets]
 ```
 
 - 内嵌默认资源来自 `.camus/assets`（`-i` 安装时生成），**不依赖工作目录存在 `./assets`**。
-- 本地 `assets_dir` 存在且非空时整体覆盖内嵌同名文件；未配置、不存在或为空时仅使用内嵌资源。
+- 本地资源目录固定为 `./assets`；存在且非空时整体覆盖内嵌同名文件，不存在或为空时仅使用内嵌资源。
 - 仅 `.css`、`.js`、`.txt`、`.json` 会做 inja 变量替换，其它文件原样复制。
-- 最终资源被**提升到输出根目录**（如 `html/css/...`、`html/robots.txt`），不保留 `assets/` 前缀。
+- 最终资源被**提升到输出根目录**（如 `dist/html/css/...`、`dist/html/robots.txt`），不保留 `assets/` 前缀。
 
 ## 6.10 dryrun 的影响
 
@@ -178,18 +180,29 @@ flowchart TD
     B -->|未找到| W[WARN 并跳过]
     B -->|找到| C[按目录树先序收集 visibility != hidden 的 .md]
     C --> D[替换 env 变量, 合并为单个 Markdown]
-    D --> E[写 dest_dir/index.md]
-    E --> F[cmark-gfm 渲染为 HTML]
-    F --> G[写入 dest_dir/pdf/index.html（内联打印样式）]
-    G --> H[调用浏览器 --headless --print-to-pdf=<解析后的输出路径>]
-    H --> I{退出码为 0 且 PDF 非空?}
-    I -->|否| W2[WARN 并跳过]
-    I -->|是| J[完成]
+    D --> E[写 dist/pdf/index.md]
+    E --> F[逐篇 cmark-gfm 渲染为 HTML, 每篇包在带锚点的 section 中]
+    F --> G[生成封面页 / 扉页 / 目录页 HTML]
+    G --> H[写入 dist/pdf/index.html（内联打印样式）]
+    H --> I[调用浏览器 --headless --print-to-pdf=<解析后的输出路径>]
+    I --> J{退出码为 0 且 PDF 非空?}
+    J -->|否| W2[WARN 并跳过]
+    J -->|是| K[完成]
 ```
 
 - 合并文档以 `# {site.title}` 开头，每篇文章为 `## {display_name}` + 正文，文章间用 `---` 分隔。
+- PDF 正文前依次生成三个独立页面，各自通过 `page-break-after: always` 强制分页：
+
+  | 页面 | 内容 | 代码位置 |
+  |---|---|---|
+  | 封面页 | 站点标题（为空时回退 `Camus`）、`site.subtitle`、`site.description`、生成日期（`%Y-%m-%d`） | `emit_pdf()` |
+  | 扉页 | 站点标题、副标题、文章数、生成日期、站点域名（`deploy.domain_name`）、程序版本（`PROJECT_VERSION`） | `emit_pdf()` |
+  | 目录页 | 标题「目录」+ 按先序排列的文章序号、显示名、标签，条目链接到 `#pdf-article-{n}` | `emit_pdf()` |
+
+- 每篇文章渲染为 `<section id="pdf-article-{n}" class="pdf-article">`，并以 `page-break-before: always` 从新页开始；正文首段（`# site.title` + `site.description`）作为引导页单独占一页。
+- 所有插入 HTML 的站点字段均做 HTML 转义（`html_escape`）。
 - 文章正文使用 Front Matter 解析后的内容，并替换 `.env` 变量；`hidden` 文章不参与，`hidden_in_toc` 参与。
-- PDF 输出路径默认 `dest_dir/index.pdf`；`--print-to-pdf` 中可用 `{{dest_dir}}` 占位符自定义，如 `--print-to-pdf={{dest_dir}}/docs/book.pdf`（相对路径按 `dest_dir` 解析）。
-- PDF 中间 HTML 固定在 `dest_dir/pdf/index.html`，避免覆盖站点首页 `dest_dir/index.html`。
+- PDF 输出路径默认 `dist/pdf/index.pdf`；`--print-to-pdf` 中可用 `{{dest_dir}}` 占位符自定义（占位符代表 `dist/pdf`），如 `--print-to-pdf={{dest_dir}}/docs/book.pdf`（相对路径按 `dist/pdf` 解析）。
+- PDF 中间产物 `index.md`、`index.html` 与最终 `index.pdf` 均位于 `dist/pdf`，与 HTML 站点目录分离。
 - PDF 生成失败只告警，不影响 HTML 站点构建结果与退出码。
 - `dryrun` 下整个阶段跳过。

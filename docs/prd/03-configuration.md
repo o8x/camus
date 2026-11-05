@@ -20,25 +20,24 @@
 - 根节点必须包含 `camus` 映射，否则 `error::panic("config file parse failed")`（退出 127）。
 - `catalog` 必须是序列，否则 `panic("parse catalog config failed")`。
 - 字符串值会做 `trim_space`；`catalog` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`。
-- 路径（`source_dir`、`assets_dir`、`dest_dir`）在解析后转为绝对路径供内部使用（`assets_dir` 为空时保持为空，回退内嵌资源）；模板 JSON 中保留解析前的值（见 §3.8）。
-- 注意 `render.html_engine` 在遍历 `camus` 每个键时都会被重置为 `default`（`yaml_config.cpp:124`），因此 `render` 段**应放在 `camus` 段末尾**；若其后还有其它键，`html_engine` 会被重置为 `default`。
+- 源目录、资源目录与输出目录不再可配置：
+  - 源目录固定按 `src` → `posts` 顺序探测，存在即使用，否则回退 `src`（随后若不存在则报错）；
+  - 本地资源目录固定为 `./assets`，不存在时回退内嵌 `.camus/assets`；
+  - HTML 输出固定为 `./dist/html`，PDF 输出固定为 `./dist/pdf`。
+- `render.html_engine` 固定为 `default`，`render.markdown_engine` 固定为 `cmark-gfm`，均不从配置读取。
+- 路径在解析后转为绝对路径供内部使用；模板 JSON 中保留解析后的值（见 §3.8）。
 
 ## 3.3 `camus` 段字段
 
 | 字段 | 类型 | 默认/必填 | 说明 | 代码位置 |
 |---|---|---|---|---|
-| `source_dir` | 字符串路径 | 必填（建议） | Markdown 源目录 | `yaml_config.cpp:213` |
-| `assets_dir` | 字符串路径 | 可选 | 本地静态资源目录；未配置或不存在时自动使用内嵌 `.camus/assets` | `yaml_config.cpp:215` |
 | `output.meta` | bool | 必填 | 是否输出 `meta.json` | `yaml_config.cpp:184` |
 | `output.sitemap` | bool | 必填 | 是否输出 `sitemap.xml` | `yaml_config.cpp:183` |
 | `output.filename_case` | 字符串 | 默认 `keep` | `uuid` 时文章 `display_name` 生成 UUID 并输出到 `/s/<uuid>.html` 风格短链 | `yaml_config.cpp:182` |
-| `output.dest_dir` | 字符串路径 | 必填 | HTML 输出目录 | `yaml_config.cpp:185` |
 | `deploy.protocol` | 字符串 | 可选 | 自动补 `://`；有域名而无协议时默认 `https://` | `yaml_config.cpp:190-204` |
 | `deploy.domain_name` | 字符串 | 可选 | 去除 `/` 与空格 | 同上 |
 | `deploy.path_prefix` | 字符串 | 可选 | 归一化为以 `/` 开头的前缀 | `yaml_config.cpp:206-208` |
 | `render.theme` | 字符串 | 默认 `default` | 主题目录名 | `yaml_config.cpp:129` |
-| `render.html_engine` | 字符串 | 默认 `default` | 目前仅支持 `default` | `yaml_config.cpp:128`、`writer.cpp:550` |
-| `render.markdown_engine` | 字符串 | 目前仅支持 `cmark-gfm` | Markdown 引擎 | `yaml_config.cpp:126` |
 | `render.markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp:144-175` |
 | `render.pdf_engine` | 字符串 | 可选 | PDF 引擎：`chromium`/`chrome`/`edge`，或可执行文件路径；非空时启用 PDF 生成 | `yaml_config.cpp:127-136` |
 | `render.pdf_options` | 字符串数组 | 可选 | Chrome/Edge 启动参数；`--print-to-pdf=` 会替换为实际输出路径 | 同上 |
@@ -56,7 +55,7 @@
 | 含 `/` 的路径 | 直接作为可执行文件路径 | 同左 |
 
 - 引擎找不到时输出 WARN 并跳过 PDF，不影响 HTML 构建。
-- `pdf_options` 原样作为启动参数；其中以 `--print-to-pdf` 开头的项只取第一个并统一重写，支持 `{{dest_dir}}` 占位符：
+- `pdf_options` 原样作为启动参数；其中以 `--print-to-pdf` 开头的项只取第一个并统一重写，支持 `{{dest_dir}}` 占位符（占位符代表 PDF 输出目录 `./dist/pdf`）：
   - `--print-to-pdf=`：默认输出 `<dest_dir>/index.pdf`；
   - `--print-to-pdf={{dest_dir}}/docs/book.pdf`：输出到 `<dest_dir>/docs/book.pdf`；
   - `--print-to-pdf=book.pdf`：相对路径按 `<dest_dir>/book.pdf` 解析。
@@ -64,7 +63,7 @@
 
 ### 3.4 markdown_options 映射
 
-仅当 `render.markdown_engine == "cmark-gfm"` 时解析；未知名会被收集用于展示但不产生标志位。`DEFAULT` 对应 `CMARK_OPT_DEFAULT`；Debug/RelWithDebInfo 构建默认追加 `SOURCEPOS`。
+Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表解析；未知名会被收集用于展示但不产生标志位。`DEFAULT` 对应 `CMARK_OPT_DEFAULT`；Debug/RelWithDebInfo 构建默认追加 `SOURCEPOS`。
 
 | 配置名 | cmark 标志 |
 |---|---|
@@ -148,7 +147,7 @@ CDN_ACCELERATE = https://data-1252251443.cos.accelerate.myqcloud.com
 
 | 顶层键 | 结构 | 说明 |
 |---|---|---|
-| `camus` | 对象 | `source_dir`、`assets_dir`、`site`、`output`、`deploy`、`render`、`friends`；`render.options` 为选项展示串。值为解析阶段的相对路径（内部随后转为绝对路径） |
+| `camus` | 对象 | `source_dir`、`assets_dir`、`site`、`output`、`deploy`、`render`、`friends`；`render.options` 为选项展示串。`source_dir`/`assets_dir`/`output.dest_dir` 为解析后的绝对路径（`source_dir` 按 `src`→`posts` 探测，`output.dest_dir` 固定 `dist/html`） |
 | `site` | 对象 | 根路由（`path/title/subtitle/description/transfers`） |
 | `route` | 数组 | 全部路由（继承后） |
 | `env` | 对象 | `.env` 键值（键小写） |

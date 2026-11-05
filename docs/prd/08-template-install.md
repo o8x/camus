@@ -60,7 +60,7 @@ flowchart TD
 | `./.env` | `.camus/.env` | 仅当目标不存在时复制 |
 | `./.gitignore` | `.camus/.gitignore` | 仅当目标不存在时复制 |
 
-注意：安装**不再生成 `./assets/`**。构建时自动使用 `.camus/assets`；若工作目录存在本地 `assets_dir`（默认 `assets`），则整体覆盖内嵌资源（见 §6.9）。
+注意：安装**不再生成 `./assets/`**。构建时自动使用 `.camus/assets`；若工作目录存在本地 `./assets`，则整体覆盖内嵌资源（见 §6.9）。
 
 `force` 只影响 `.camus` 目录的重装；工作目录下的 `posts/camus.yaml/.env/.gitignore` 即使 force 也**不会覆盖**已有文件。
 

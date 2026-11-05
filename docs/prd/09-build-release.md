@@ -45,8 +45,8 @@
 |---|---|
 | `make build` | `cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -B build/release -S .` 后构建所有目标 |
 | `make package` | Release + 按平台选择 CPack 生成器（Linux `DEB`，macOS `productbuild`），构建并打包 |
-| `make serve` | 构建后运行 `ctest -R build-test-site`，再用 `python3 -m http.server` 在 `localhost:8000` 提供 `site/html` |
-| `make push` | 先跑 `build-test-site`，再在 `site/html` 初始化 git、提交并强制推送到 `REPO_URL`（默认 `git@github.com:o8x/o8x.github.io.git`） |
+| `make serve` | 构建后运行 `ctest -R build-test-site`，再用 `python3 -m http.server` 在 `localhost:8000` 提供 `site/dist/html` |
+| `make push` | 先跑 `build-test-site`，再在 `site/dist/html` 初始化 git、提交并强制推送到 `REPO_URL`（默认 `git@github.com:o8x/o8x.github.io.git`） |
 | `make all` | 等价 `build` |
 
 可变参数：`SITE_ROOT` 默认 `site`，`REPO_URL` 可覆盖。
@@ -83,7 +83,7 @@
 | `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `xxd`、`mold`、`libarchive-dev`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus -iIw /tmp/site` + `camus -idw /tmp/site` | `build/release/packages` |
 | `build-macos` | `macos-14` | brew 安装依赖 → submodule → `make package` → `sudo installer -pkg *.pkg -target /` + 同样冒烟命令 | `build/release/packages` |
 | `release` | `ubuntu-24.04` | 下载并合并产物；仅在 tag 上通过 `softprops/action-gh-release` 发布（匹配 `*.dmg/*.pkg/*.rpm/*.deb/*.exe`） | GitHub Release |
-| `pages` | `ubuntu-24.04` 容器 | 安装 deb → 在 `example/.env` 追加构建上下文 → `camus -iIw example` + `camus -dw example` → 上传并部署 GitHub Pages | `example/html` |
+| `pages` | `ubuntu-24.04` 容器 | 安装 deb → 在 `example/.env` 追加构建上下文 → `camus -iIw example` + `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |
 
 工作流权限：`contents: write`、`pages: write`、`id-token: write`；`pages` concurrency。
 

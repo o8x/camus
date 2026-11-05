@@ -4,7 +4,7 @@
 
 ## 4.1 目录树构建
 
-`build_catalog_tree(path, relative_path)`（`catalog.cpp:8`）从 `source_dir` 递归扫描：
+`build_catalog_tree(path, relative_path)`（`catalog.cpp:8`）从源目录 `source_dir` 递归扫描（源目录固定按 `src` → `posts` 探测，见 §3.2）：
 
 - 根节点 `path` 归一为 `/`；子节点 `path` 为相对源目录的路径。
 - 普通文件：读入全部内容并按 `\n` 拆分为 `contents`（`read_file(..., true)`，整体两端空白会被裁剪）。

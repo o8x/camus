@@ -24,7 +24,7 @@ camus -Ww mysite       	# Watch and auto-rebuild on changes
 camus -I              	# Inspect and display the current configuration
 ```
 
-The built site is output to `html/` by default.
+The built site is output to `dist/html/` (HTML) and `dist/pdf/` (PDF) by default.
 
 ## Command-Line Options
 

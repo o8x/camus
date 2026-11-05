@@ -19,7 +19,7 @@
 2. 若本地存在 `theme/{theme_name}/{type}.html`，优先使用本地覆盖。
 3. 文件不存在时 `logging::fatal("read theme content failed ...")`，进程退出 127。
 
-`theme_name` 默认 `default`；示例站点使用 `terminal`。若 `render.html_engine != "default"`，`theme_name` 会变为 `{theme}/{html_engine}` 形式的子路径，但由于 `emit_toc` 仅支持 `default`，当前版本实际只可使用 `default` 引擎。
+`theme_name` 默认 `default`；示例站点使用 `terminal`。HTML 引擎固定为 `default`（inja），不再从配置读取，`theme_name` 也不会再拼接引擎子路径。
 
 ## 5.2 Markdown 渲染
 

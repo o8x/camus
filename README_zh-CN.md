@@ -24,7 +24,7 @@ camus -Ww mysite        # 监视文件变更并自动重新构建
 camus -I                # 检查并显示当前配置
 ```
 
-构建后的站点默认输出到 `html/` 目录。
+构建后的站点默认输出到 `dist/html/`（HTML）与 `dist/pdf/`（PDF）。
 
 ## 命令行选项
 

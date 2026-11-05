@@ -48,7 +48,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 ```mermaid
 flowchart TD
     A[reload 配置 camus.yaml/.env] --> B[切换工作目录 workdir]
-    B --> C[扫描 source_dir 构建目录树]
+    B --> C[扫描 source_dir（src/posts）构建目录树]
     C -->|空| W[WARN No articles found, 返回 1]
     C -->|非空| D[emit_article]
     D --> E[emit_toc]
@@ -57,7 +57,7 @@ flowchart TD
     G --> H[emit_assets]
     H --> I[flush_writes 统一落盘]
     I --> P{配置了 pdf_engine?}
-    P -->|是| Q[emit_pdf: 合并 Markdown -> HTML -> Chrome/Edge 打印]
+    P -->|是| Q[emit_pdf: 合并 Markdown + 封面/扉页/目录 -> HTML -> Chrome/Edge 打印]
     P -->|否| J
     Q --> J[INFO build complete, 返回 0]
 ```
@@ -69,9 +69,10 @@ flowchart TD
 | 术语 | 含义 |
 |---|---|
 | workdir | 工作目录，`-w` 指定，默认当前目录；运行时会 `chdir` 到该目录 |
-| source_dir | Markdown 源目录，默认取自 `camus.yaml` |
-| dest_dir | HTML 输出目录 |
-| assets_dir | 本地静态资源目录；缺省时使用 `.camus/assets`，内容会被提升到输出根目录 |
+| source_dir | Markdown 源目录；固定按 `src` → `posts` 探测，不存在则回退 `src` |
+| dest_dir | HTML 输出目录，固定 `./dist/html` |
+| pdf_dir | PDF 输出目录，固定 `./dist/pdf` |
+| assets_dir | 本地静态资源目录，固定 `./assets`；缺省时使用 `.camus/assets`，内容会被提升到输出根目录 |
 | catalog | 运行期内存中的目录树 `catalog_node` |
 | route | `camus.yaml` 中 `catalog` 段的目录配置，可设置标题/副标题/描述/搬运 |
 | transfer | 路由内的文件搬运映射，把源目录内容映射到另一输出路径 |
