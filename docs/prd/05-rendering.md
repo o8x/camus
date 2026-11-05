@@ -70,7 +70,7 @@ flowchart TD
 | `camus` / `source_dir` / `assets_dir` / `meta` / `sitemap` / `filename_case` / `public_url` / `protocol` / `domain_name` / `path_prefix` / `render` / `friends` / `site` / `route` / `git` / `build` | 见 §3.7 | 站点配置 |
 | `title` | 字符串 | 文章显示名（来自节点 `to_json`） |
 | `write_time` | 数字 | 文章时间戳 |
-| `path` | 字符串 | `real_url` 去掉前缀 |
+| `path` | 字符串 | 节点 `real_url` 加上 `public_url.path_prefix` 的完整链接（主题直接作 `href`） |
 | `is_dir` | bool | 文章为 false |
 | `link_path` | 字符串 | 短链路径，无短链时为空 |
 | `tags` | 数组 | 文章标签 |
@@ -89,17 +89,19 @@ flowchart TD
 
 ## 5.6 TOC 数据项
 
-`build_toc_items()`（`writer.cpp:263`）取根节点直接子节点中 `visibility != hidden` 的项，序列化为 `catalog_node` JSON，并排序（目录优先，再按 `write_time` 降序）。该数组用于文章页/统计页的导航。
+`build_toc_items()` 取根节点直接子节点中 `visibility` 既不是 `hidden` 也不是 `hidden_in_toc` 的项，序列化为 `catalog_node` JSON，并排序（目录优先，再按 `write_time` 降序，时间相同按 `path` 升序）。该数组用于文章页/统计页的导航。
 
 `emit_toc` / `emit_friends` 中会对每个目录页构造：
 
 | 键 | 结构 | 说明 |
 |---|---|---|
-| `parent.url` | 字符串 | 父目录 `link_url`；根目录为空 |
-| `parent.label` | 字符串 | 父目录显示名；父 URL 为 `/` 时固定为 `/` |
-| `items` | 数组 | 当前目录直接子节点（排序：目录优先，再按时间降序） |
-| `current` | 对象 | 当前目录节点 JSON（含 `render_data`） |
+| `parent.url` | 字符串 | 父目录 `link_url` 加上 `public_url.path_prefix` 的完整链接；根目录为空 |
+| `parent.label` | 字符串 | 父目录显示名；父目录为根时固定为 `/` |
+| `items` | 数组 | 当前目录直接子节点（过滤 `hidden` 与 `hidden_in_toc`；目录优先，再按时间降序、`path` 升序） |
+| `current` | 对象 | 当前目录节点 JSON（含 `render_data`）；其中 `current.path` 被覆盖为相对目录树路径（根为 `/`） |
 | 其余键 | — | `conf_.json()` 的顶层键（`camus/source_dir/assets_dir/meta/sitemap/filename_case/public_url/protocol/domain_name/path_prefix/render/friends/site/route/git/build`）被合并进来 |
+
+`meta.json` 的 `catalog` 数组按目录树的先序顺序输出，保证结果稳定。
 
 注意：这些目录页数据是「父级 + 子项 + 当前目录」结构，不是完整递归树。
 
@@ -113,17 +115,14 @@ flowchart TD
 
 ## 5.8 HTML 后处理
 
-文章页最终 HTML 会执行一组替换（`writer.cpp:380-390`，`strings::replace(..., map, deep=true)`，共两轮）：
+文章页最终 HTML 会执行一组替换（`strings::replace(..., map, deep=true)`）：
 
 | 查找 | 替换 |
 |---|---|
 | ` 00:00:00` | 空串 |
 | `<img ` | `<img width="100%"` |
-| `<hr>` | 空串 |
-| `<hr/>` | 空串 |
-| `<hr />` | 空串 |
 
-用途：去掉 UTC 时间中的零时分秒、让图片自适应宽度、移除 Front Matter 关闭分隔线与 Markdown 分隔线产生的水平线。
+用途：去掉 UTC 时间中的零时分秒、让图片自适应宽度。Front Matter 分隔符在解析阶段已丢弃，正文中的 Markdown 水平线（`<hr>`）会被保留。
 
 ## 5.9 渲染错误处理
 

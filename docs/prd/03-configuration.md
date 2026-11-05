@@ -108,6 +108,9 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 | `transfers[].target` | 是 | 目标输出路径（作为该目录的外部路径） |
 
 - 根路由 `path: "/"` 决定 `site`；根路由的 `transfers` 无效。
+- 每条 transfer 的 `source`/`target` 缺失或 `target` 为空时会被忽略并打印 WARN。
+- transfer 的 `source` 会预先拼成完整源路径（`source: .` → 路由自身路径，否则 `路由路径/source`），因此 `source: 子目录` 可搬运路由下的子目录；搬运会作用于该目录的所有后代。
+- 同一 `path` 出现多次时只有第一条生效，后续打印 WARN 并忽略。
 - `path` 中若包含名为 `private` 的路径段（常量 `CAMUS_PRIVATE_DIR`），该条路由在解析阶段被忽略并打印 WARN，不能作为目录页使用。
 - 若不存在 `path: "/"`，`site` 默认 `{path: "/", title: "A mysterious site"}`。
 - 所有路由的空 `title/subtitle/description` 最终继承 `site`。
@@ -161,6 +164,8 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 | `git` | 对象 | `repo`、`branch`、`commit_hash` |
 | `build` | 对象 | 见下表 |
 
+`camus` 聚合对象在所有配置解析完成后生成，包含最终 `site`（根路由继承后）、`friends` 以及绝对路径形式的 `source_dir` / `assets_dir`。
+
 `build` 对象字段（来源 `yaml_config.cpp:59-90`）：
 
 | 字段 | 说明 |
@@ -172,7 +177,7 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 | `cmake_version` | CMake 版本 |
 | `cxx_standard` | C++ 标准号（23） |
 | `version` | 项目版本（11.1.0） |
-| `version_major` | 主版本号（10） |
+| `version_major` | 主版本号（11） |
 | `compiler` | 编译器版本字符串 |
 | `powered_by` | 预渲染的页脚 HTML 片段 |
 
@@ -187,9 +192,9 @@ Markdown 引擎固定为 `cmark-gfm`，`render.markdown_options` 始终按本表
 ## 3.8 持久性与重载
 
 - 配置本身持久于磁盘；运行期不写回配置。
-- `reload()` 每次全量重读 `camus.yaml` 与 `catalog.yaml`。
-- 当前实现中 `routes_`、`camus_.friends` 在 `reload()` 前**不会清空**，多次热重载会导致内部路由/友链列表累积；`public_config_` 为覆盖写入，模板 JSON 的 `route` 也随 `routes_` 累积。
+- `reload()` 每次全量重读 `camus.yaml` 与 `catalog.yaml`，并先重置上一轮的 `camus_`、`routes_`、`public_config_`，因此反复构建/热重载不会累积路由或友链。
 - 路由/友链的新增在下次构建生效。
+- `writer::inspect()` 与 `writer::build()` 会先把进程工作目录切到 `--workdir`，因此 `-w <dir> -I` 读取的是该目录下的配置。
 
 ## 3.9 `inspect` 输出
 

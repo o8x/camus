@@ -154,18 +154,16 @@ friends:
 
 说明：
 
-- 搬运是整目录映射：源目录下的所有文件都会输出到 `target` 之下。
+- 搬运是整目录映射：源目录下的所有文件（含嵌套子目录）都会输出到 `target` 之下。
 - 不设置搬运时保留原目录路径。
 - 根路由 `path: "/"` 用于定义站点标题/副标题/简介，其 `transfers` 无效。
 - 路径中包含 `private` 段的路由会被忽略并打印警告；`private` 目录本身也不会进入源目录树。
 
 ## 文章
 
-Markdown 文件放在 `src/` 或 `posts/` 下。可选 Front Matter 位于 `---` 之间：
+Markdown 文件放在 `src/` 或 `posts/` 下。可选 Front Matter 位于 `---` 之间（文件首行必须为 `---` 才会启用）：
 
 ```markdown
-标题行
-
 ---
 display-name: My article
 date: 2026-01-01
@@ -174,7 +172,7 @@ visibility: open
 ---
 ```
 
-支持 `display-name`、`short-path`、`date`、`visibility`（`open` / `hidden` / `hidden_in_toc`）与 `tags` 等字段。
+支持 `display-name`、`short-path`、`date`、`visibility`（`open` / `hidden` / `hidden_in_toc`）与 `tags` 等字段。`hidden` 文章不渲染；`hidden_in_toc` 文章正常渲染，但不进入 TOC/导航列表。
 
 ## 主题与模板函数
 

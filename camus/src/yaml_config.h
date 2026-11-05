@@ -61,7 +61,7 @@ namespace camus::config
 		std::string markdown_engine = "cmark-gfm";
 		std::string pdf_engine;
 		std::vector<std::string> pdf_options;
-		int markdown_options;
+		int markdown_options = 0;
 		// 主题数据
 		std::unordered_map<camus_theme_type, std::string> theme;
 
@@ -141,5 +141,7 @@ namespace camus::config
 		[[nodiscard]] std::map<std::string, std::string> map() const;
 		[[nodiscard]] std::string render_var(const std::string &data) const;
 		[[nodiscard]] std::expected<route_conf, std::string> match_route(const std::filesystem::path &path) const;
+		// 在所有路由的 transfers 中查找匹配 path 的搬运目标（支持子目录 source）
+		[[nodiscard]] std::filesystem::path match_transfer(const std::filesystem::path &path) const;
 	};
 } // namespace camus::config

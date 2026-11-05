@@ -154,18 +154,16 @@ Examples:
 
 Notes:
 
-- Transfers are whole-directory mappings. All files under the source directory are written below `target`.
+- Transfers are whole-directory mappings. All files (including nested subdirectories) under the source directory are written below `target`.
 - Without a transfer rule, the directory keeps its original path.
 - The root route `path: "/"` defines the site title/subtitle/description and cannot use transfers.
 - A route whose path contains a `private` segment is ignored (with a warning); `private` directories are excluded from the source tree.
 
 ## Posts
 
-Markdown files live under `src/` or `posts/`. Optional front matter sits between `---` markers:
+Markdown files live under `src/` or `posts/`. Optional front matter sits between `---` markers (the file must start with `---` to enable it):
 
 ```markdown
-Title line
-
 ---
 display-name: My article
 date: 2026-01-01
@@ -174,7 +172,7 @@ visibility: open
 ---
 ```
 
-Supported fields include `display-name`, `short-path`, `date`, `visibility` (`open` / `hidden` / `hidden_in_toc`) and `tags`.
+Supported fields include `display-name`, `short-path`, `date`, `visibility` (`open` / `hidden` / `hidden_in_toc`) and `tags`. `hidden` articles are not rendered; `hidden_in_toc` articles are rendered but omitted from TOC/navigation lists.
 
 ## Themes and template helpers
 

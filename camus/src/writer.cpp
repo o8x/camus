@@ -119,6 +119,12 @@ namespace
 		return "'" + strings::replace(value, "'", "'\\''") + "'";
 	}
 
+	bool visible_in_toc(const camus::catalog::catalog_node &node)
+	{
+		return node.property.visibility != camus::catalog::hidden &&
+			   node.property.visibility != camus::catalog::hidden_in_toc;
+	}
+
 	std::string html_escape(const std::string &value)
 	{
 		std::string out;
@@ -221,11 +227,15 @@ namespace camus
 			return;
 		}
 
-		if (pending_writes_.contains(path)) {
-			logging::fatal("output file already queued dest={}", path.string());
+		// 统一为绝对路径，避免相对/绝对路径指向同一文件时重复检测失效
+		const std::filesystem::path target =
+			path.is_absolute() ? path.lexically_normal() : std::filesystem::absolute(path).lexically_normal();
+
+		if (pending_writes_.contains(target)) {
+			logging::fatal("output file already queued dest={}", target.string());
 		}
 
-		pending_writes_[path] = content;
+		pending_writes_[target] = content;
 	}
 
 	void writer::flush_writes()
@@ -243,6 +253,8 @@ namespace camus
 		resolve_directory_routes();
 		parse_article_frontmatter();
 		prepare_output_dir();
+		// 必须在生成 TOC 与统计数据前完成：计算目录属性、清理隐藏/无效节点
+		finalize_directory_properties();
 
 		auto articles = collect_articles();
 		fill_article_nav(articles);
@@ -260,32 +272,38 @@ namespace camus
 		}
 
 		render_stats_page(stats, toc_items);
-		finalize_directory_properties();
 	}
 
 	void writer::resolve_directory_routes()
 	{
-		catalog::traverse_catalog_tree(catalog_, [&](catalog::catalog_node &node, int) {
+		catalog::traverse_catalog_tree(catalog_, [&](catalog::catalog_node &node, const int depth) {
 			if (!node.is_directory()) {
 				return;
 			}
 
 			node.path_prefix = conf_.camus().public_url.path_prefix;
-			node.property.external_path = node.path;
-			node.property.display_name = node.path.filename();
+
+			if (depth == 0) {
+				node.property.external_path = node.path;
+				node.property.display_name = node.path.filename();
+			}
 
 			if (const auto route = conf_.match_route(node.path)) {
 				node.property.display_name = route->title;
 				node.property.subtitle = route->subtitle;
 				node.property.description = route->description;
-
-				if (const std::filesystem::path tr_path = route->match_transfer(node.path); !tr_path.empty()) {
-					node.property.external_path = tr_path;
-				}
 			}
 
+			// transfers 在全部路由中匹配，从而支持 source 指向路由下的子目录
+			if (const std::filesystem::path tr_path = conf_.match_transfer(node.path); !tr_path.empty()) {
+				node.property.external_path = tr_path;
+			}
+
+			// 子目录继承父目录的输出前缀，并追加自身目录名；文件直接继承父目录输出前缀。
+			// 这样父目录的搬运（transfer）才能完整作用到所有后代。
 			for (auto &c : node.children) {
-				c.property.external_path = node.property.external_path;
+				c.property.external_path =
+					c.is_directory() ? node.property.external_path / c.path.filename() : node.property.external_path;
 			}
 		});
 	}
@@ -300,23 +318,35 @@ namespace camus
 			node.path_prefix = conf_.camus().public_url.path_prefix;
 
 			std::map<std::string, std::string> params;
-			for (int i = 0; i < node.contents.size(); ++i) {
-				const std::string line = strings::trim_space(node.contents[i]);
-				if (i > 1 && line == "---") {
-					node.contents.assign(node.contents.begin() + i, node.contents.end());
-					break;
+			if (!node.contents.empty() && strings::trim_space(node.contents.front()) == "---") {
+				bool closed = false;
+				for (size_t i = 1; i < node.contents.size(); ++i) {
+					const std::string line = strings::trim_space(node.contents[i]);
+					if (line == "---") {
+						node.contents.assign(
+							node.contents.begin() + static_cast<std::ptrdiff_t>(i),
+							node.contents.end()
+						);
+						closed = true;
+						break;
+					}
+
+					const auto [left, right] = strings::split_pair(line, ":", true);
+					if (left.empty() && right.empty()) {
+						logging::fatal("failed to parse params file={} line={}({})", node.path.string(), i, line);
+					}
+
+					params.emplace(left, right);
 				}
 
-				if (i == 0) {
-					continue;
+				if (!closed) {
+					logging::fatal("failed to find front matter end file={}", node.path.string());
 				}
 
-				const auto [left, right] = strings::split_pair(line, ":", true);
-				if (left.empty() && right.empty()) {
-					logging::fatal("failed to parse params file={} line={}({})", node.path.string(), i, line);
+				// 丢弃作为分隔符的结尾 --- 行本身，避免在正文中多出一条水平线
+				if (!node.contents.empty() && strings::trim_space(node.contents.front()) == "---") {
+					node.contents.erase(node.contents.begin());
 				}
-
-				params.emplace(left, right);
 			}
 
 			if (params["visibility"] == "hidden") {
@@ -344,8 +374,6 @@ namespace camus
 					++it;
 				}
 			}
-
-			assert(!node.contents.empty());
 
 			if (params.contains("tags")) {
 				try {
@@ -418,7 +446,11 @@ namespace camus
 		});
 
 		std::ranges::sort(articles, [](const catalog::catalog_node *a, const catalog::catalog_node *b) -> bool {
-			return a->property.write_time > b->property.write_time;
+			if (a->property.write_time != b->property.write_time) {
+				return a->property.write_time > b->property.write_time;
+			}
+
+			return a->path.string() < b->path.string();
 		});
 
 		return articles;
@@ -447,7 +479,7 @@ namespace camus
 	{
 		std::vector<nlohmann::json> items;
 		for (const auto &child : catalog_.children) {
-			if (child.property.visibility != catalog::hidden) {
+			if (visible_in_toc(child)) {
 				items.push_back(nlohmann::json(child));
 			}
 		}
@@ -457,7 +489,11 @@ namespace camus
 				return a_dir;
 			}
 
-			return a.value("write_time", 0) > b.value("write_time", 0);
+			if (const auto at = a.value("write_time", 0); at != b.value("write_time", 0)) {
+				return at > b.value("write_time", 0);
+			}
+
+			return a.value("path", "") < b.value("path", "");
 		});
 
 		return items;
@@ -550,16 +586,12 @@ namespace camus
 			out_dir.string(),
 			node.link_url().string()
 		);
-		assert(!node.contents.empty());
 
 		const std::string contents = strings::replace(
 			render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_PAGE), j),
 			std::map<std::string, std::string>{
 				{" 00:00:00", ""},
 				{"<img ", R"(<img width="100%")"},
-				{"<hr>", ""},
-				{"<hr/>", ""},
-				{"<hr />", ""},
 			},
 			true
 		);
@@ -584,7 +616,12 @@ namespace camus
 
 	void writer::finalize_directory_properties()
 	{
-		catalog::traverse_catalog_tree(catalog_, [&](catalog::catalog_node &node, int) {
+		// 后序遍历：先完成子目录，父目录才能真正取到所有后代的 write_time
+		std::function<void(catalog::catalog_node &)> finalize = [&](catalog::catalog_node &node) {
+			for (auto &child : node.children) {
+				finalize(child);
+			}
+
 			if (!node.is_directory()) {
 				return;
 			}
@@ -599,11 +636,14 @@ namespace camus
 				node.property.description.empty() ? conf_.camus().site.description : node.property.description;
 			node.property.display_name =
 				node.property.display_name.empty() ? conf_.camus().site.title : node.property.display_name;
-		});
+		};
 
+		finalize(catalog_);
+
+		// 移除隐藏/非 markdown 文件，以及因此变空的目录
 		catalog_.remove_children_if([](const catalog::catalog_node &a) -> bool {
 			if (a.is_directory()) {
-				return false;
+				return a.children.empty();
 			}
 
 			return a.property.invalid();
@@ -614,7 +654,7 @@ namespace camus
 	{
 		std::vector<nlohmann::json> toc_items;
 		for (const auto &child : catalog_.children) {
-			if (child.property.visibility == catalog::hidden) {
+			if (!visible_in_toc(child)) {
 				continue;
 			}
 			toc_items.push_back(nlohmann::json(child));
@@ -625,7 +665,11 @@ namespace camus
 				return a_dir;
 			}
 
-			return a.value("write_time", 0) > b.value("write_time", 0);
+			if (const auto at = a.value("write_time", 0); at != b.value("write_time", 0)) {
+				return at > b.value("write_time", 0);
+			}
+
+			return a.value("path", "") < b.value("path", "");
 		});
 
 		nlohmann::json json = conf_.json();
@@ -650,14 +694,22 @@ namespace camus
 		};
 
 		std::map<const catalog::catalog_node *, dir_ctx> dirs;
+		std::vector<const catalog::catalog_node *> order;
 
 		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
 			if (!node.is_directory()) {
 				return;
 			}
 
+			// 按先序遍历顺序记录目录，保证 meta.json 等输出稳定
+			order.push_back(&node);
+
 			auto &[parent, children] = dirs[&node];
 			for (const auto &child : node.children) {
+				if (!visible_in_toc(child)) {
+					continue;
+				}
+
 				if (child.is_directory()) {
 					dirs[&child].parent = &node;
 				}
@@ -668,12 +720,15 @@ namespace camus
 		nlohmann::json toc_full;
 		toc_full["config"] = conf_.json();
 
-		for (const auto &[dir_node, ctx] : dirs) {
+		for (const auto *dir_node : order) {
+			const auto &ctx = dirs.at(dir_node);
 			nlohmann::json toc_item;
 
 			if (ctx.parent) {
-				toc_item["parent"]["url"] = ctx.parent->link_url();
-				if (toc_item["parent"]["label"] = ctx.parent->property.display_name; toc_item["parent"]["url"] == "/") {
+				const std::filesystem::path parent_url = ctx.parent->link_url();
+				toc_item["parent"]["url"] = filesystem::clean_path(parent_url, conf_.camus().public_url.path_prefix);
+				toc_item["parent"]["label"] = ctx.parent->property.display_name;
+				if (parent_url == "/") {
 					toc_item["parent"]["label"] = "/";
 				}
 			} else {
@@ -691,11 +746,18 @@ namespace camus
 					return a_dir;
 				}
 
-				return a.value("write_time", 0) > b.value("write_time", 0);
+				if (const auto at = a.value("write_time", 0); at != b.value("write_time", 0)) {
+					return at > b.value("write_time", 0);
+				}
+
+				return a.value("path", "") < b.value("path", "");
 			});
 
 			toc_item["items"] = items;
 			toc_item["current"] = *dir_node;
+			// current.path 供主题判断是否根目录（如 current.path != "/"），
+			// 使用相对目录树的原始路径，而不是带 public_url 前缀的 URL。
+			toc_item["current"]["path"] = filesystem::clean_path(dir_node->path, "");
 
 			toc_full["catalog"].push_back(toc_item);
 			toc_item.update(conf_.json());
@@ -1148,6 +1210,7 @@ namespace camus
 	void writer::inspect()
 	{
 		cmd_.dryrun = true;
+		std::filesystem::current_path(cmd_.workdir);
 		conf_.reload();
 
 		uint16_t max_length = 0;
@@ -1205,13 +1268,13 @@ namespace camus
 
 	int writer::build()
 	{
+		std::filesystem::current_path(cmd_.workdir);
+
 		if (cmd_.dryrun) {
 			logging::info("camus running on dryrun mode");
 		}
 
 		conf_.reload();
-
-		std::filesystem::current_path(cmd_.workdir);
 
 		if (catalog_ = catalog::build_catalog_tree(conf_.camus().source_dir); catalog_.empty()) {
 			logging::warn("No articles found");

@@ -17,7 +17,7 @@ namespace camus::catalog
 		// 创建时间
 		time_t write_time = 0;
 		// 可见性
-		catalog_visibility visibility;
+		catalog_visibility visibility = open;
 		// 对外路径，处理 toc 之后的公开 URL，只保存路径
 		std::filesystem::path external_path;
 		// 文件的显示名称
@@ -75,6 +75,8 @@ namespace camus::catalog
 		std::filesystem::path path;
 		// 路径前缀，和主配置文件中 public_url 的 path_prefix 等同
 		std::filesystem::path path_prefix;
+		// 是否由源目录中的目录生成（用于收尾阶段清理空目录）
+		bool directory = false;
 		// 内容
 		std::vector<std::string> contents;
 		// 参数
@@ -86,11 +88,15 @@ namespace camus::catalog
 
 		friend bool operator<(const catalog_node &a, const catalog_node &b)
 		{
-			if (a.is_directory() || b.is_directory()) {
-				return false;
+			if (a.is_directory() != b.is_directory()) {
+				return a.is_directory();
 			}
 
-			return a.property.write_time > b.property.write_time;
+			if (a.property.write_time != b.property.write_time) {
+				return a.property.write_time > b.property.write_time;
+			}
+
+			return a.path.string() < b.path.string();
 		}
 
 		template <
@@ -146,15 +152,15 @@ namespace camus::catalog
 
 		[[nodiscard]] bool is_directory() const
 		{
-			return !children.empty();
+			return directory;
 		}
 
 		[[nodiscard]] bool empty() const
 		{
-			return !contents.empty();
+			return children.empty() && contents.empty();
 		}
 
-		[[nodiscard]] uint16_t size();
+		[[nodiscard]] size_t size();
 	};
 
 	// 遍历

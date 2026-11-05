@@ -45,7 +45,7 @@ dist/
 | 产物 | 触发条件 | 代码位置 |
 |---|---|---|
 | 文章页 | 每篇 `visibility != hidden` 的 `.md` | `writer.cpp:392-394` |
-| 目录索引页 | 每个有子节点的目录节点（含根） | `writer.cpp:531-537` |
+| 目录索引页 | 每个非空目录节点（含根；空目录在收尾阶段被移除） | `writer.cpp` `emit_toc()` |
 | `stats.html` | 始终（除非 dryrun） | `writer.cpp:408` |
 | `friends.html` | 始终（除非 dryrun） | `writer.cpp:461` |
 | `sitemap.xml` | `sitemap: true` | `writer.cpp:555` |
@@ -88,7 +88,7 @@ dist/
 
 ## 6.6 友链页 `friends.html`
 
-`emit_friends()`（`writer.cpp:439`）使用 `friends.html` 模板，数据为 `{ ...conf, toc, friends }`；`toc` 为根节点直接子节点（过滤 `hidden`）排序后的数组。输出到 `dest_dir/friends.html`。
+`emit_friends()` 使用 `friends.html` 模板，数据为 `{ ...conf, toc, friends }`；`toc` 为根节点直接子节点（过滤 `hidden` 与 `hidden_in_toc`）排序后的数组。输出到 `dest_dir/friends.html`。
 
 ## 6.7 `sitemap.xml`
 
@@ -104,6 +104,7 @@ dist/
 - `full_prefix = protocol + domain_name + path_prefix`（来自 public_url）。
 - 只包含非目录节点；条目间以换行 + 制表符分隔。
 - 使用 `link_url`：启用 `short-path` 时 `<loc>` 为短链地址。
+- 包含 `open` 与 `hidden_in_toc` 的文章，不包含 `hidden`。
 - 输出为 `dest_dir/sitemap.xml`。
 
 ## 6.8 `meta.json`

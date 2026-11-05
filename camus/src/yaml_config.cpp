@@ -1,8 +1,10 @@
 #include "yaml_config.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <ranges>
 
 #include <build/build.h>
 
@@ -144,6 +146,11 @@ namespace camus::config
 			error::panic("config file not fount name={}", filename_);
 		}
 
+		// 允许重复 reload（watch / inspect / build），先重置上一轮状态，避免路由与友链累积
+		camus_ = camus_conf{};
+		routes_.clear();
+		public_config_ = nlohmann::json{};
+
 		logging::info("load config: {}", filesystem::path_abs(filename_));
 
 		const YAML::Node root = YAML::LoadFile(filename_);
@@ -163,18 +170,30 @@ namespace camus::config
 
 		std::vector<std::string> markdown_options;
 		camus_.render.pdf_options.clear();
+		camus_.render.markdown_options = CMARK_OPT_DEFAULT;
+		if (WORK_ON_DEBUG) {
+			camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
+		}
 
 		for (const auto &it : camus_data) {
 			const auto key = strings::trim_space(it.first.as<std::string>());
 
 			if (key == "render") {
-				camus_.render.pdf_engine = get_string(it.second["pdf_engine"]);
-				camus_.render.theme_name = get_string(it.second["theme"]);
+				YAML::Node render = it.second;
+				if (render["pdf_engine"]) {
+					camus_.render.pdf_engine = get_string(render["pdf_engine"]);
+				}
+
+				if (const std::string theme = get_string(render["theme"]); !theme.empty()) {
+					camus_.render.theme_name = theme;
+				}
 
 				// 有值就生成
 				if (!camus_.render.pdf_engine.empty()) {
-					for (const auto &opt : it.second["pdf_options"]) {
-						camus_.render.pdf_options.push_back(opt.as<std::string>());
+					if (const YAML::Node options = render["pdf_options"]; options && options.IsSequence()) {
+						for (const auto &opt : options) {
+							camus_.render.pdf_options.push_back(opt.as<std::string>());
+						}
 					}
 				}
 
@@ -183,36 +202,38 @@ namespace camus::config
 					camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
 				}
 
-				for (const auto &opt : it.second["markdown_options"]) {
-					const auto name = opt.as<std::string>();
-					markdown_options.push_back(name);
+				if (const YAML::Node options = render["markdown_options"]; options && options.IsSequence()) {
+					for (const auto &opt : options) {
+						const auto name = opt.as<std::string>();
+						markdown_options.push_back(name);
 
-					if (name == "SOURCEPOS") {
-						camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
-					} else if (name == "HARDBREAKS") {
-						camus_.render.markdown_options |= CMARK_OPT_HARDBREAKS;
-					} else if (name == "UNSAFE") {
-						camus_.render.markdown_options |= CMARK_OPT_UNSAFE;
-					} else if (name == "NOBREAKS") {
-						camus_.render.markdown_options |= CMARK_OPT_NOBREAKS;
-					} else if (name == "NORMALIZE") {
-						camus_.render.markdown_options |= CMARK_OPT_NORMALIZE;
-					} else if (name == "VALIDATE_UTF8") {
-						camus_.render.markdown_options |= CMARK_OPT_VALIDATE_UTF8;
-					} else if (name == "SMART") {
-						camus_.render.markdown_options |= CMARK_OPT_SMART;
-					} else if (name == "GITHUB_PRE_LANG") {
-						camus_.render.markdown_options |= CMARK_OPT_GITHUB_PRE_LANG;
-					} else if (name == "LIBERAL_HTML_TAG") {
-						camus_.render.markdown_options |= CMARK_OPT_LIBERAL_HTML_TAG;
-					} else if (name == "FOOTNOTES") {
-						camus_.render.markdown_options |= CMARK_OPT_FOOTNOTES;
-					} else if (name == "STRIKETHROUGH_DOUBLE_TILDE") {
-						camus_.render.markdown_options |= CMARK_OPT_STRIKETHROUGH_DOUBLE_TILDE;
-					} else if (name == "TABLE_PREFER_STYLE_ATTRIBUTES") {
-						camus_.render.markdown_options |= CMARK_OPT_TABLE_PREFER_STYLE_ATTRIBUTES;
-					} else if (name == "FULL_INFO_STRING") {
-						camus_.render.markdown_options |= CMARK_OPT_FULL_INFO_STRING;
+						if (name == "SOURCEPOS") {
+							camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
+						} else if (name == "HARDBREAKS") {
+							camus_.render.markdown_options |= CMARK_OPT_HARDBREAKS;
+						} else if (name == "UNSAFE") {
+							camus_.render.markdown_options |= CMARK_OPT_UNSAFE;
+						} else if (name == "NOBREAKS") {
+							camus_.render.markdown_options |= CMARK_OPT_NOBREAKS;
+						} else if (name == "NORMALIZE") {
+							camus_.render.markdown_options |= CMARK_OPT_NORMALIZE;
+						} else if (name == "VALIDATE_UTF8") {
+							camus_.render.markdown_options |= CMARK_OPT_VALIDATE_UTF8;
+						} else if (name == "SMART") {
+							camus_.render.markdown_options |= CMARK_OPT_SMART;
+						} else if (name == "GITHUB_PRE_LANG") {
+							camus_.render.markdown_options |= CMARK_OPT_GITHUB_PRE_LANG;
+						} else if (name == "LIBERAL_HTML_TAG") {
+							camus_.render.markdown_options |= CMARK_OPT_LIBERAL_HTML_TAG;
+						} else if (name == "FOOTNOTES") {
+							camus_.render.markdown_options |= CMARK_OPT_FOOTNOTES;
+						} else if (name == "STRIKETHROUGH_DOUBLE_TILDE") {
+							camus_.render.markdown_options |= CMARK_OPT_STRIKETHROUGH_DOUBLE_TILDE;
+						} else if (name == "TABLE_PREFER_STYLE_ATTRIBUTES") {
+							camus_.render.markdown_options |= CMARK_OPT_TABLE_PREFER_STYLE_ATTRIBUTES;
+						} else if (name == "FULL_INFO_STRING") {
+							camus_.render.markdown_options |= CMARK_OPT_FULL_INFO_STRING;
+						}
 					}
 				}
 
@@ -253,23 +274,6 @@ namespace camus::config
 		}
 
 		camus_.assets_dir = "assets";
-
-		nlohmann::json camus_json;
-		camus_json["source_dir"] = camus_.source_dir;
-		camus_json["assets_dir"] = camus_.assets_dir;
-		camus_json["site"] = camus_.site;
-		camus_json["meta"] = camus_.output.meta;
-		camus_json["sitemap"] = camus_.output.sitemap;
-		camus_json["filename_case"] = camus_.output.filename_case;
-		camus_json["public_url"] = camus_.public_url.url;
-		camus_json["protocol"] = camus_.public_url.protocol;
-		camus_json["domain_name"] = camus_.public_url.domain_name;
-		camus_json["path_prefix"] = camus_.public_url.path_prefix;
-		camus_json["render"] = camus_.render;
-		camus_json["friends"] = camus_.friends;
-		camus_json["render"]["options"] =
-			std::format("{}({})", camus_.render.markdown_options, strings::string_join(markdown_options, ","));
-		public_config_["camus"] = camus_json;
 
 		camus_.source_dir = filesystem::path_abs(camus_.source_dir);
 		camus_.output.dest_dir = filesystem::path_abs(camus_.output.dest_dir);
@@ -313,8 +317,7 @@ namespace camus::config
 		camus_.render.theme[CAMUS_THEME_TYPE_STATS] = read_theme(camus_.render.theme_name, "stats");
 		camus_.render.theme[CAMUS_THEME_TYPE_FRIENDS] = read_theme(camus_.render.theme_name, "friends");
 
-		const std::filesystem::path catalog_file =
-			std::filesystem::path(filename_).parent_path() / CAMUS_CATALOG_NAME;
+		const std::filesystem::path catalog_file = std::filesystem::path(filename_).parent_path() / CAMUS_CATALOG_NAME;
 		if (!std::filesystem::exists(catalog_file)) {
 			error::panic("catalog file not found name={}", catalog_file.string());
 		}
@@ -364,10 +367,20 @@ namespace camus::config
 
 			if (const YAML::Node transfers = item["transfers"]; transfers && c.path != "/" && transfers.IsSequence()) {
 				for (const auto &tr : transfers) {
+					if (!tr.IsMap() || !tr["source"] || !tr["target"]) {
+						logging::warn("ignore invalid catalog transfer path={} reason=missing source/target", c.path);
+						continue;
+					}
+
 					route_transfer_conf t{
 						.source = tr["source"].as<std::string>(),
 						.target = tr["target"].as<std::string>()
 					};
+
+					if (t.target.empty()) {
+						logging::warn("ignore invalid catalog transfer path={} reason=empty target", c.path);
+						continue;
+					}
 
 					if (t.source == "." || t.source == "/") {
 						t.source = c.path;
@@ -378,6 +391,11 @@ namespace camus::config
 
 					c.transfers.push_back(t);
 				}
+			}
+
+			if (std::ranges::any_of(routes_, [&](const route_conf &r) { return r.path == c.path; })) {
+				logging::warn("duplicate catalog route ignored path={}", c.path);
+				continue;
 			}
 
 			routes_.push_back(c);
@@ -411,6 +429,24 @@ namespace camus::config
 				camus_.friends.push_back(t);
 			}
 		}
+
+		// 兼容聚合对象必须在 site / friends / 绝对路径都确定后生成
+		nlohmann::json camus_json;
+		camus_json["source_dir"] = camus_.source_dir;
+		camus_json["assets_dir"] = camus_.assets_dir;
+		camus_json["site"] = camus_.site;
+		camus_json["meta"] = camus_.output.meta;
+		camus_json["sitemap"] = camus_.output.sitemap;
+		camus_json["filename_case"] = camus_.output.filename_case;
+		camus_json["public_url"] = camus_.public_url.url;
+		camus_json["protocol"] = camus_.public_url.protocol;
+		camus_json["domain_name"] = camus_.public_url.domain_name;
+		camus_json["path_prefix"] = camus_.public_url.path_prefix;
+		camus_json["render"] = camus_.render;
+		camus_json["friends"] = camus_.friends;
+		camus_json["render"]["options"] =
+			std::format("{}({})", camus_.render.markdown_options, strings::string_join(markdown_options, ","));
+		public_config_["camus"] = camus_json;
 
 		supplement_other_vars();
 	}
@@ -477,5 +513,16 @@ namespace camus::config
 		}
 
 		return std::unexpected("route not found: " + path.string());
+	}
+
+	std::filesystem::path yaml_config::match_transfer(const std::filesystem::path &path) const
+	{
+		for (const auto &route : routes_) {
+			if (const std::filesystem::path target = route.match_transfer(path); !target.empty()) {
+				return target;
+			}
+		}
+
+		return {};
 	}
 } // namespace camus::config

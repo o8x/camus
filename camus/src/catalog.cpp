@@ -1,5 +1,7 @@
 #include "catalog.h"
 
+#include <algorithm>
+
 #include <build/build.h>
 
 #include "common/str/str.h"
@@ -15,6 +17,7 @@ namespace camus::catalog
 		}
 
 		catalog_node node;
+		node.directory = true;
 		if (node.path = std::filesystem::relative(path, root); node.path == ".") {
 			node.path = "/";
 		}
@@ -24,6 +27,12 @@ namespace camus::catalog
 		}
 
 		for (const auto &entry : std::filesystem::directory_iterator(path)) {
+			// 必须先判断符号链接，is_directory/is_regular_file 会跟随链接，
+			// 否则链接会被当成普通目录/文件递归或读取，甚至造成循环。
+			if (entry.is_symlink()) {
+				logging::fatal("catalog does not support symlinks name={}", filesystem::path_abs(entry.path()));
+			}
+
 			if (std::filesystem::is_directory(entry.path())) {
 				if (entry.path().filename() == CAMUS_PRIVATE_DIR) {
 					logging::debug("skip private directory name={}", filesystem::path_abs(entry.path()));
@@ -38,21 +47,20 @@ namespace camus::catalog
 			} else if (std::filesystem::is_regular_file(entry.path())) {
 				catalog_node file_node;
 				file_node.path = std::filesystem::relative(entry.path(), root);
-				std::filesystem::path filepath;
-				if (relative_path.empty()) {
-					filepath = root / file_node.path;
-				} else {
-					filepath = relative_path / file_node.path;
-				}
+				const std::filesystem::path filepath =
+					relative_path.empty() ? root / file_node.path : relative_path / file_node.path;
 
 				file_node.contents = strings::split(filesystem::read_file(filepath, true), "\n");
 				node.children.push_back(file_node);
-			} else if (std::filesystem::is_symlink(entry.path())) {
-				logging::fatal("catalog does not support symlinks name={}", filesystem::path_abs(entry.path()));
 			} else {
 				logging::fatal("catalog does not support file={}", entry.path().string());
 			}
 		}
+
+		// directory_iterator 顺序未定义，排序保证构建结果可复现
+		std::ranges::sort(node.children, [](const catalog_node &a, const catalog_node &b) {
+			return a.path.string() < b.path.string();
+		});
 
 		return node;
 	}
@@ -74,9 +82,9 @@ namespace camus::catalog
 		children.erase(std::ranges::remove_if(children, predicate).begin(), children.end());
 	}
 
-	uint16_t catalog_node::size()
+	size_t catalog_node::size()
 	{
-		uint16_t size = 0;
+		size_t size = 0;
 		traverse_catalog_tree(*this, [&](catalog_node &, int) { size++; });
 
 		return size;
