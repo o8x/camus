@@ -37,6 +37,36 @@ namespace camus::catalog
 		}
 	};
 
+	struct render_stats {
+		uint32_t word_count = 0;
+		uint32_t read_min = 0;
+
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(render_stats, word_count, read_min);
+	};
+
+	struct render_page_data {
+		std::string contents;
+
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(render_page_data, contents);
+	};
+
+	struct render_nav {
+		std::string next_path;
+		std::string next_title;
+		std::string prev_path;
+		std::string prev_title;
+
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(render_nav, next_path, next_title, prev_path, prev_title);
+	};
+
+	struct render_data {
+		render_stats stats;
+		render_page_data page;
+		render_nav nav;
+
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(render_data, stats, page, nav);
+	};
+
 	// 相对于 workdir 的内存目录树
 	// path 为目录 property 无意义
 	// path 为文件 name	   是文件名
@@ -49,6 +79,8 @@ namespace camus::catalog
 		std::vector<std::string> contents;
 		// 参数
 		catalog_property property;
+		// 渲染数据
+		render_data render_data_;
 		// 递归子目录
 		std::vector<catalog_node> children;
 
@@ -82,6 +114,8 @@ namespace camus::catalog
 			} else {
 				json["tags"] = data.property.tags;
 			}
+
+			json["render_data"] = data.render_data_;
 		}
 
 		[[nodiscard]] std::string serialize_json() const;

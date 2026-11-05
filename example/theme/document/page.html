@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="{{ title }}">
+    <meta name="build-time" content="{{ build.time }}">
+    <meta name="build-type" content="{{ build.build_type }}">
+    <title>{{ title }} — {{ site.title }}</title>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ with_prefix("/css/document.css") }}">
+    <style>
+        .article-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.8125rem;
+            color: var(--gray-50);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-20);
+        }
+
+        .article-meta span { display: inline-flex; align-items: center; gap: 0.25rem; }
+
+        .chapter-content { line-height: 1.75; }
+        .chapter-content h1 { font-size: 1.5rem; font-weight: 600; margin: 2rem 0 0.75rem; color: var(--gray-90); }
+        .chapter-content h2 { font-size: 1.25rem; font-weight: 600; margin: 1.75rem 0 0.5rem; color: var(--gray-90); }
+        .chapter-content h3 { font-size: 1.0625rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--gray-90); }
+        .chapter-content h4, .chapter-content h5, .chapter-content h6 { font-weight: 600; margin: 1.25rem 0 0.5rem; color: var(--gray-90); }
+        .chapter-content p { margin-bottom: 1rem; color: var(--gray-90); }
+        .chapter-content a { color: var(--blue-60); text-decoration: none; }
+        .chapter-content a:hover { text-decoration: underline; }
+        .chapter-content blockquote {
+            margin: 1.25rem 0;
+            padding: 0.75rem 1.25rem;
+            border-left: 3px solid var(--gray-30);
+            background: var(--gray-10);
+            color: var(--gray-70);
+        }
+        .chapter-content ul, .chapter-content ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+        .chapter-content li { margin-bottom: 0.375rem; }
+        .chapter-content code {
+            font-family: 'IBM Plex Mono', 'Courier New', monospace;
+            font-size: 0.875em;
+            background: var(--gray-10);
+            padding: 0.125em 0.375em;
+            color: var(--gray-90);
+        }
+        .chapter-content pre {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            background: var(--gray-90);
+            color: var(--gray-10);
+            padding: 1.25rem;
+            font-size: 0.8125rem;
+            line-height: 1.6;
+        }
+        .chapter-content pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+        .chapter-content img { max-width: 100%; height: auto; display: block; margin: 1.25rem auto; }
+        .chapter-content hr { border: none; border-top: 1px solid var(--gray-20); margin: 1.5rem 0; }
+        .chapter-content table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.875rem; }
+        .chapter-content th {
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 2px solid var(--gray-30);
+            font-weight: 600;
+            background: var(--gray-10);
+        }
+        .chapter-content td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--gray-20); }
+
+        .chapter-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-20);
+        }
+
+        .nav-link {
+            flex: 1;
+            max-width: 48%;
+            display: flex;
+            flex-direction: column;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-20);
+            text-decoration: none;
+            color: var(--gray-90);
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .nav-link:hover { border-color: var(--blue-60); background: var(--gray-10); }
+
+        .nav-link .nav-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--gray-50);
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-link .nav-title {
+            font-size: 0.875rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .nav-link.disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+
+        .nav-center {
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8125rem;
+        }
+
+        .nav-center a { color: var(--gray-70); text-decoration: none; }
+        .nav-center a:hover { color: var(--blue-60); }
+
+        @media (max-width: 768px) {
+            .content { max-width: 100%; }
+            .chapter-nav { flex-direction: column; gap: 0.75rem; }
+            .nav-link { max-width: 100%; }
+        }
+
+        @media (max-width: 480px) {
+            .chapter-content h1 { font-size: 1.25rem !important; }
+            .chapter-content h2 { font-size: 1.1rem !important; }
+            .chapter-content h3 { font-size: 1rem !important; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle">&#9776;</button>
+
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <a class="sidebar-site-title" href="{{ with_prefix("/") }}">{{ site.title }}</a>
+        <div class="sidebar-site-sub">{{ site.subtitle }}</div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Navigation</div>
+        <a class="sidebar-link" href="{{ with_prefix("/") }}">Home</a>
+        <a class="sidebar-link" href="{{ with_prefix("/friends.html") }}">Friends</a>
+        <a class="sidebar-link" href="{{ with_prefix("/stats.html") }}">Statistics</a>
+
+        {% if toc %}
+        <div class="sidebar-section-label">Index</div>
+        {% for item in toc %}
+        {% if item.is_dir %}
+        <a class="sidebar-link sidebar-link-dir" href="{{ item.path }}">
+            {{ item.title }}
+            {% if item.write_time > 0 %}{% endif %}
+        </a>
+        {% else %}
+        <a class="sidebar-link" href="{% if item.link_path != "" %}{{ item.link_path }}{% else %}{{ item.path }}{% endif %}">
+            {{ item.title }}
+            {% if item.write_time > 0 %}{% endif %}
+        </a>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+        <a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/">Home</a> /<a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/friends.html">Friends</a> /
+        <a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/stats.html">Stats</a> /
+        <a class="site-stats-link" href="{{ env.github_url }}" target="_blank">GitHub</a>
+        <br/>
+        <small>
+            <em>Powered by <a href="{{ git.repo }}/releases/tag/v{{ build.version }}" target="_blank" title="Camus v{{ build.version }}">
+                Camus
+            </a>
+            built with {{ build.compiler }}</em>
+        </small>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="top-bar">
+        <div class="breadcrumb">
+            <a href="{{ with_prefix("/") }}">{{ site.title }}</a>
+            <span class="sep">/</span>
+            <span class="current">{{ title }}</span>
+        </div>
+    </div>
+
+    <div class="content">
+        <header class="page-heading">
+            <h1>{{ title }}</h1>
+        </header>
+
+        <div class="article-meta">
+            <span>{{ render_data.stats.word_count }} words</span>
+            <span>&#183;</span>
+            <span>~{{ render_data.stats.read_min }} min read</span>
+            <span>&#183;</span>
+            <span>{{ format_datetime(write_time) }}</span>
+        </div>
+
+        <article class="chapter-content">
+            {{ render_data.page.contents }}
+        </article>
+
+        <nav class="chapter-nav">
+            {% if render_data.nav.prev_path and render_data.nav.prev_path != "" %}
+            <a class="nav-link" href="{{ render_data.nav.prev_path }}">
+                <span class="nav-label">Previous</span>
+                <span class="nav-title">{{ render_data.nav.prev_title }}</span>
+            </a>
+            {% else %}
+            <div class="nav-link disabled">
+                <span class="nav-label">Previous</span>
+                <span class="nav-title"></span>
+            </div>
+            {% endif %}
+
+            <div class="nav-center">
+                <a href="{{ with_prefix("/") }}">Index</a>
+            </div>
+
+            {% if render_data.nav.next_path and render_data.nav.next_path != "" %}
+            <a class="nav-link" href="{{ render_data.nav.next_path }}">
+                <span class="nav-label">Next</span>
+                <span class="nav-title">{{ render_data.nav.next_title }}</span>
+            </a>
+            {% else %}
+            <div class="nav-link disabled">
+                <span class="nav-label">Next</span>
+                <span class="nav-title"></span>
+            </div>
+            {% endif %}
+        </nav>
+    </div>
+</main>
+
+<script src="{{ with_prefix("/js/document.js") }}"></script>
+</body>
+</html>

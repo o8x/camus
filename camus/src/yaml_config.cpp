@@ -117,6 +117,7 @@ namespace camus::config
 		};
 
 		std::vector<std::string> markdown_options;
+		camus_.render.pdf_options.clear();
 
 		for (const auto &it : camus_data) {
 			const auto key = strings::trim_space(it.first.as<std::string>());
@@ -124,8 +125,16 @@ namespace camus::config
 			camus_.render.html_engine = "default";
 			if (key == "render") {
 				camus_.render.markdown_engine = get_string(it.second["markdown_engine"]);
+				camus_.render.pdf_engine = get_string(it.second["pdf_engine"]);
 				camus_.render.html_engine = get_string(it.second["html_engine"]);
 				camus_.render.theme_name = get_string(it.second["theme"]);
+
+				// 有值就生成
+				if (!camus_.render.pdf_engine.empty()) {
+					for (const auto &opt : it.second["pdf_options"]) {
+						camus_.render.pdf_options.push_back(opt.as<std::string>());
+					}
+				}
 
 				if (camus_.render.markdown_engine == "cmark-gfm") {
 					camus_.render.markdown_options = CMARK_OPT_DEFAULT;
@@ -218,8 +227,10 @@ namespace camus::config
 			std::format("{}({})", camus_.render.markdown_options, strings::string_join(markdown_options, ","));
 
 		camus_.source_dir = filesystem::path_abs(camus_.source_dir);
-		camus_.assets_dir = filesystem::path_abs(camus_.assets_dir);
 		camus_.output.dest_dir = filesystem::path_abs(camus_.output.dest_dir);
+		if (!camus_.assets_dir.empty()) {
+			camus_.assets_dir = filesystem::path_abs(camus_.assets_dir);
+		}
 
 		if (!std::filesystem::exists(camus_.source_dir)) {
 			logging::fatal("source dir not exists name={}", camus_.source_dir.string());
@@ -229,8 +240,9 @@ namespace camus::config
 			logging::warn("output dir not exists name={}", camus_.output.dest_dir.string());
 		}
 
-		if (!std::filesystem::exists(camus_.assets_dir)) {
-			logging::fatal("assets dir not exists name={}", camus_.assets_dir.string());
+		if (!camus_.assets_dir.empty() && !std::filesystem::exists(camus_.assets_dir)) {
+			logging::warn("assets dir not exists, fallback to embedded assets name={}", camus_.assets_dir.string());
+			camus_.assets_dir.clear();
 		}
 
 		const auto read_theme = [](const std::string &name, const std::string &type) -> std::string {

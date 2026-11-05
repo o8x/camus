@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="{{ site.subtitle }}">
+    <meta name="build-time" content="{{ build.time }}">
+    <meta name="build-type" content="{{ build.build_type }}">
+    <title>{% if current.path != "/" and current.title %}{{ current.title }} — {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ with_prefix("/css/document.css") }}">
+    <style>
+        .desc-block {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--gray-70);
+            margin-bottom: 2.5rem;
+            padding: 1rem 1.25rem;
+            border-left: 3px solid var(--blue-60);
+            background: var(--gray-10);
+        }
+
+        .toc-section { margin-bottom: 2.5rem; }
+
+        .toc-item {
+            display: flex;
+            align-items: baseline;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--gray-20);
+            font-size: 0.9375rem;
+        }
+
+        .toc-item:last-child { border-bottom: none; }
+
+        .toc-link {
+            color: var(--blue-60);
+            text-decoration: none;
+            font-weight: 400;
+        }
+
+        .toc-link:hover { text-decoration: underline; color: var(--blue-70); }
+
+        .toc-link-dir { font-weight: 600; }
+
+        .toc-item .date {
+            margin-left: auto;
+            font-size: 0.8125rem;
+            color: var(--gray-50);
+            white-space: nowrap;
+        }
+
+        .toc-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--gray-70);
+            text-decoration: none;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .toc-back-link:hover { color: var(--blue-60); }
+
+        @media (max-width: 768px) {
+            .content { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle">&#9776;</button>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <a class="sidebar-site-title" href="{{ with_prefix("/") }}">{{ site.title }}</a>
+        <div class="sidebar-site-sub">{{ site.subtitle }}</div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Navigation</div>
+        <a class="sidebar-link active" href="{{ with_prefix("/") }}">Home</a>
+        <a class="sidebar-link" href="{{ with_prefix("/friends.html") }}">Friends</a>
+        <a class="sidebar-link" href="{{ with_prefix("/stats.html") }}">Statistics</a>
+
+        {% if items %}
+        <div class="sidebar-section-label">Index</div>
+
+        {% if current.path != "/" %}
+        <a class="sidebar-link sidebar-link-back" href="{{ parent.url }}">&#8592; {{ parent.label }}</a>
+        {% endif %}
+
+        {% for item in items %}
+        {% if item.is_dir %}
+        <a class="sidebar-link sidebar-link-dir" href="{{ item.path }}">
+            {{ item.title }}
+            <span class="sidebar-date">{{ format_datetime(item.write_time) }}</span>
+        </a>
+        {% else %}
+        <a class="sidebar-link" href="{% if item.link_path != "" %}{{ item.link_path }}{% else %}{{ item.path }}{% endif %}">
+            {{ item.title }}
+            <span class="sidebar-date">{{ format_datetime(item.write_time) }}</span>
+        </a>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+        <a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/">Home</a> /<a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/friends.html">Friends</a> /
+        <a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/stats.html">Stats</a> /
+        <a class="site-stats-link" href="{{ env.github_url }}" target="_blank">GitHub</a>
+        <br/>
+        <small>
+            <em>Powered by <a href="{{ git.repo }}/releases/tag/v{{ build.version }}" target="_blank" title="Camus v{{ build.version }}">
+                Camus
+            </a>
+            built with {{ build.compiler }}</em>
+        </small>
+    </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+    <div class="top-bar">
+        <div class="breadcrumb">
+            <a href="{{ with_prefix("/") }}">{{ site.title }}</a>
+            {% if current.path != "/" %}
+            <span class="sep">/</span>
+            <span class="current">{{ current.title }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="content">
+
+        <header class="page-heading">
+            <h1>{% if current.path != "/" and current.title %}{{ current.title }}{% else %}{{ site.title }}{% endif %}</h1>
+            {% if current.path != "/" and current.subtitle %}
+            <p class="subtitle">{{ current.subtitle }}</p>
+            {% else %}
+            <p class="subtitle">{{ site.subtitle }}</p>
+            {% endif %}
+        </header>
+
+        <div class="desc-block">
+            {% if current.path != "/" and current.desc %}
+            {{ current.desc }}
+            {% else %}
+            {{ default(site.description, "") }}
+            {% endif %}
+        </div>
+
+        {% if items %}
+        <div class="toc-section">
+            {% if current.path != "/" %}
+            <a class="toc-back-link" href="{{ parent.url }}">&#8592; {{ parent.label }}</a>
+            {% endif %}
+
+            {% for item in items %}
+            {% if item.is_dir %}
+            <div class="toc-item">
+                <a class="toc-link toc-link-dir" href="{{ item.path }}">{{ item.title }}</a>
+            </div>
+            {% else %}
+            <div class="toc-item">
+                <a class="toc-link" href="{% if item.link_path != "" %}{{ item.link_path }}{% else %}{{ item.path }}{% endif %}">{{ item.title }}</a>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <footer class="content-footer">
+            {{ build.powered_by }}
+        </footer>
+    </div>
+</main>
+
+<script src="{{ with_prefix("/js/document.js") }}"></script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="{{ site.subtitle }}">
+    <meta name="build-time" content="{{ build.time }}">
+    <meta name="build-type" content="{{ build.build_type }}">
+    <title>Friends — {{ site.title }}</title>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ with_prefix("/css/document.css") }}">
+    <style>
+        .friends-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .friend-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            border: 1px solid var(--gray-20);
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+        }
+
+        .friend-card:hover {
+            border-color: var(--blue-60);
+            background: var(--gray-10);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .friend-avatar {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            border: 1px solid var(--gray-20);
+            flex-shrink: 0;
+            object-fit: cover;
+        }
+
+        .friend-info { min-width: 0; }
+
+        .friend-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--gray-90);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .friend-desc {
+            font-size: 0.8125rem;
+            color: var(--gray-50);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .content { max-width: 100%; }
+            .friends-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .friend-card { padding: 1rem; gap: 0.75rem; }
+            .friend-avatar { width: 48px; height: 48px; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle">&#9776;</button>
+
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <a class="sidebar-site-title" href="{{ with_prefix("/") }}">{{ site.title }}</a>
+        <div class="sidebar-site-sub">{{ site.subtitle }}</div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Navigation</div>
+        <a class="sidebar-link" href="{{ with_prefix("/") }}">Home</a>
+        <a class="sidebar-link active" href="{{ with_prefix("/friends.html") }}">Friends</a>
+        <a class="sidebar-link" href="{{ with_prefix("/stats.html") }}">Statistics</a>
+
+        {% if toc %}
+        <div class="sidebar-section-label">Index</div>
+        {% for item in toc %}
+        {% if item.is_dir %}
+        <a class="sidebar-link sidebar-link-dir" href="{{ item.path }}">
+            {{ item.title }}
+            {% if item.write_time > 0 %}<span class="sidebar-date">{{ format_datetime(item.write_time) }}</span>{% endif %}
+        </a>
+        {% else %}
+        <a class="sidebar-link" href="{% if item.link_path != "" %}{{ item.link_path }}{% else %}{{ item.path }}{% endif %}">
+            {{ item.title }}
+            {% if item.write_time > 0 %}<span class="sidebar-date">{{ format_datetime(item.write_time) }}</span>{% endif %}
+        </a>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+        <a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/">Home</a> /<a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/friends.html">Friends</a> /
+        <a class="site-stats-link" href="{{ camus.deploy.path_prefix }}/stats.html">Stats</a> /
+        <a class="site-stats-link" href="{{ env.github_url }}" target="_blank">GitHub</a>
+        <br/>
+        <small>
+            <em>Powered by <a href="{{ git.repo }}/releases/tag/v{{ build.version }}" target="_blank" title="Camus v{{ build.version }}">
+                Camus
+            </a>
+            built with {{ build.compiler }}</em>
+        </small>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="top-bar">
+        <div class="breadcrumb">
+            <a href="{{ with_prefix("/") }}">{{ site.title }}</a>
+            <span class="sep">/</span>
+            <span class="current">Friends</span>
+        </div>
+    </div>
+
+    <div class="content">
+        <header class="page-heading">
+            <h1>Friends</h1>
+            <p class="subtitle">{{ length(friends) }} link(s)</p>
+        </header>
+
+        <div class="friends-grid">
+            {% for friend in friends %}
+            <a class="friend-card" href="{{ friend.link_url }}" target="_blank">
+                <img class="friend-avatar" src="{{ friend.image_url }}" alt="{{ friend.title }}" width="56" height="56">
+                <div class="friend-info">
+                    <span class="friend-name">{{ friend.title }}</span>
+                    {% if friend.desc %}
+                    <span class="friend-desc">{{ friend.desc }}</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+
+<script src="{{ with_prefix("/js/document.js") }}"></script>
+</body>
+</html>

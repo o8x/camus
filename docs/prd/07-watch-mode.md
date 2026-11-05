@@ -1,0 +1,59 @@
+# 7. 监听模式与本地服务
+
+实现：`writer::watch()`（`camus/src/writer.cpp:692`）。由 `-W/--watch` 触发；启动前会先执行一次 `build()`。
+
+## 7.1 本地 HTTP 服务
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| 端口 | `3001`（固定常量） | `writer.cpp:694` `constexpr uint16_t server_port = 3001` |
+| 监听地址 | 本机出口 IP | `net::get_local_addr()` |
+| 文档根 | `camus.output.dest_dir` | `watch_server_.set_mount_point("/", conf_.camus().dest_dir())` |
+| 框架 | cpp-httplib | `common/common/net` |
+
+`net::get_local_addr(dns_server="114.114.114.114")` 通过向 DNS 地址建立 UDP `connect`（不发送数据）并 `getsockname` 获取本机 IPv4 地址；失败返回空串，`watch()` 中 `assert(!server_addr.empty())`。
+
+服务在线程中运行，主线程负责轮询。
+
+## 7.2 轮询与重建
+
+```mermaid
+flowchart TD
+    A[启动 HTTP 服务线程] --> B[初始化 current_hash 为当前工作目录内容 hash]
+    B --> C{quit_?}
+    C -->|是| D[停止服务线程 join]
+    C -->|否| E{workdir 存在?}
+    E -->|否| F[fatal 日志后 continue]
+    E -->|是| G[递归遍历 workdir, 拼接命中文件内容]
+    G --> H{hash 变化?}
+    H -->|是| I[更新 hash 并 build]
+    H -->|否| J[sleep 500ms]
+    I --> J
+    J --> C
+```
+
+- 轮询间隔：`500ms`（`writer.cpp:733`）。
+- 参与 hash 的文件（递归遍历整个 `workdir`）：
+  - 扩展名为 `.md`、`.yaml`、`.json`；
+  - **或**路径字符串中包含 `/theme/` 的任意文件。
+- 首次 hash 在进入循环前用当前内容初始化；只有内容 hash 变化才触发 `build()`。
+- 文件内容读取失败时返回错误字符串参与 hash（`filesystem::read_file` 行为）。
+
+## 7.3 日志
+
+启动时输出：
+
+```text
+watch directory: <dest_dir>
+watch server listen on http://<addr>:3001
+```
+
+工作目录不存在时循环内 `logging::fatal("watch directory not exists ...")`（进程退出 127）。
+
+## 7.4 生命周期与限制
+
+- `quit_` 为 `std::atomic<bool>`，当前代码中**没有任何地方将其置为 true**，也没有注册信号处理；因此监听模式只能由外部终止进程（如 Ctrl+C）结束，`watch_server_.stop()` 分支实际上不可达。
+- 端口固定 3001，不支持配置；被占用时 `listen` 失败，服务线程退出，但主循环仍继续轮询。
+- 由于轮询范围是整个工作目录且包含 `.json`，若输出目录位于工作目录内并生成 `meta.json`（`output.meta: true`），每次构建都会改变该文件 hash，可能导致**持续重建**。需要稳定监听体验时，建议将输出目录放在工作目录之外或关闭 `output.meta`。
+- 每次 `build()` 会重新 `reload()` 配置；注意配置重载的列表累积问题（§3.9）。
+- `-W` 下首次构建失败不会阻止进入监听循环。
