@@ -1,14 +1,9 @@
 camus:
-    # 源文件夹
-    source_dir: posts
-    # asserts/* 原样复制到 output_dir/
-    assets_dir: assets
-    # 文件输出相关配置
+    # 文件输出相关配置（固定输出到 ./dist/html 与 ./dist/pdf）
     output:
         meta: true                              # 是否生成元信息 /meta.json，其内容会因构建类型不同而不同
         sitemap: true                           # 自动生成 sitemap.xml
         filename_case: keep                     # 转换md的输出文件名：keep 不转换，uuid 自动转换为 /uuid.html
-        dest_dir: html                   # html 输出文件夹
     # 部署配置
     deploy:
         protocol: https://                        # 协议
@@ -17,14 +12,12 @@ camus:
     # 页面渲染配置
     render:
         theme: terminal                         # 加载 theme/name/*.html
-        html_engine: default                    # 静态渲染引擎，默认使用 inja 对模板进行渲染
         pdf_engine: chrome                      # PDF 引擎：chromium/chrome/edge（Linux 自动按 PATH 查找）
         pdf_options:
             - --headless
             - --enable-logging
             - --no-pdf-header-footer
-            - --print-to-pdf={{dest_dir}}/index.pdf  # 支持 {{dest_dir}} 占位符，可自定义文件名与位置
-        markdown_engine: cmark-gfm              # markdown 渲染引擎
+            - --print-to-pdf={{dest_dir}}/index.pdf  # {{dest_dir}} 为 PDF 输出目录，可自定义文件名与位置
         markdown_options:                       # markdown 引擎参数
             - DEFAULT                           # 默认选项，采用安全模式（过滤原始HTML和危险链接）
             - VALIDATE_UTF8                     # 解析前验证 UTF-8 编码，将非法序列替换为替换字符 U+FFFD

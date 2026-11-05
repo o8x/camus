@@ -27,13 +27,13 @@ build:
 serve: build
 	@ctest --extra-verbose -R build-test-site --test-dir $(BUILD_DIR)
 	@echo "listen on http://localhost:8000"
-	@python3 -m http.server --bind localhost 8000 --directory $(SITE_ROOT)/html
+	@python3 -m http.server --bind localhost 8000 --directory $(SITE_ROOT)/dist/html
 
 .PHONY: push
 push: build
 	@ctest --extra-verbose -R build-test-site --test-dir $(BUILD_DIR)
-	@git -C $(SITE_ROOT)/html init
-	@git -C $(SITE_ROOT)/html remote add origin $(REPO_URL)
-	@git -C $(SITE_ROOT)/html add .
-	@git -C $(SITE_ROOT)/html commit -qm "$(shell date +'%Y-%m-%d %H:%M:%S'), push project"
-	@git -C $(SITE_ROOT)/html push -f origin main
+	@git -C $(SITE_ROOT)/dist/html init
+	@git -C $(SITE_ROOT)/dist/html remote add origin $(REPO_URL)
+	@git -C $(SITE_ROOT)/dist/html add .
+	@git -C $(SITE_ROOT)/dist/html commit -qm "$(shell date +'%Y-%m-%d %H:%M:%S'), push project"
+	@git -C $(SITE_ROOT)/dist/html push -f origin main

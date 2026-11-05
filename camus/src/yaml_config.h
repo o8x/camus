@@ -57,8 +57,8 @@ namespace camus::config
 
 	struct render_conf {
 		std::string theme_name = "default";
-		std::string html_engine;
-		std::string markdown_engine;
+		std::string html_engine = "default";
+		std::string markdown_engine = "cmark-gfm";
 		std::string pdf_engine;
 		std::vector<std::string> pdf_options;
 		int markdown_options;
@@ -72,7 +72,7 @@ namespace camus::config
 		bool meta;
 		bool sitemap;
 		std::string filename_case = "keep";
-		std::filesystem::path dest_dir = "";
+		std::filesystem::path dest_dir = "dist/html";
 
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(output_conf, meta, sitemap, filename_case, dest_dir);
 	};
@@ -111,6 +111,11 @@ namespace camus::config
 		[[nodiscard]] std::filesystem::path dest_dir() const
 		{
 			return output.dest_dir;
+		}
+
+		[[nodiscard]] std::filesystem::path pdf_dir() const
+		{
+			return output.dest_dir.parent_path() / "pdf";
 		}
 
 		std::string get_theme(const camus_theme_type &theme)

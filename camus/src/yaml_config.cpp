@@ -122,11 +122,8 @@ namespace camus::config
 		for (const auto &it : camus_data) {
 			const auto key = strings::trim_space(it.first.as<std::string>());
 
-			camus_.render.html_engine = "default";
 			if (key == "render") {
-				camus_.render.markdown_engine = get_string(it.second["markdown_engine"]);
 				camus_.render.pdf_engine = get_string(it.second["pdf_engine"]);
-				camus_.render.html_engine = get_string(it.second["html_engine"]);
 				camus_.render.theme_name = get_string(it.second["theme"]);
 
 				// 有值就生成
@@ -136,43 +133,41 @@ namespace camus::config
 					}
 				}
 
-				if (camus_.render.markdown_engine == "cmark-gfm") {
-					camus_.render.markdown_options = CMARK_OPT_DEFAULT;
-					if (WORK_ON_DEBUG) {
+				camus_.render.markdown_options = CMARK_OPT_DEFAULT;
+				if (WORK_ON_DEBUG) {
+					camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
+				}
+
+				for (const auto &opt : it.second["markdown_options"]) {
+					const auto name = opt.as<std::string>();
+					markdown_options.push_back(name);
+
+					if (name == "SOURCEPOS") {
 						camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
-					}
-
-					for (const auto &opt : it.second["markdown_options"]) {
-						const auto name = opt.as<std::string>();
-						markdown_options.push_back(name);
-
-						if (name == "SOURCEPOS") {
-							camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
-						} else if (name == "HARDBREAKS") {
-							camus_.render.markdown_options |= CMARK_OPT_HARDBREAKS;
-						} else if (name == "UNSAFE") {
-							camus_.render.markdown_options |= CMARK_OPT_UNSAFE;
-						} else if (name == "NOBREAKS") {
-							camus_.render.markdown_options |= CMARK_OPT_NOBREAKS;
-						} else if (name == "NORMALIZE") {
-							camus_.render.markdown_options |= CMARK_OPT_NORMALIZE;
-						} else if (name == "VALIDATE_UTF8") {
-							camus_.render.markdown_options |= CMARK_OPT_VALIDATE_UTF8;
-						} else if (name == "SMART") {
-							camus_.render.markdown_options |= CMARK_OPT_SMART;
-						} else if (name == "GITHUB_PRE_LANG") {
-							camus_.render.markdown_options |= CMARK_OPT_GITHUB_PRE_LANG;
-						} else if (name == "LIBERAL_HTML_TAG") {
-							camus_.render.markdown_options |= CMARK_OPT_LIBERAL_HTML_TAG;
-						} else if (name == "FOOTNOTES") {
-							camus_.render.markdown_options |= CMARK_OPT_FOOTNOTES;
-						} else if (name == "STRIKETHROUGH_DOUBLE_TILDE") {
-							camus_.render.markdown_options |= CMARK_OPT_STRIKETHROUGH_DOUBLE_TILDE;
-						} else if (name == "TABLE_PREFER_STYLE_ATTRIBUTES") {
-							camus_.render.markdown_options |= CMARK_OPT_TABLE_PREFER_STYLE_ATTRIBUTES;
-						} else if (name == "FULL_INFO_STRING") {
-							camus_.render.markdown_options |= CMARK_OPT_FULL_INFO_STRING;
-						}
+					} else if (name == "HARDBREAKS") {
+						camus_.render.markdown_options |= CMARK_OPT_HARDBREAKS;
+					} else if (name == "UNSAFE") {
+						camus_.render.markdown_options |= CMARK_OPT_UNSAFE;
+					} else if (name == "NOBREAKS") {
+						camus_.render.markdown_options |= CMARK_OPT_NOBREAKS;
+					} else if (name == "NORMALIZE") {
+						camus_.render.markdown_options |= CMARK_OPT_NORMALIZE;
+					} else if (name == "VALIDATE_UTF8") {
+						camus_.render.markdown_options |= CMARK_OPT_VALIDATE_UTF8;
+					} else if (name == "SMART") {
+						camus_.render.markdown_options |= CMARK_OPT_SMART;
+					} else if (name == "GITHUB_PRE_LANG") {
+						camus_.render.markdown_options |= CMARK_OPT_GITHUB_PRE_LANG;
+					} else if (name == "LIBERAL_HTML_TAG") {
+						camus_.render.markdown_options |= CMARK_OPT_LIBERAL_HTML_TAG;
+					} else if (name == "FOOTNOTES") {
+						camus_.render.markdown_options |= CMARK_OPT_FOOTNOTES;
+					} else if (name == "STRIKETHROUGH_DOUBLE_TILDE") {
+						camus_.render.markdown_options |= CMARK_OPT_STRIKETHROUGH_DOUBLE_TILDE;
+					} else if (name == "TABLE_PREFER_STYLE_ATTRIBUTES") {
+						camus_.render.markdown_options |= CMARK_OPT_TABLE_PREFER_STYLE_ATTRIBUTES;
+					} else if (name == "FULL_INFO_STRING") {
+						camus_.render.markdown_options |= CMARK_OPT_FULL_INFO_STRING;
 					}
 				}
 
@@ -183,7 +178,6 @@ namespace camus::config
 				camus_.output.filename_case = get_string(it.second["filename_case"]);
 				camus_.output.sitemap = it.second["sitemap"].as<bool>();
 				camus_.output.meta = it.second["meta"].as<bool>();
-				camus_.output.dest_dir = it.second["dest_dir"].as<std::string>();
 				continue;
 			}
 
@@ -209,18 +203,17 @@ namespace camus::config
 				}
 				continue;
 			}
-
-			auto value = strings::trim_space(it.second.as<std::string>());
-			if (key == "source_dir") {
-				camus_.source_dir = value;
-			} else if (key == "assets_dir") {
-				camus_.assets_dir = value;
-			}
 		}
 
-		if (camus_.render.html_engine != "default") {
-			camus_.render.theme_name = std::format("{}/{}", camus_.render.theme_name, camus_.render.html_engine);
+		if (std::filesystem::is_directory("src")) {
+			camus_.source_dir = "src";
+		} else if (std::filesystem::is_directory("posts")) {
+			camus_.source_dir = "posts";
+		} else {
+			camus_.source_dir = "src";
 		}
+
+		camus_.assets_dir = "assets";
 
 		public_config_["camus"] = camus_;
 		public_config_["camus"]["render"]["options"] =

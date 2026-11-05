@@ -402,8 +402,8 @@ namespace camus
 	void writer::prepare_output_dir() const
 	{
 		run_only_live([&]() {
-			filesystem::empty_path(conf_.camus().output.dest_dir, true);
 			filesystem::empty_path(conf_.camus().dest_dir(), true);
+			filesystem::empty_path(conf_.camus().pdf_dir(), true);
 		});
 	}
 
@@ -647,81 +647,74 @@ namespace camus
 			return;
 		}
 
-		if (conf_.camus().render.html_engine == "default") {
-			struct dir_ctx {
-				const catalog::catalog_node *parent = nullptr;
-				std::vector<const catalog::catalog_node *> children;
-			};
+		struct dir_ctx {
+			const catalog::catalog_node *parent = nullptr;
+			std::vector<const catalog::catalog_node *> children;
+		};
 
-			std::map<const catalog::catalog_node *, dir_ctx> dirs;
+		std::map<const catalog::catalog_node *, dir_ctx> dirs;
 
-			catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
-				if (!node.is_directory()) {
-					return;
+		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
+			if (!node.is_directory()) {
+				return;
+			}
+
+			auto &[parent, children] = dirs[&node];
+			for (const auto &child : node.children) {
+				if (child.is_directory()) {
+					dirs[&child].parent = &node;
+				}
+				children.push_back(&child);
+			}
+		});
+
+		nlohmann::json toc_full;
+		toc_full["config"] = conf_.json();
+
+		for (const auto &[dir_node, ctx] : dirs) {
+			nlohmann::json toc_item;
+
+			if (ctx.parent) {
+				toc_item["parent"]["url"] = ctx.parent->link_url();
+				if (toc_item["parent"]["label"] = ctx.parent->property.display_name; toc_item["parent"]["url"] == "/") {
+					toc_item["parent"]["label"] = "/";
+				}
+			} else {
+				toc_item["parent"]["url"] = "";
+				toc_item["parent"]["label"] = "";
+			}
+
+			std::vector<nlohmann::json> items;
+			for (const auto *child : ctx.children) {
+				items.push_back(nlohmann::json(*child));
+			}
+
+			std::ranges::sort(items, [](const nlohmann::json &a, const nlohmann::json &b) -> bool {
+				if (const bool a_dir = a.value("is_dir", false); a_dir != b.value("is_dir", false)) {
+					return a_dir;
 				}
 
-				auto &[parent, children] = dirs[&node];
-				for (const auto &child : node.children) {
-					if (child.is_directory()) {
-						dirs[&child].parent = &node;
-					}
-					children.push_back(&child);
-				}
+				return a.value("write_time", 0) > b.value("write_time", 0);
 			});
 
-			nlohmann::json toc_full;
-			toc_full["config"] = conf_.json();
+			toc_item["items"] = items;
+			toc_item["current"] = *dir_node;
 
-			for (const auto &[dir_node, ctx] : dirs) {
-				nlohmann::json toc_item;
+			toc_full["catalog"].push_back(toc_item);
+			toc_item.update(conf_.json());
 
-				if (ctx.parent) {
-					toc_item["parent"]["url"] = ctx.parent->link_url();
-					if (toc_item["parent"]["label"] = ctx.parent->property.display_name;
-						toc_item["parent"]["url"] == "/") {
-						toc_item["parent"]["label"] = "/";
-					}
-				} else {
-					toc_item["parent"]["url"] = "";
-					toc_item["parent"]["label"] = "";
-				}
-
-				std::vector<nlohmann::json> items;
-				for (const auto *child : ctx.children) {
-					items.push_back(nlohmann::json(*child));
-				}
-
-				std::ranges::sort(items, [](const nlohmann::json &a, const nlohmann::json &b) -> bool {
-					if (const bool a_dir = a.value("is_dir", false); a_dir != b.value("is_dir", false)) {
-						return a_dir;
-					}
-
-					return a.value("write_time", 0) > b.value("write_time", 0);
-				});
-
-				toc_item["items"] = items;
-				toc_item["current"] = *dir_node;
-
-				toc_full["catalog"].push_back(toc_item);
-				toc_item.update(conf_.json());
-
-				add_write(
-					filesystem::clean_path(
-						std::format("{}/index.html", dir_node->real_url().string()),
-						conf_.camus().dest_dir()
-					),
-					render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_HOME), toc_item)
-				);
-			}
-
-			if (conf_.camus().output.meta) {
-				add_write(filesystem::clean_path("meta.json", conf_.camus().dest_dir()), toc_full.dump(4));
-			}
-
-			return;
+			add_write(
+				filesystem::clean_path(
+					std::format("{}/index.html", dir_node->real_url().string()),
+					conf_.camus().dest_dir()
+				),
+				render::inja_render(inja_, conf_.camus().get_theme(config::CAMUS_THEME_TYPE_HOME), toc_item)
+			);
 		}
 
-		logging::fatal("html engine '{}' not supported", conf_.camus().render.html_engine);
+		if (conf_.camus().output.meta) {
+			add_write(filesystem::clean_path("meta.json", conf_.camus().dest_dir()), toc_full.dump(4));
+		}
 	}
 
 	void writer::emit_sitemap()
@@ -954,13 +947,12 @@ namespace camus
 			toc_items
 		);
 
-		const std::filesystem::path dest_dir = conf_.camus().dest_dir();
-		const std::filesystem::path html_dir = dest_dir / "pdf";
-		const std::filesystem::path markdown_path = dest_dir / "index.md";
-		const std::filesystem::path html_path = html_dir / "index.html";
-		std::filesystem::path pdf_path = dest_dir / "index.pdf";
+		const std::filesystem::path pdf_dir = conf_.camus().pdf_dir();
+		const std::filesystem::path markdown_path = pdf_dir / "index.md";
+		const std::filesystem::path html_path = pdf_dir / "index.html";
+		std::filesystem::path pdf_path = pdf_dir / "index.pdf";
 
-		std::filesystem::create_directories(html_dir);
+		std::filesystem::create_directories(pdf_dir);
 		filesystem::write_file(markdown_path, markdown);
 
 		const std::string html = std::format(
@@ -999,12 +991,12 @@ namespace camus
 				if (const auto pos = option.find('='); pos != std::string::npos) {
 					std::string value = option.substr(pos + 1);
 					if (!value.empty()) {
-						value = strings::replace(value, "{{dest_dir}}", dest_dir.string());
-						value = strings::replace(value, "{{ dest_dir }}", dest_dir.string());
+						value = strings::replace(value, "{{dest_dir}}", pdf_dir.string());
+						value = strings::replace(value, "{{ dest_dir }}", pdf_dir.string());
 
 						std::filesystem::path path(value);
 						if (path.is_relative()) {
-							path = dest_dir / path;
+							path = pdf_dir / path;
 						}
 
 						pdf_path = path.lexically_normal();
@@ -1127,8 +1119,19 @@ namespace camus
 				continue;
 			}
 
+			const std::string dist_prefix = conf_.camus().dest_dir().parent_path().string() + "/";
 			std::stringstream buffer;
-			for (const auto &entry : std::filesystem::recursive_directory_iterator(watch_path)) {
+			for (auto it = std::filesystem::recursive_directory_iterator(watch_path);
+				 it != std::filesystem::recursive_directory_iterator();
+				 ++it) {
+				const auto &entry = *it;
+				if (entry.path().string().starts_with(dist_prefix)) {
+					if (entry.is_directory()) {
+						it.disable_recursion_pending();
+					}
+					continue;
+				}
+
 				if (const auto ext = entry.path().extension();
 					ext == ".md" || ext == ".yaml" || ext == ".json" ||
 					entry.path().string().find("/theme/") != std::string::npos) {
