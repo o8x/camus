@@ -44,7 +44,7 @@
 | `theme` | 字符串 | 默认 `default` | 主题目录名 | `yaml_config.cpp` |
 | `markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp` |
 | `pdf_engine` | 字符串 | 可选 | PDF 引擎：`chromium`/`chrome`/`edge`，或可执行文件路径；非空且不为 `disable` 时启用 PDF 生成 | `yaml_config.cpp` |
-| `pdf_options` | 字符串数组 | 可选 | Chrome/Edge 启动参数；`--print-to-pdf=` 会替换为实际输出路径 | `yaml_config.cpp` |
+| `pdf_options` | 对象 | 可选 | PDF 参数：`build`（字符串数组，Chrome/Edge 启动参数）与 `page`（`size` / `margin`，应用到 `@page`）；旧写法顶层字符串数组等价于 `build` | `yaml_config.cpp` |
 
 `public_url` 拆解规则（`parse_public_url()`）：
 
@@ -73,10 +73,12 @@
 
 - `pdf_engine: disable` 表示显式禁用 PDF：不解析引擎、不产生 `dist/pdf` 内容，也不输出告警。
 - 引擎找不到时输出 WARN 并跳过 PDF，不影响 HTML 构建。
-- `pdf_options` 原样作为启动参数；其中以 `--print-to-pdf` 开头的项只取第一个并统一重写，支持 `{{dest_dir}}` 占位符（占位符代表 PDF 输出目录 `./dist/pdf`）：
+- `pdf_options.build` 中的字符串原样作为启动参数；其中以 `--print-to-pdf` 开头的项只取第一个并统一重写，支持 `{{dest_dir}}` 占位符（占位符代表 PDF 输出目录 `./dist/pdf`）：
   - `--print-to-pdf=`：默认输出 `<dest_dir>/index.pdf`；
   - `--print-to-pdf={{dest_dir}}/docs/book.pdf`：输出到 `<dest_dir>/docs/book.pdf`；
   - `--print-to-pdf=book.pdf`：相对路径按 `<dest_dir>/book.pdf` 解析。
+- 兼容旧写法：`pdf_options` 直接写成字符串数组时，等价于把这些项放入 `pdf_options.build`。
+- `pdf_options.page.size` 与 `pdf_options.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加到打印样式末尾，作用于未命名页；默认 `A4` / `20mm 18mm`。命名页（`cover` / `front`）仍以 `theme/pdf/style.css` 中的定义为准。取值同时作为 `pdf.page.size` / `pdf.page.margin` 提供给模板（见 §5.10）。
 - 未显式提供 `--headless` 时自动追加；始终追加临时 `--user-data-dir`（构建结束删除），避免污染用户浏览器配置。
 - PDF 中间 HTML 使用 `theme/pdf/page.html` 模板、`theme/pdf/style.css` 样式与 `theme/pdf/fonts.css` 字体样式；自定义字体放在 `theme/pdf/fonts/`。该目录不通过 `camus.yaml` 配置，查找顺序与可用模板变量见 §5.10、§8.3。
 

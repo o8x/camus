@@ -165,7 +165,8 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 |---|---|---|
 | `pdf.lang` | 字符串 | 站点标题非空时为 `zh-CN`，否则为 `en` |
 | `pdf.title` | 字符串 | 已 HTML 转义的封面标题（站点标题为空时回退 `Camus`） |
-| `pdf.style` | 字符串 | `style.css` 经配置 JSON 渲染后的内容（可写 inja 配置变量；另提供顶层 `pdf_page_offset` 供页码偏移使用） |
+| `pdf.style` | 字符串 | `style.css` 经配置 JSON 渲染后的内容，末尾追加由 `pdf_options.page` 生成的 `@page { size; margin }` 覆盖规则（可写 inja 配置变量；另提供顶层 `pdf_page_offset` 供页码偏移使用） |
+| `pdf.page` | 对象 | `size`、`margin`，来自 `pdf_options.page`；默认 `A4` / `20mm 18mm`，空值回退默认 |
 | `pdf.fonts` | 字符串 | `fonts.css` 经配置 JSON 渲染后的内容；文件缺失时为空串 |
 | `pdf.intro` | 字符串 | 引导页 Markdown（`# site.title` + `site.description`）渲染后的 HTML，**未转义** |
 | `pdf.cover` | 对象 | `eyebrow`、`title`、`subtitle`、`description`、`meta`（生成日期）、`image`（根 `SUMMARY.md` 的 `cover_image` 指向有效文件时为其复制后的文件名，否则空串）、`has_image`（是否存在有效封面图；空串在 inja 中为真值，模板须用该布尔值判断）；标题等字段按模板需要预转义；默认模板优先输出整页封面图，无图时输出 `title`、`subtitle` |

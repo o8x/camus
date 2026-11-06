@@ -84,8 +84,12 @@ cdn_url: ''                # 例如 https://cdn.stdout.com.cn/camus
 theme: terminal
 pdf_engine: chrome         # 设为 disable 时跳过 PDF 生成
 pdf_options:
-  - --headless
-  - --print-to-pdf={{dest_dir}}/index.pdf
+  build:
+    - --headless
+    - --print-to-pdf={{dest_dir}}/index.pdf
+  page:
+    size: A4
+    margin: 20mm 18mm
 markdown_options:
   - DEFAULT
   - SMART

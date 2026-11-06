@@ -201,6 +201,21 @@ namespace
 
 		logging::debug("copy pdf theme fonts from={} to={}", source.string(), target.string());
 	}
+
+	std::string pdf_page_style(const camus::config::pdf_page_conf &page)
+	{
+		std::string size = strings::trim_space(page.size);
+		std::string margin = strings::trim_space(page.margin);
+		if (size.empty()) {
+			size = camus::config::pdf_page_size_default;
+		}
+
+		if (margin.empty()) {
+			margin = camus::config::pdf_page_margin_default;
+		}
+
+		return "\n@page { size: " + size + "; margin: " + margin + "; }\n";
+	}
 } // namespace
 
 namespace camus
@@ -951,10 +966,22 @@ namespace camus
 		view["pdf_page_offset"] = 0;
 		std::string markdown = std::format("# {}\n\n{}\n", site_title, conf_.camus().site.description);
 
+		const camus::config::pdf_page_conf page_conf = conf_.camus().render.pdf_options.page;
+		const std::string page_size = strings::trim_space(page_conf.size).empty()
+										  ? camus::config::pdf_page_size_default
+										  : strings::trim_space(page_conf.size);
+		const std::string page_margin = strings::trim_space(page_conf.margin).empty()
+											? camus::config::pdf_page_margin_default
+											: strings::trim_space(page_conf.margin);
+
 		nlohmann::json pdf;
 		pdf["lang"] = site_title.empty() ? "en" : "zh-CN";
 		pdf["title"] = cover_title;
-		pdf["style"] = render::inja_render(inja_, style_source, view);
+		pdf["style"] = render::inja_render(inja_, style_source, view) + pdf_page_style(page_conf);
+		pdf["page"] = {
+			{"size", page_size},
+			{"margin", page_margin},
+		};
 		pdf["fonts"] = fonts_source.empty() ? "" : render::inja_render(inja_, fonts_source, view);
 		pdf["intro"] = render::render_markdown(
 			markdown.c_str(),
@@ -1121,7 +1148,7 @@ namespace camus
 		bool has_print_to_pdf = false;
 		bool has_user_data_dir = false;
 
-		for (const auto &option : conf_.camus().render.pdf_options) {
+		for (const auto &option : conf_.camus().render.pdf_options.build) {
 			if (option.empty()) {
 				continue;
 			}
@@ -1268,7 +1295,8 @@ namespace camus
 				"\n@counter-style camus-page { system: fixed; first: 0; symbols: " + symbols.str() + "; }\n";
 
 			view["pdf_page_offset"] = page_offset;
-			view["pdf"]["style"] = render::inja_render(inja_, style_source, view) + counter_css;
+			view["pdf"]["style"] =
+				render::inja_render(inja_, style_source, view) + pdf_page_style(page_conf) + counter_css;
 			logging::debug(
 				"pdf page offset={} toc page numbers resolved count={} total_pages={}",
 				page_offset,

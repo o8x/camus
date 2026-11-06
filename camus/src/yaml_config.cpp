@@ -282,7 +282,7 @@ namespace camus::config
 		};
 
 		std::vector<std::string> markdown_options;
-		camus_.render.pdf_options.clear();
+		camus_.render.pdf_options = {};
 		camus_.render.markdown_options = CMARK_OPT_DEFAULT;
 		if (WORK_ON_DEBUG) {
 			camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
@@ -309,9 +309,28 @@ namespace camus::config
 			}
 
 			if (key == "pdf_options") {
+				// 兼容旧写法：顶层字符串序列直接作为 build 参数。
 				if (it.second && it.second.IsSequence()) {
 					for (const auto &opt : it.second) {
-						camus_.render.pdf_options.push_back(opt.as<std::string>());
+						camus_.render.pdf_options.build.push_back(opt.as<std::string>());
+					}
+				} else if (it.second && it.second.IsMap()) {
+					const YAML::Node build = it.second["build"];
+					if (build && build.IsSequence()) {
+						for (const auto &opt : build) {
+							camus_.render.pdf_options.build.push_back(opt.as<std::string>());
+						}
+					}
+
+					const YAML::Node page = it.second["page"];
+					if (page && page.IsMap()) {
+						if (const YAML::Node size = page["size"]; size && size.IsScalar()) {
+							camus_.render.pdf_options.page.size = strings::trim_space(size.as<std::string>());
+						}
+
+						if (const YAML::Node margin = page["margin"]; margin && margin.IsScalar()) {
+							camus_.render.pdf_options.page.margin = strings::trim_space(margin.as<std::string>());
+						}
 					}
 				}
 				continue;

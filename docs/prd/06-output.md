@@ -205,6 +205,8 @@ flowchart TD
 
 - 合并文档以 `# {site.title}` 开头，每篇文章为 `## {display_name}` + 正文，文章间用 `---` 分隔。
 - PDF 中间 HTML 由 `theme/pdf/page.html`（inja）渲染，打印样式来自 `theme/pdf/style.css`，字体样式来自 `theme/pdf/fonts.css`；自定义字体放在 `theme/pdf/fonts/`，构建时复制到 `dist/pdf/fonts/`。这些资源均可被工作目录 `theme/pdf/`、`.camus/theme/pdf/` 或平台数据目录覆盖（详见 §5.10）。
+- `pdf_options.page.size` / `pdf_options.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加在打印样式末尾，覆盖未命名页的尺寸与边距；默认 `A4` / `20mm 18mm`。`@page cover` 的 0 边距等命名页规则不受影响。
+- HTML 站点的 `assets/` 只复制并渲染到站点输出目录（如 `dist/html/`），不参与 PDF；PDF 仅内联 `theme/pdf/style.css` 与 `theme/pdf/fonts.css`，因此二者互不覆盖同名文件。
 - 默认模板在正文前依次输出三个独立页面，各自通过 `page-break-after: always` 强制分页：
 
   | 页面 | 模板数据 | 说明 |

@@ -49,6 +49,23 @@ namespace camus::config
 		}
 	};
 
+	inline constexpr const char *pdf_page_size_default = "A4";
+	inline constexpr const char *pdf_page_margin_default = "20mm 18mm";
+
+	struct pdf_page_conf {
+		std::string size = pdf_page_size_default;
+		std::string margin = pdf_page_margin_default;
+
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(pdf_page_conf, size, margin);
+	};
+
+	struct pdf_options_conf {
+		std::vector<std::string> build;
+		pdf_page_conf page;
+
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(pdf_options_conf, build, page);
+	};
+
 	enum camus_theme_type : uint8_t {
 		CAMUS_THEME_TYPE_HOME,
 		CAMUS_THEME_TYPE_PAGE,
@@ -61,7 +78,7 @@ namespace camus::config
 		std::string html_engine = "default";
 		std::string markdown_engine = "cmark-gfm";
 		std::string pdf_engine;
-		std::vector<std::string> pdf_options;
+		pdf_options_conf pdf_options;
 		int markdown_options = 0;
 		// 主题数据
 		std::unordered_map<camus_theme_type, std::string> theme;
