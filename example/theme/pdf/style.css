@@ -1,14 +1,22 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 .pdf-anchor-link { display: none; }
+@counter-style camus-page {
+    system: decimal;
+    pad: 3 "0";
+}
 @page {
     size: A4;
     margin: 20mm 18mm;
     @bottom-center {
-        content: counter(page);
+        content: counter(page, camus-page);
         font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
         font-size: 0.8rem;
-        color: #8d8d8d;
+        color: #000;
     }
+}
+@page cover {
+    size: A4;
+    margin: 0;
 }
 @page front {
     @bottom-center {
@@ -40,15 +48,17 @@ table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9rem
 th, td { padding: 0.4em 0.6em; border-bottom: 1px solid #e0e0e0; text-align: left; }
 th { background: #f4f4f4; font-weight: 600; }
 hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.5em 0; }
-.pdf-cover, .pdf-title-page, .pdf-toc { page: front; page-break-after: always; break-after: page; }
-.pdf-cover { display: flex; flex-direction: column; justify-content: center; min-height: 235mm; text-align: center; }
+.pdf-cover { page: cover; page-break-after: always; break-after: page; width: 210mm; height: 297mm; margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.pdf-cover--image { display: block; }
+.pdf-cover__image { display: block; width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; object-position: center; }
 .pdf-cover__title { font-size: 2.8rem; line-height: 1.25; margin: 0 0 0.5em; }
 .pdf-cover__subtitle { font-size: 1.2rem; color: #525252; margin: 0 auto 1.6em; max-width: 80%; }
+.pdf-title-page, .pdf-toc { page: front; page-break-after: always; break-after: page; }
 .pdf-title-page { display: flex; flex-direction: column; justify-content: center; min-height: 235mm; }
 .pdf-title-page__inner { margin: 0 auto; max-width: 78%; }
-.pdf-title-page__title { font-size: 2.2rem; margin: 0 0 0.4em; }
-.pdf-title-page__subtitle { font-size: 1.05rem; color: #525252; margin: 0 0 0.6em; }
-.pdf-title-page__desc { font-size: 0.95rem; color: #6f6f6f; margin: 0 0 2em; }
+.pdf-title-page__title { font-size: 1.7rem; margin: 0 0 0.4em; }
+.pdf-title-page__subtitle { font-size: 0.95rem; color: #525252; margin: 0 0 0.6em; }
+.pdf-title-page__desc { font-size: 0.85rem; color: #6f6f6f; margin: 0 0 2em; }
 .pdf-title-page__rule { border: none; border-top: 2px solid #161616; width: 4.5em; margin: 0 0 2em; }
 .pdf-meta { display: grid; grid-template-columns: auto 1fr; gap: 0.55em 1.6em; font-size: 0.92rem; }
 .pdf-meta dt { color: #8d8d8d; }
@@ -60,6 +70,6 @@ hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.5em 0; }
 .pdf-toc__section { display: block; padding: 0.35em 0 0.2em; font-weight: 600; color: #161616; page-break-after: avoid; break-after: avoid; }
 .pdf-toc__link { display: flex; align-items: baseline; justify-content: space-between; gap: 1em; padding: 0.5em 0; color: #262626; }
 .pdf-toc__title { flex: 1; }
-.pdf-toc__page { flex: none; min-width: 3em; text-align: right; color: #525252; font-variant-numeric: tabular-nums; }
+.pdf-toc__page { flex: none; min-width: 3em; text-align: right; color: #000; font-variant-numeric: tabular-nums; }
 .pdf-intro { page-break-after: always; break-after: page; }
 .pdf-article { page-break-before: always; break-before: page; }

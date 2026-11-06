@@ -964,6 +964,7 @@ namespace camus
 			{"subtitle", cover_subtitle},
 			{"description", cover_desc},
 			{"meta", generated_at},
+			{"image", ""},
 		};
 		pdf["title_page"] = {
 			{"title", cover_title},
@@ -991,8 +992,10 @@ namespace camus
 					{"index", 0},
 					{"number", ""},
 					{"title", html_escape(node.property.display_name)},
+					{"outline_title", node.property.display_name},
 					{"tags", ""},
 					{"page", ""},
+					{"page_label", ""},
 					{"depth", depth - 1},
 					{"is_dir", true},
 				});
@@ -1026,8 +1029,10 @@ namespace camus
 					{"index", index},
 					{"number", number},
 					{"title", html_escape(label)},
+					{"outline_title", label},
 					{"tags", tags},
 					{"page", ""},
+					{"page_label", ""},
 					{"depth", depth - 1},
 					{"is_dir", false},
 				});
@@ -1070,6 +1075,36 @@ namespace camus
 		std::filesystem::create_directories(pdf_dir);
 		filesystem::write_file(markdown_path, markdown);
 		copy_pdf_theme_fonts(pdf_dir);
+
+		const std::vector<std::filesystem::path> cover_candidates{
+			conf_.camus().assets_dir / "imgs" / "cover.png",
+			paths::local_data_dir() / "assets" / "imgs" / "cover.png",
+			paths::resource_assets_dir() / "imgs" / "cover.png",
+		};
+
+		for (const auto &candidate : cover_candidates) {
+			if (candidate.empty() || !std::filesystem::is_regular_file(candidate)) {
+				continue;
+			}
+
+			std::error_code cover_ec;
+			if (std::filesystem::copy_file(
+					candidate,
+					pdf_dir / "cover.png",
+					std::filesystem::copy_options::overwrite_existing,
+					cover_ec
+				)) {
+				pdf["cover"]["image"] = "cover.png";
+				logging::debug("pdf cover image source={}", candidate.string());
+			} else {
+				logging::warn(
+					"pdf cover image copy failed source={} error={}",
+					candidate.string(),
+					cover_ec.message()
+				);
+			}
+			break;
+		}
 
 		view["pdf"] = std::move(pdf);
 
@@ -1204,6 +1239,7 @@ namespace camus
 			}
 
 			item["page"] = number;
+			item["page_label"] = std::format("{:03}", number);
 			numbered = true;
 		}
 
@@ -1214,6 +1250,20 @@ namespace camus
 			if (!render_and_print()) {
 				logging::warn("pdf generation with toc page numbers failed, keep previous output");
 			}
+		}
+
+		std::vector<pdf::outline_entry> outline_entries;
+		for (const auto &item : view["pdf"]["toc"]) {
+			outline_entries.push_back({
+				.title = item.value("outline_title", item.value("title", "")),
+				.anchor = item.value("anchor", ""),
+				.depth = item.value("depth", 0),
+				.is_dir = item.value("is_dir", false),
+			});
+		}
+
+		if (!outline_entries.empty() && !pdf::write_outline(pdf_path, outline_entries)) {
+			logging::warn("pdf outline injection failed dest={}", pdf_path.string());
 		}
 
 		std::filesystem::remove_all(profile_dir, ec);

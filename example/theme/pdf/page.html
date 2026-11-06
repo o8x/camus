@@ -10,9 +10,10 @@
 </head>
 <body>
 <a class="pdf-anchor-link" href="#pdf-intro" aria-hidden="true"></a>
-<section class="pdf-cover">
-<h1 class="pdf-cover__title">{{ pdf.cover.title }}</h1>
-<p class="pdf-cover__subtitle">{{ pdf.cover.subtitle }}</p>
+<section class="pdf-cover{% if pdf.cover.image %} pdf-cover--image{% endif %}">
+{% if pdf.cover.image %}<img class="pdf-cover__image" src="{{ pdf.cover.image }}" alt="">
+{% else %}<h1 class="pdf-cover__title">{{ pdf.cover.title }}</h1>
+<p class="pdf-cover__subtitle">{{ pdf.cover.subtitle }}</p>{% endif %}
 </section>
 <section class="pdf-title-page">
 <div class="pdf-title-page__inner">
@@ -31,7 +32,7 @@
 <h2 class="pdf-toc__heading">Contents</h2>
 <ul class="pdf-toc__list">
 {% for item in pdf.toc %}{% if item.is_dir %}<li class="pdf-toc__item pdf-toc__item--section" style="padding-left: calc({{ item.depth }} * 1.4em)"><span class="pdf-toc__section">{{ item.title }}</span></li>
-{% else %}<li class="pdf-toc__item" style="padding-left: calc({{ item.depth }} * 1.4em)"><a class="pdf-toc__link" href="#{{ item.anchor }}"><span class="pdf-toc__title">{{ item.title }}</span><span class="pdf-toc__page">{{ item.page }}</span></a></li>
+{% else %}<li class="pdf-toc__item" style="padding-left: calc({{ item.depth }} * 1.4em)"><a class="pdf-toc__link" href="#{{ item.anchor }}"><span class="pdf-toc__title">{{ item.title }}</span><span class="pdf-toc__page">{{ item.page_label }}</span></a></li>
 {% endif %}{% endfor %}</ul>
 </section>
 <main>
