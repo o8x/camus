@@ -11,7 +11,7 @@
 | 文档根 | `./dist/html`（固定） | `watch_server_.set_mount_point("/", conf_.camus().dest_dir())` |
 | 框架 | cpp-httplib | `common/common/net` |
 
-`net::get_local_addr(dns_server="114.114.114.114")` 通过向 DNS 地址建立 UDP `connect`（不发送数据）并 `getsockname` 获取本机 IPv4 地址；失败返回空串，`watch()` 中 `assert(!server_addr.empty())`。服务实际绑定 `0.0.0.0`，`get_local_addr()` 得到的地址仅用于拼接日志中可直接访问的 URL（如 Clash fake-ip 网段 `198.18.x` / `198.19.x` 会回退为 `localhost`）。
+`net::get_local_addr(dns_server="114.114.114.114")` 通过向 DNS 地址建立 UDP `connect`（不发送数据）并 `getsockname` 获取本机 IPv4 地址；失败返回空串，`watch()` 中 `assert(!server_addr.empty())`。服务实际绑定 `0.0.0.0`，`get_local_addr()` 得到的地址仅用于拼接日志中可直接访问的 URL（原样返回取得的 IPv4，不做 fake-ip 网段改写）。
 
 服务在线程中运行，主线程负责轮询。
 

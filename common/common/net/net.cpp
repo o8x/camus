@@ -42,12 +42,6 @@ namespace net
 		}
 
 		close(sock);
-
-		std::string addr(ip);
-		if (addr.starts_with("198.18.") || addr.starts_with("198.19.")) {
-			return "localhost";
-		}
-
-		return addr;
+		return ip;
 	}
 } // namespace net

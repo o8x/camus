@@ -75,7 +75,7 @@
 `std::string get_local_addr(const std::string& dns_server = "114.114.114.114")`：
 
 - 创建 UDP socket，向 DNS 服务器地址 `connect`（不发送数据），通过 `getsockname` 取本机 IPv4。
-- 若取得的地址落在 `198.18.0.0/15`（Clash 等 fake-ip 网段，含 `198.18.`、`198.19.` 前缀），返回 `localhost`。
+- 成功时原样返回取得的 IPv4 地址，不做 fake-ip 网段改写。
 - 任一步失败返回空串。用于监听模式日志中展示可访问地址（服务本身绑定 `0.0.0.0`）。
 
 ## 10.6 平台路径 `paths`（`common/common/paths/paths.h`）
