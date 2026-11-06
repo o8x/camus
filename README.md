@@ -114,6 +114,8 @@ build:
         target: /intro/Well-known
 ```
 
+All scalar config values can be overridden by a `CAMUS_<PATH>` environment variable (e.g. `pdf_options.page.size` → `CAMUS_PDF_OPTIONS_PAGE_SIZE`, `theme` → `CAMUS_THEME`). Arrays/lists such as `markdown_options`, `pdf_options.build`, `friends` and `build` cannot be injected.
+
 `public_url` accepts with or without a protocol. Missing protocols default to `https://`; a trailing slash is normalized away. It drives absolute links, the sitemap, and PDF cover data.
 
 `cdn_url` is optional and empty by default. When set, `with_cdn(path)` returns `cdn_url + with_prefix(path)`; when empty it returns `with_prefix(path)`, so the `public_url.path_prefix` is always applied. In watch mode (`-W`), both `public_url` and `cdn_url` are ignored so local builds use root-relative paths.

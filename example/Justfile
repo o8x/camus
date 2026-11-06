@@ -6,8 +6,8 @@ camus := require("camus")
 default:
     @{{camus}} --check
 
-build:
-    @{{camus}} --build
+build size="A4":
+    @CAMUS_PDF_OPTIONS_PAGE_SIZE={{size}} {{camus}} --build
 
-serve:
-	@{{python3}} -m http.server --bind 127.0.0.1 8000 --directory dist/html
+serve port="8080":
+	@{{python3}} -m http.server --bind 127.0.0.1 {{port}} --directory dist/html

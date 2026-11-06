@@ -113,6 +113,8 @@ build:
         target: /intro/Well-known
 ```
 
+所有标量配置项都可用 `CAMUS_<PATH>` 环境变量覆盖（如 `pdf_options.page.size` → `CAMUS_PDF_OPTIONS_PAGE_SIZE`、`theme` → `CAMUS_THEME`）；数组/列表（`markdown_options`、`pdf_options.build`、`friends`、`build`）不支持注入。
+
 `public_url` 可带协议也可省略：省略时默认 `https://`，末尾多余的 `/` 会被归一化。它用于绝对链接、sitemap 与 PDF 封面信息。
 
 `cdn_url` 可选、默认空。设置后 `with_cdn(path)` 返回 `cdn_url + with_prefix(path)`；为空时返回 `with_prefix(path)`，始终带上 `public_url.path_prefix`。监听模式（`-W`）下会忽略 `public_url` 与 `cdn_url`，本地构建使用根相对路径。

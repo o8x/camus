@@ -1,10 +1,12 @@
 #include "yaml_config.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <ranges>
 
 #include <build/build.h>
@@ -168,6 +170,53 @@ namespace camus::config
 			conf.domain_name = strings::replace(conf.domain_name, " ", "");
 			conf.url = conf.full_prefix();
 			return conf;
+		}
+
+		// 标量配置项对应的环境变量名：CAMUS_ + 大写路径（非字母数字转为 '_'）。
+		// 例如 pdf_options.page.size -> CAMUS_PDF_OPTIONS_PAGE_SIZE。
+		std::string env_override_name(const std::string &path)
+		{
+			std::string name = "CAMUS_";
+			for (const char c : path) {
+				if (std::isalnum(static_cast<unsigned char>(c)) != 0) {
+					name += static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+				} else {
+					name += '_';
+				}
+			}
+
+			return name;
+		}
+
+		std::optional<std::string> env_override(const std::string &path)
+		{
+			const std::string name = env_override_name(path);
+			if (const char *value = std::getenv(name.c_str()); value != nullptr && *value != '\0') {
+				return std::string(value);
+			}
+
+			return std::nullopt;
+		}
+
+		std::optional<bool> parse_bool_override(const std::string &value)
+		{
+			std::string normalized;
+			normalized.reserve(value.size());
+			for (const char c : value) {
+				normalized += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+			}
+
+			if (normalized == "true" || normalized == "yes" || normalized == "on" || normalized == "y" ||
+				normalized == "1") {
+				return true;
+			}
+
+			if (normalized == "false" || normalized == "no" || normalized == "off" || normalized == "n" ||
+				normalized == "0") {
+				return false;
+			}
+
+			return std::nullopt;
 		}
 	} // namespace
 
@@ -407,11 +456,47 @@ namespace camus::config
 			}
 		}
 
-		// 配置未提供 public_url 时，允许通过环境变量覆盖（供 CI 自动注入部署前缀）
-		if (camus_.public_url.url.empty()) {
-			if (const char *public_url = std::getenv("CAMUS_PUBLIC_URL"); public_url != nullptr && *public_url != '\0') {
-				camus_.public_url = parse_public_url(public_url);
+		// 所有标量配置项都可由 CAMUS_<PATH> 环境变量覆盖（优先于 camus.yaml）。
+		// 数组 / 列表字段不参与注入。
+		if (const auto value = env_override("meta"); value.has_value()) {
+			camus_.output.meta = parse_bool_override(*value).value_or(camus_.output.meta);
+		}
+
+		if (const auto value = env_override("sitemap"); value.has_value()) {
+			camus_.output.sitemap = parse_bool_override(*value).value_or(camus_.output.sitemap);
+		}
+
+		if (const auto value = env_override("filename_case"); value.has_value()) {
+			camus_.output.filename_case = strings::trim_space(*value);
+		}
+
+		if (const auto value = env_override("public_url"); value.has_value()) {
+			camus_.public_url = parse_public_url(*value);
+		}
+
+		if (const auto value = env_override("cdn_url"); value.has_value()) {
+			camus_.cdn_url = strings::trim_space(*value);
+			while (camus_.cdn_url.size() > 1 && camus_.cdn_url.ends_with('/')) {
+				camus_.cdn_url.pop_back();
 			}
+		}
+
+		if (const auto value = env_override("theme"); value.has_value()) {
+			if (const std::string theme = strings::trim_space(*value); !theme.empty()) {
+				camus_.render.theme_name = theme;
+			}
+		}
+
+		if (const auto value = env_override("pdf_engine"); value.has_value()) {
+			camus_.render.pdf_engine = strings::trim_space(*value);
+		}
+
+		if (const auto value = env_override("pdf_options.page.size"); value.has_value()) {
+			camus_.render.pdf_options.page.size = strings::trim_space(*value);
+		}
+
+		if (const auto value = env_override("pdf_options.page.margin"); value.has_value()) {
+			camus_.render.pdf_options.page.margin = strings::trim_space(*value);
 		}
 
 		// 监听模式由本地服务访问，公网地址无意义，按未配置处理

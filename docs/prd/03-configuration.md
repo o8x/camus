@@ -29,6 +29,7 @@
   - HTML 输出固定为 `./dist/html`，PDF 输出固定为 `./dist/pdf`。
 - `html_engine` 固定为 `default`，`markdown_engine` 固定为 `cmark-gfm`，均不从配置读取。
 - 路径在解析后转为绝对路径供内部使用；模板 JSON 中保留解析后的值（见 §3.7）。
+- **环境变量注入**：所有标量配置项都可用环境变量覆盖，变量名为 `CAMUS_` + 配置路径（大写、层级与非法字符转为 `_`），例如 `pdf_options.page.size` → `CAMUS_PDF_OPTIONS_PAGE_SIZE`、`theme` → `CAMUS_THEME`、`meta` → `CAMUS_META`。环境变量优先于 `camus.yaml` 中的值；即使配置文件中没有该键，也可注入已知标量项（`meta`、`sitemap`、`filename_case`、`public_url`、`cdn_url`、`theme`、`pdf_engine`、`pdf_options.page.size`、`pdf_options.page.margin`）。数组 / 列表字段（`markdown_options`、`pdf_options.build`、`friends`、`build` / `transfer` 及其元素字段）**不支持**注入。`-W` 监听模式仍会清空 `public_url` / `cdn_url`。
 
 ## 3.3 顶层配置字段
 
@@ -37,7 +38,7 @@
 | `meta` | bool | 默认 `true` | 是否输出 `meta.json` | `yaml_config.cpp` |
 | `sitemap` | bool | 默认 `true` | 是否输出 `sitemap.xml` | `yaml_config.cpp` |
 | `filename_case` | 字符串 | 默认 `keep` | `uuid` 时文章 `display_name` 生成 UUID 并输出到 `/s/<uuid>.html` 风格短链 | `yaml_config.cpp` |
-| `public_url` | 字符串 | 可选 | 站点对外访问地址，自动拆解为下方三项；配置为空时回退读取环境变量 `CAMUS_PUBLIC_URL`；`-W` 监听模式下忽略（按空处理） | `yaml_config.cpp` `parse_public_url()` |
+| `public_url` | 字符串 | 可选 | 站点对外访问地址，自动拆解为下方三项；可由 `CAMUS_PUBLIC_URL` 注入（优先级高于配置文件）；`-W` 监听模式下忽略（按空处理） | `yaml_config.cpp` `parse_public_url()` |
 | `protocol` | 字符串（只读派生） | 默认 `https://` | `public_url` 的协议部分，含 `://` | 同上 |
 | `domain_name` | 字符串（只读派生） | 空 | `public_url` 的域名部分（含端口，去除空格） | 同上 |
 | `path_prefix` | 字符串（只读派生） | 空 | `public_url` 的路径部分，以 `/` 开头且不带尾斜杠 | 同上 |
@@ -58,7 +59,7 @@
 
 `public_url_conf::full_prefix()` = `protocol + domain_name + path_prefix`，用于绝对链接与 sitemap。
 
-`public_url` 的取值优先级：配置文件非空值 > 环境变量 `CAMUS_PUBLIC_URL` > 空。环境变量用于 CI 等场景自动注入部署前缀（如 GitHub Pages 项目页 `https://<owner>.github.io/<repo>`），无需修改 `camus.yaml`。
+`public_url` 的取值优先级：环境变量 `CAMUS_PUBLIC_URL` > 配置文件非空值 > 空。环境变量用于 CI 等场景自动注入部署前缀（如 GitHub Pages 项目页 `https://<owner>.github.io/<repo>`），无需修改 `camus.yaml`。
 
 `-W` 监听模式由本地服务访问，`public_url` 与 `cdn_url` 在解析后被清空（`path_prefix` 随之为空），构建产物使用根相对路径。
 
