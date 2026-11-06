@@ -20,7 +20,7 @@
 
 ## 3.2 解析总则
 
-- 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`theme`、`pdf`、`markdown_options`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。不再接受 `render` 嵌套段；出现时打印 WARN 并忽略其内容。
+- 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`theme`、`pdf`、`markdown`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。不再接受 `render` 嵌套段；出现时打印 WARN 并忽略其内容。
 - `SUMMARY.md` 在目录扫描时跳过，不进入文章树。
 - 字符串值会做 `trim_space`；`SUMMARY.md` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`；`cover_image` 只做 `trim_space`，保留原始路径。
 - 源目录、资源目录与输出目录不再可配置：
@@ -29,7 +29,7 @@
   - HTML 输出固定为 `./dist/html`，PDF 输出固定为 `./dist/pdf`。
 - `html_engine` 固定为 `default`，`markdown_engine` 固定为 `cmark-gfm`，均不从配置读取。
 - 路径在解析后转为绝对路径供内部使用；模板 JSON 中保留解析后的值（见 §3.7）。
-- **环境变量注入**：所有标量配置项都可用环境变量覆盖，变量名为 `CAMUS_` + 配置路径（大写、层级与非法字符转为 `_`），例如 `pdf.page.size` → `CAMUS_PDF_PAGE_SIZE`、`pdf.engine` → `CAMUS_PDF_ENGINE`、`pdf.sort` → `CAMUS_PDF_SORT`、`theme` → `CAMUS_THEME`、`meta` → `CAMUS_META`。环境变量优先于 `camus.yaml` 中的值；即使配置文件中没有该键，也可注入已知标量项（`meta`、`sitemap`、`filename_case`、`public_url`、`cdn_url`、`theme`、`pdf.engine`、`pdf.page.size`、`pdf.page.margin`、`pdf.sort`）。为兼容旧配置，仍接受 `CAMUS_PDF_ENGINE`（对应旧 `pdf_engine`，与 `pdf.engine` 同名）与 `CAMUS_PDF_OPTIONS_PAGE_SIZE` / `CAMUS_PDF_OPTIONS_PAGE_MARGIN`（旧 `pdf_options.page.*`），新键优先。数组 / 列表字段（`markdown_options`、`pdf.build`、`friends`、`build` / `transfer` 及其元素字段）**不支持**注入。`-W` 监听模式仍会清空 `public_url` / `cdn_url`。
+- **环境变量注入**：所有标量配置项都可用环境变量覆盖，变量名为 `CAMUS_` + 配置路径（大写、层级与非法字符转为 `_`），例如 `pdf.page.size` → `CAMUS_PDF_PAGE_SIZE`、`pdf.engine` → `CAMUS_PDF_ENGINE`、`pdf.sort` → `CAMUS_PDF_SORT`、`theme` → `CAMUS_THEME`、`meta` → `CAMUS_META`。环境变量优先于 `camus.yaml` 中的值；即使配置文件中没有该键，也可注入已知标量项（`meta`、`sitemap`、`filename_case`、`public_url`、`cdn_url`、`theme`、`pdf.engine`、`pdf.page.size`、`pdf.page.margin`、`pdf.sort`）。为兼容旧配置，仍接受 `CAMUS_PDF_ENGINE`（对应旧 `pdf_engine`，与 `pdf.engine` 同名）与 `CAMUS_PDF_OPTIONS_PAGE_SIZE` / `CAMUS_PDF_OPTIONS_PAGE_MARGIN`（旧 `pdf_options.page.*`），新键优先。数组 / 列表字段（`markdown`、`pdf.build`、`friends`、`build` / `transfer` 及其元素字段）**不支持**注入。`-W` 监听模式仍会清空 `public_url` / `cdn_url`。
 
 ## 3.3 顶层配置字段
 
@@ -44,7 +44,8 @@
 | `path_prefix` | 字符串（只读派生） | 空 | `public_url` 的路径部分，以 `/` 开头且不带尾斜杠 | 同上 |
 | `cdn_url` | 字符串 | 空 | `with_cdn()` 使用的 CDN 基地址；为空时 `with_cdn(path)` 返回 `with_prefix(path)`（包含 `path_prefix`），末尾多余 `/` 会被去除；`-W` 监听模式下忽略（按空处理） | `yaml_config.cpp` |
 | `theme` | 字符串 | 默认 `default` | 主题目录名 | `yaml_config.cpp` |
-| `markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp` |
+| `markdown` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp` |
+| `markdown_options` | 旧键 | 可选（已弃用） | 兼容旧配置：等价于 `markdown`；存在顶层 `markdown` 时被忽略。加载时输出 WARN 提示迁移 | `yaml_config.cpp` |
 | `pdf` | 对象 | 可选 | PDF 配置：`engine`（字符串）、`build`（字符串数组）、`page`（`size` / `margin`）、`sort`（`file_first` / `dir_first` / `mixed`，默认 `file_first`），见 §3.3.1 | `yaml_config.cpp` |
 | `pdf_engine` / `pdf_options` | 旧键 | 可选（已弃用） | 兼容旧配置：分别等价于 `pdf.engine` 与 `pdf.build` / `pdf.page`；存在顶层 `pdf` 时旧键被忽略。加载时输出 WARN 提示迁移 | `yaml_config.cpp` |
 
@@ -92,9 +93,9 @@
 - 未显式提供 `--headless` 时自动追加；始终追加临时 `--user-data-dir`（构建结束删除），避免污染用户浏览器配置。
 - PDF 中间 HTML 使用 `theme/pdf/page.html` 模板、`theme/pdf/style.css` 样式与 `theme/pdf/fonts.css` 字体样式；字体文件放在站点 `assets/fonts/`，构建时复制到 `dist/pdf/assets/fonts/`。该目录不通过 `camus.yaml` 配置，查找顺序与可用模板变量见 §5.10、§8.3。
 
-### 3.4 markdown_options 映射
+### 3.4 markdown 映射
 
-Markdown 引擎固定为 `cmark-gfm`，顶层 `markdown_options` 始终按本表解析；未知名会被收集用于展示但不产生标志位。`DEFAULT` 对应 `CMARK_OPT_DEFAULT`；Debug/RelWithDebInfo 构建默认追加 `SOURCEPOS`。
+Markdown 引擎固定为 `cmark-gfm`，顶层 `markdown` 始终按本表解析；未知名会被收集用于展示但不产生标志位。`DEFAULT` 对应 `CMARK_OPT_DEFAULT`；Debug/RelWithDebInfo 构建默认追加 `SOURCEPOS`。旧键 `markdown_options` 仍被接受（输出弃用 WARN，存在 `markdown` 时忽略）。
 
 | 配置名 | cmark 标志 |
 |---|---|
@@ -112,7 +113,7 @@ Markdown 引擎固定为 `cmark-gfm`，顶层 `markdown_options` 始终按本表
 | `TABLE_PREFER_STYLE_ATTRIBUTES` | `CMARK_OPT_TABLE_PREFER_STYLE_ATTRIBUTES` |
 | `FULL_INFO_STRING` | `CMARK_OPT_FULL_INFO_STRING` |
 
-顶层配置 `markdown_options` 在模板 JSON 的 `camus.render.options` 会显示为 `"{数值}({名称1,名称2,...})"`（`yaml_config.cpp:225-226`）。
+顶层配置 `markdown` 在模板 JSON 的 `camus.render.options` 会显示为 `"{数值}({名称1,名称2,...})"`（`yaml_config.cpp:225-226`）。
 
 ## 3.5 `transfer`（目录搬运）与 `SUMMARY.md`（目录元信息）
 

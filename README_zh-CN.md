@@ -95,7 +95,7 @@ pdf:
   page:
     size: A4
     margin: 20mm 18mm
-markdown_options:
+markdown:
   - DEFAULT
   - SMART
   - FOOTNOTES
@@ -114,7 +114,7 @@ build:
         target: /intro/Well-known
 ```
 
-所有标量配置项都可用 `CAMUS_<PATH>` 环境变量覆盖（如 `pdf.page.size` → `CAMUS_PDF_PAGE_SIZE`、`theme` → `CAMUS_THEME`）；数组/列表（`markdown_options`、`pdf.build`、`friends`、`build`）不支持注入。
+所有标量配置项都可用 `CAMUS_<PATH>` 环境变量覆盖（如 `pdf.page.size` → `CAMUS_PDF_PAGE_SIZE`、`theme` → `CAMUS_THEME`）；数组/列表（`markdown`、`pdf.build`、`friends`、`build`）不支持注入。
 
 `public_url` 可带协议也可省略：省略时默认 `https://`，末尾多余的 `/` 会被归一化。它用于绝对链接、sitemap 与 PDF 封面信息。
 

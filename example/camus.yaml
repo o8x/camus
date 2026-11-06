@@ -17,7 +17,7 @@ pdf:
     page:                                   # 打印页面尺寸与边距，应用到 @page
         size: A4
         margin: 20mm 18mm
-markdown_options:                           # markdown 引擎参数
+markdown:                                   # markdown 引擎参数
     - DEFAULT                               # 默认选项，采用安全模式（过滤原始HTML和危险链接）
     - VALIDATE_UTF8                         # 解析前验证 UTF-8 编码，将非法序列替换为替换字符 U+FFFD
     - SMART                                 # 智能排版：将直引号转为弯引号，---转为长破折号，--转为短破折号

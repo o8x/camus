@@ -386,6 +386,9 @@ namespace camus::config
 			}
 		};
 
+		const YAML::Node markdown_node = root["markdown"];
+		const bool has_markdown_config = markdown_node && !markdown_node.IsNull();
+
 		const YAML::Node pdf_node = root["pdf"];
 		const bool has_pdf_config = pdf_node && !pdf_node.IsNull();
 		if (has_pdf_config) {
@@ -400,7 +403,7 @@ namespace camus::config
 			const auto key = strings::trim_space(it.first.as<std::string>());
 
 			if (key == "render") {
-				logging::warn("config key 'render' is no longer supported, move theme/pdf/markdown_options to top level");
+				logging::warn("config key 'render' is no longer supported, move theme/pdf/markdown to top level");
 				continue;
 			}
 
@@ -461,7 +464,16 @@ namespace camus::config
 				continue;
 			}
 
-			if (key == "markdown_options") {
+			if (key == "markdown" || key == "markdown_options") {
+				if (key == "markdown_options") {
+					if (has_markdown_config) {
+						logging::warn("config key 'markdown_options' ignored because 'markdown' is set");
+						continue;
+					}
+
+					logging::warn("config key 'markdown_options' is deprecated, use 'markdown'");
+				}
+
 				if (it.second && it.second.IsSequence()) {
 					for (const auto &opt : it.second) {
 						const auto name = opt.as<std::string>();
