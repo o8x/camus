@@ -54,7 +54,7 @@ mkdir my-site && cd my-site
 | `camus --new <dir>` | 创建站点目录、安装示例文件并构建 |
 | `camus --repo [url]` | 执行 `git init`；提供地址时设置 `origin` |
 | `camus --new <dir> --repo <url>` | 创建、安装、初始化 git 后构建 |
-| `camus -c` | 把最小可编辑资源（`assets/css/style.css`、`assets/js/onload.js`）复制到 `./.camus` |
+| `camus -c` | 把最小可编辑资源（`assets/css/style.css`、`assets/js/onload.js`、`assets/fonts/`）复制到 `./.camus` |
 | `camus -c --full` | 把完整内置资源树复制到 `./.camus` |
 | `camus -c --theme` | 只把整个 `theme/` 复制到 `./.camus/theme` |
 | `camus -c --theme <name>` | 只把 `theme/<name>/` 复制到 `./.camus/theme/<name>` |

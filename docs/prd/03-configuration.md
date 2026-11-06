@@ -9,7 +9,8 @@
 | `camus.yaml` | 运行时当前工作目录 | 主配置 | 是 |
 | `SUMMARY.md` | 源目录及任意子目录 | 目录页元信息（`title`/`subtitle`/`description`/`cover_image`），不参与文章渲染 | 是 |
 | `theme/{name}/*.html` | 工作目录 | 本地主题覆盖 | 是 |
-| `theme/pdf/{page.html,style.css,fonts.css,fonts/}` | 工作目录 | 本地 PDF 模板/样式/字体覆盖 | 是 |
+| `theme/pdf/{page.html,style.css,fonts.css}` | 工作目录 | 本地 PDF 模板/样式覆盖 | 是 |
+| `assets/fonts/` | 工作目录 | 站点与 PDF 共用的字体目录 | 是 |
 | `.camus/` | 工作目录 | `-c` 复制的本地主题、PDF 模板、资源与示例模板 | 是 |
 | `<数据目录>/` | macOS `~/Library/Application Support/Camus`；Linux `/var/lib/camus` | 默认主题、静态资源与示例模板（由安装包写入） | 是 |
 
@@ -80,7 +81,7 @@
 - 兼容旧写法：`pdf_options` 直接写成字符串数组时，等价于把这些项放入 `pdf_options.build`。
 - `pdf_options.page.size` 与 `pdf_options.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加到打印样式末尾，作用于未命名页；默认 `A4` / `20mm 18mm`。命名页（`cover` / `front`）仍以 `theme/pdf/style.css` 中的定义为准。取值同时作为 `pdf.page.size` / `pdf.page.margin` 提供给模板（见 §5.10）。
 - 未显式提供 `--headless` 时自动追加；始终追加临时 `--user-data-dir`（构建结束删除），避免污染用户浏览器配置。
-- PDF 中间 HTML 使用 `theme/pdf/page.html` 模板、`theme/pdf/style.css` 样式与 `theme/pdf/fonts.css` 字体样式；自定义字体放在 `theme/pdf/fonts/`。该目录不通过 `camus.yaml` 配置，查找顺序与可用模板变量见 §5.10、§8.3。
+- PDF 中间 HTML 使用 `theme/pdf/page.html` 模板、`theme/pdf/style.css` 样式与 `theme/pdf/fonts.css` 字体样式；字体文件放在站点 `assets/fonts/`，构建时复制到 `dist/pdf/assets/fonts/`。该目录不通过 `camus.yaml` 配置，查找顺序与可用模板变量见 §5.10、§8.3。
 
 ### 3.4 markdown_options 映射
 

@@ -3,12 +3,12 @@ body {
 }
 
 /*
- * 自定义字体示例：把字体文件放到 theme/pdf/fonts/，取消下面的注释并按需修改字体名与文件名。
- * 字体文件会随 PDF 构建复制到 dist/pdf/fonts/，因此 url() 使用相对 dist/pdf/index.html 的路径。
+ * 自定义字体示例：把字体文件放到 assets/fonts/，取消下面的注释并按需修改字体名与文件名。
+ * 站点资源 assets/fonts 会随 PDF 构建复制到 dist/pdf/assets/fonts/，因此 url() 使用相对 dist/pdf/index.html 的路径。
  *
  * @font-face {
  *     font-family: "Camus Custom";
- *     src: url("fonts/YourFont.ttf") format("truetype");
+ *     src: url("assets/fonts/YourFont.ttf") format("truetype");
  *     font-weight: 400;
  *     font-style: normal;
  * }

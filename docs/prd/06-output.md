@@ -41,9 +41,8 @@ dist/
     ├── index.html                  # PDF 中间 HTML
     ├── index.pdf                   # 最终 PDF（可由 pdf_options 自定义路径）
     ├── assets.css                  # 站点 css/style.css 存在时复制（不覆盖 PDF 主题样式）
-    ├── cover.<ext>                 # cover_image 有效时复制为封面（保留原扩展名）
-    └── fonts/                      # theme/pdf/fonts/ 存在时复制
-        └── <字体文件>
+    ├── assets/fonts/               # 站点 assets/fonts 复制到 PDF（fonts.css 以 assets/fonts/... 引用）
+    └── cover.<ext>                 # cover_image 有效时复制为封面（保留原扩展名）
 ```
 
 | 产物 | 触发条件 | 代码位置 |
@@ -57,7 +56,7 @@ dist/
 | 静态资源 | 数据目录 `assets/` 或本地 `./assets` 非空 | `writer.cpp` `emit_assets()` |
 | `index.md` / `index.pdf` / `index.html`（均位于 `dist/pdf`） | `pdf_engine` 非空、不为 `disable` 且引擎可用 | `writer.cpp` `emit_pdf()` |
 | `dist/pdf/assets.css` | 站点输出中存在 `css/style.css` | `writer.cpp` `copy_pdf_asset_style()` |
-| `dist/pdf/fonts/` | `theme/pdf/fonts/` 存在 | `writer.cpp` `copy_pdf_theme_fonts()` |
+| `dist/pdf/assets/fonts/` | 站点输出中存在 `fonts/`（来自 `assets/fonts/`） | `writer.cpp` `copy_pdf_asset_fonts()` |
 
 ## 6.3 文章输出
 
@@ -194,7 +193,7 @@ flowchart TD
     F --> CV[解析根 SUMMARY.md 的 cover_image, 复制为 dist/pdf/cover.<ext>]
     CV --> CA[复制 dist/html/css/style.css -> dist/pdf/assets.css]
     CA --> G[读取 theme/pdf/page.html / style.css / fonts.css, 用 inja 渲染完整文档]
-    G --> H[复制 theme/pdf/fonts -> dist/pdf/fonts, 写 dist/pdf/index.html（内联样式与字体样式）]
+    G --> H[复制 dist/html/fonts -> dist/pdf/assets/fonts, 写 dist/pdf/index.html（内联样式与字体样式）]
     H --> I[调用浏览器 --headless --print-to-pdf=<解析后的输出路径>]
     I --> J{退出码为 0 且 PDF 非空?}
     J -->|否| W2[WARN 并跳过]
@@ -207,7 +206,7 @@ flowchart TD
 ```
 
 - 合并文档以 `# {site.title}` 开头，每篇文章为 `## {display_name}` + 正文，文章间用 `---` 分隔。
-- PDF 中间 HTML 由 `theme/pdf/page.html`（inja）渲染，打印样式来自 `theme/pdf/style.css`，字体样式来自 `theme/pdf/fonts.css`；自定义字体放在 `theme/pdf/fonts/`，构建时复制到 `dist/pdf/fonts/`。这些资源均可被工作目录 `theme/pdf/`、`.camus/theme/pdf/` 或平台数据目录覆盖（详见 §5.10）。
+- PDF 中间 HTML 由 `theme/pdf/page.html`（inja）渲染，打印样式来自 `theme/pdf/style.css`，字体样式来自 `theme/pdf/fonts.css`；字体文件使用站点 `assets/fonts/`，构建时复制到 `dist/pdf/assets/fonts/`，`fonts.css` 以 `assets/fonts/<file>` 引用。PDF 模板/样式可被工作目录 `theme/pdf/`、`.camus/theme/pdf/` 或平台数据目录覆盖（详见 §5.10）。
 - `pdf_options.page.size` / `pdf_options.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加在打印样式末尾，覆盖未命名页的尺寸与边距；默认 `A4` / `20mm 18mm`。`@page cover` 的 0 边距等命名页规则不受影响。
 - HTML 站点的 `assets/` 会复制并渲染到站点输出目录（如 `dist/html/`）；PDF 阶段再单独把 `dist/html/css/style.css` 复制为 `dist/pdf/assets.css` 并以 `<link>` 引用，PDF 主题样式仍内联在 `<style>` 中且位于该链接之后，因此不会被覆盖或反向压制。
 - 默认模板在正文前依次输出三个独立页面，各自通过 `page-break-after: always` 强制分页：
@@ -225,7 +224,7 @@ flowchart TD
 - 程序写入模板的站点字段（标题、副标题、描述、域名、目录标题/标签）均做 HTML 转义（`html_escape`）；文章正文与引导页为已渲染 HTML，原样插入。
 - 文章正文使用 Front Matter 解析后的内容；`hidden` 文章不参与，`hidden_in_toc` 参与。
 - PDF 输出路径默认 `dist/pdf/index.pdf`；`--print-to-pdf` 中可用 `{{dest_dir}}` 占位符自定义（占位符代表 `dist/pdf`），如 `--print-to-pdf={{dest_dir}}/docs/book.pdf`（相对路径按 `dist/pdf` 解析）。
-- PDF 中间产物 `index.md`、`index.html` 与最终 `index.pdf` 均位于 `dist/pdf`，与 HTML 站点目录分离；存在自定义字体时 `theme/pdf/fonts/` 会复制为 `dist/pdf/fonts/`。
+- PDF 中间产物 `index.md`、`index.html` 与最终 `index.pdf` 均位于 `dist/pdf`，与 HTML 站点目录分离；站点字体 `assets/fonts/` 会复制为 `dist/pdf/assets/fonts/`。
 - 浏览器的 stderr（含 macOS `CVDisplayLinkCreateWithCGDisplay failed` 等噪声日志）不直接输出到终端，而是重定向到临时日志 `camus-pdf-<pid>.log`（位于系统临时目录）；构建成功且两遍打印均正常时删除该文件，命令失败或未产出 PDF 时保留，并在告警中给出 `log=<绝对路径>` 便于排查。
 - PDF 生成成功后以 **info** 级别输出 `pdf generated dest=<绝对路径>`，提示产物位置（浏览器自身日志仍按上述规则隐藏）。
 - 浏览器缺失、命令失败或未产出 PDF 只告警，不影响 HTML 站点构建结果与退出码；`theme/pdf` 模板/样式缺失属配置错误，会以致命错误退出（退出码 127）。

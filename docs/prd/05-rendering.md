@@ -151,7 +151,7 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 | `theme/pdf/page.html` | `CAMUS_PDF_TEMPLATE_NAME` | 完整 PDF 中间 HTML 文档模板（inja） |
 | `theme/pdf/style.css` | `CAMUS_PDF_STYLE_NAME` | 打印样式，由模板通过 `{{ pdf.style }}` 内联到 `<style>` |
 | `theme/pdf/fonts.css` | `CAMUS_PDF_FONTS_NAME` | 字体样式（`@font-face` 与 `body` 的 `font-family`），通过 `{{ pdf.fonts }}` 内联 |
-| `theme/pdf/fonts/` | `CAMUS_PDF_FONTS_DIR` | 自定义字体文件目录；构建时整体复制到 `dist/pdf/fonts/` |
+| `assets/fonts/` | `CAMUS_PDF_FONTS_DIR` | 站点与 PDF 共用的字体目录；构建时复制到 `dist/pdf/assets/fonts/`，供 `fonts.css` 以 `assets/fonts/...` 引用 |
 
 加载顺序（`writer::emit_pdf()` → `read_pdf_theme_file()`，`writer.cpp`）：
 
@@ -184,9 +184,9 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 
 - `style.css` 与 `fonts.css` 先以配置 JSON 单独渲染（可使用 `{{ build.version }}`、`{{ site.title }}` 等配置变量），再分别作为 `pdf.style` / `pdf.fonts` 字符串插入 `page.html`；`page.html` 自身以「配置 JSON + `pdf` 对象」渲染。插入的样式内容不会被二次解析。第二遍打印前会再以更新后的 `pdf_page_offset` 重新渲染一次 `pdf.style`。
 - 站点资源中的 `assets/css/style.css`（构建后位于 `dist/html/css/style.css`）会在 PDF 阶段复制为 `dist/pdf/assets.css`，由默认模板以 `<link>` 引在 PDF 内联样式之前，因此不会覆盖 `theme/pdf/style.css`（PDF 主题规则在后、优先级更高）；文件不存在时 `pdf.asset_style` 为假、不输出该 `<link>`。
-- `body` 的字体定义默认位于 `fonts.css`，`style.css` 只保留颜色、行高等打印样式。`fonts.css` 中的自定义字体示例默认被注释：将 ttf 放入 `theme/pdf/fonts/`，取消 `@font-face` 与 `body` 覆盖注释即可启用。
-- `theme/pdf/fonts/` 存在时会在写 `dist/pdf/index.html` 前递归复制到 `dist/pdf/fonts/`，因此 `url("fonts/<file>.ttf")` 相对 `dist/pdf/index.html` 可正常加载；该目录缺失时跳过复制。
-- 默认模板的封面/扉页/目录/文章分页样式保持一致，其中封面为整页满铺图片（来源为根 `SUMMARY.md` 的 `cover_image`）、扉页字号较封面缩小、目录按真实目录树多级缩进；用户可整体替换 `page.html`，或只覆盖 `style.css` / `fonts.css` / `fonts/`。
+- `body` 的字体定义默认位于 `fonts.css`，`style.css` 只保留颜色、行高等打印样式。`fonts.css` 中的自定义字体示例默认被注释：将字体文件放入 `assets/fonts/`，取消 `@font-face` 与 `body` 覆盖注释即可启用。
+- 站点资源 `assets/fonts/`（构建后位于 `dist/html/fonts/`）会在写 `dist/pdf/index.html` 前递归复制到 `dist/pdf/assets/fonts/`，因此 `url("assets/fonts/<file>.ttf")` 相对 `dist/pdf/index.html` 可正常加载；目录缺失时跳过复制。
+- 默认模板的封面/扉页/目录/文章分页样式保持一致，其中封面为整页满铺图片（来源为根 `SUMMARY.md` 的 `cover_image`）、扉页字号较封面缩小、目录按真实目录树多级缩进；用户可整体替换 `page.html`，或只覆盖 `style.css` / `fonts.css`（字体文件放在站点 `assets/fonts/`）。
 - 输出 `dist/pdf/index.html` 是模板渲染结果；`dist/pdf/index.md` 仍由程序生成，不受模板影响。
 - 页面写入成功与否只影响 PDF 阶段；`page.html`/`style.css` 缺失属于配置错误，会以致命错误退出（与普通主题缺失一致）。
 - 模板/样式/字体源文件持久于工作目录 `theme/pdf`、`.camus` 或数据目录；生成的 `dist/pdf` 产物可随时重建。

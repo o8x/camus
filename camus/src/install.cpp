@@ -77,6 +77,19 @@ This directory is excluded from builds.
 
 			std::filesystem::copy_file(from, to, std::filesystem::copy_options::overwrite_existing);
 		}
+
+		const std::filesystem::path source_fonts = source_assets / "fonts";
+		const std::filesystem::path target_fonts = target_assets / "fonts";
+		std::error_code ec;
+		if (!std::filesystem::is_directory(source_fonts, ec) || ec) {
+			return;
+		}
+
+		std::filesystem::create_directories(target_fonts);
+		std::filesystem::copy_options options = std::filesystem::copy_options::recursive;
+		options |= force ? std::filesystem::copy_options::overwrite_existing
+						 : std::filesystem::copy_options::skip_existing;
+		std::filesystem::copy(source_fonts, target_fonts, options);
 	}
 
 	std::filesystem::path template_source_dir()
@@ -205,6 +218,9 @@ namespace camus
 			options |= force ? std::filesystem::copy_options::overwrite_existing
 							 : std::filesystem::copy_options::skip_existing;
 			std::filesystem::copy(source, target, options);
+
+			// --theme 同时复制最小资源骨架（css/style.css、js/onload.js、fonts/）。
+			copy_minimal_assets(source_root, workdir / paths::local_data_dir(), force);
 		} catch (const std::exception &e) {
 			logging::error("theme copy failed error={}", e.what());
 			return 1;

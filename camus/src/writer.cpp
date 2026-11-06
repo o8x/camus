@@ -183,23 +183,26 @@ namespace
 		return filesystem::read_file(path);
 	}
 
-	void copy_pdf_theme_fonts(const std::filesystem::path &dest_dir)
+	// PDF 复用站点 assets/fonts：站点构建后已提升到 dest_dir/fonts，
+	// 这里复制为 pdf_dir/assets/fonts，供 theme/pdf/fonts.css 以 assets/fonts/... 引用。
+	void copy_pdf_asset_fonts(const std::filesystem::path &dest_dir, const std::filesystem::path &pdf_dir)
 	{
-		const std::filesystem::path source = find_pdf_theme_path(CAMUS_PDF_FONTS_DIR);
+		const std::filesystem::path source = dest_dir / CAMUS_PDF_FONTS_DIR;
 		std::error_code ec;
-		if (source.empty() || !std::filesystem::is_directory(source, ec) || ec) {
-			logging::debug("pdf theme fonts not found, skip copy");
+		if (!std::filesystem::is_directory(source, ec) || ec) {
+			logging::debug("pdf asset fonts not found, skip copy path={}", source.string());
 			return;
 		}
 
-		const std::filesystem::path target = dest_dir / CAMUS_PDF_FONTS_DIR;
+		const std::filesystem::path target = pdf_dir / "assets" / CAMUS_PDF_FONTS_DIR;
+		std::filesystem::create_directories(target.parent_path());
 		std::filesystem::copy(
 			source,
 			target,
 			std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
 		);
 
-		logging::debug("copy pdf theme fonts from={} to={}", source.string(), target.string());
+		logging::debug("copy pdf asset fonts from={} to={}", source.string(), target.string());
 	}
 
 	// 把站点 assets/css/style.css 复制为 PDF 目录下的 assets.css，避免与 PDF 主题样式同名冲突。
@@ -1132,7 +1135,7 @@ namespace camus
 
 		std::filesystem::create_directories(pdf_dir);
 		filesystem::write_file(markdown_path, markdown);
-		copy_pdf_theme_fonts(pdf_dir);
+		copy_pdf_asset_fonts(conf_.camus().dest_dir(), pdf_dir);
 		pdf["asset_style"] = copy_pdf_asset_style(conf_.camus().dest_dir(), pdf_dir);
 
 		if (const std::string cover_image = strings::trim_space(conf_.camus().site.cover_image);

@@ -54,7 +54,7 @@ mkdir my-site && cd my-site
 | `camus --new <dir>` | Create a site directory, install example files, then build |
 | `camus --repo [url]` | Run `git init`; set `origin` when a URL is provided |
 | `camus --new <dir> --repo <url>` | Create, install, initialize git and then build |
-| `camus -c` | Copy minimal editable resources (`assets/css/style.css`, `assets/js/onload.js`) into `./.camus` |
+| `camus -c` | Copy minimal editable resources (`assets/css/style.css`, `assets/js/onload.js`, `assets/fonts/`) into `./.camus` |
 | `camus -c --full` | Copy the complete bundled resource tree into `./.camus` |
 | `camus -c --theme` | Copy the whole `theme/` directory into `./.camus/theme` |
 | `camus -c --theme <name>` | Copy only `theme/<name>/` into `./.camus/theme/<name>` |

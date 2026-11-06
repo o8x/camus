@@ -25,10 +25,10 @@
 <数据目录>/
 ├── theme/{default,document,pixel,terminal}/{home,page,stats,friends}.html
 ├── theme/pdf/{page.html,style.css,fonts.css}   # PDF 模板、打印样式与字体样式
-├── theme/pdf/fonts/                    # 自定义 PDF 字体文件（构建时复制到 dist/pdf/fonts）
 ├── assets/                    # 默认静态资源（css/js/fonts/imgs/robots.txt 等）
 │   ├── css/style.css          # 公共样式入口，默认空文件
-│   └── js/onload.js           # 公共脚本入口，默认空文件
+│   ├── js/onload.js           # 公共脚本入口，默认空文件
+│   └── fonts/                 # 站点与 PDF 共用的字体文件
 ├── posts/                     # 示例文章
 │   ├── SUMMARY.md              # 示例站点与目录元信息（可配置 PDF cover_image）
 │   └── private/                # 不参与构建的私有内容目录（安装时自动创建，含 README.md）
@@ -68,14 +68,14 @@ flowchart TD
 
 `copy_resources()` 根据 `--full` 选择复制范围：
 
-- 默认（最小）：只创建 `<workdir>/.camus/assets/css` 与 `.camus/assets/js`，并从数据目录复制 `css/style.css`、`js/onload.js`；目标文件已存在且未指定 `-f` 时跳过。
+- 默认（最小）：只创建 `<workdir>/.camus/assets/css`、`.camus/assets/js` 与 `.camus/assets/fonts`，并从数据目录复制 `css/style.css`、`js/onload.js` 及整个 `fonts/` 目录；目标文件已存在且未指定 `-f` 时跳过。
 - `--full`：把 `source_data_dir()` 的全部内容复制到 `<workdir>/.camus`。
 
 ```mermaid
 flowchart TD
     A[解析 source_data_dir] -->|无资源| X[报错, 返回 1]
     A -->|找到| F{--full?}
-    F -->|否| M[创建 .camus/assets/css、js<br/>复制 style.css、onload.js]
+    F -->|否| M[创建 .camus/assets/css、js、fonts<br/>复制 style.css、onload.js、fonts/]
     M --> S[补齐工作目录 posts/camus.yaml/.gitignore<br/>确保 posts/private]
     F -->|是| B{.camus 已存在且非空?}
     B -->|否| D[创建 .camus 并复制全部文件]
@@ -87,7 +87,7 @@ flowchart TD
     S --> OK[返回 0, 继续构建]
 ```
 
-- 最小复制可重复执行：`-f` 覆盖已有的 `style.css` / `onload.js`，未指定时保留现有文件。
+- 最小复制可重复执行：`-f` 覆盖已有的 `style.css` / `onload.js` 与 `fonts/` 中同名文件，未指定时保留现有文件。
 - `--full` 下 `.camus` 已存在且非空、未指定 `-f`：打印 WARN，仅补齐工作目录根部示例文件，不覆盖 `.camus`。
 - `--full -f`：先删除 `.camus`（受 §6.1 的 >200 文件保护），再复制。
 - 复制完成后，对 `posts`、`camus.yaml`、`.gitignore`：仅当工作目录根部不存在同名路径时才补齐；`posts/private/` 始终确保存在。
@@ -96,11 +96,11 @@ flowchart TD
 
 ### 8.2.3 `-c --theme [name]`（只复制主题）
 
-`copy_theme()` 只处理 `source_data_dir()/theme`，目标为 `<workdir>/.camus/theme`：
+`copy_theme()` 复制 `source_data_dir()/theme` 这个范围，并同时复制最小资源骨架：
 
 - `-c --theme`：复制整个 `theme/`（含 `theme/pdf/`）。
 - `-c --theme pixel`：只复制 `theme/pixel/` 到 `.camus/theme/pixel`。
-- 不复制 `assets/`，不补齐工作目录根部的 `posts` / `camus.yaml` / `.gitignore`，也不受 `--full` 影响。
+- 同时复制最小资源：`assets/css/style.css`、`assets/js/onload.js` 与整个 `assets/fonts/`；不复制其他 assets，不补齐工作目录根部的 `posts` / `camus.yaml` / `.gitignore`，也不受 `--full` 影响。
 - 不加 `-f` 时跳过目标中已存在的文件（可重复执行补齐缺失主题）；加 `-f` 时覆盖同名文件。
 - `--theme` 未搭配 `-c` 时打印错误并返回 1；主题名非法（绝对路径或含 `.` / `..`）时返回 1。
 
@@ -110,8 +110,9 @@ flowchart TD
     A -->|找到| T{name 为空?}
     T -->|是| C[复制整个 theme -> .camus/theme]
     T -->|否| O[校验主题名并复制 theme/name -> .camus/theme/name]
-    C --> S{--force?}
-    O --> S
+    C --> AS[复制最小 assets: style.css/onload.js/fonts]
+    O --> AS
+    AS --> S{--force?}
     S -->|是| W[覆盖同名文件]
     S -->|否| K[跳过已存在文件]
     W --> OK[返回 0, 继续构建]
@@ -128,12 +129,12 @@ flowchart TD
 2. `paths::find_resource("theme/{theme_name}/{type}.html")`：先 `.camus/theme/...`，再数据目录。
 3. 均不存在时 `logging::fatal("read theme content failed name=...")`，退出 127。
 
-PDF 模板、样式与字体（`writer.cpp` 的 `read_pdf_theme_file()` / `copy_pdf_theme_fonts()`）：
+PDF 模板、样式与字体（`writer.cpp` 的 `read_pdf_theme_file()` / `copy_pdf_asset_fonts()`）：
 
 1. 工作目录 `theme/pdf/{page.html,style.css,fonts.css}`（显式本地覆盖，可只覆盖单个文件）。
 2. `paths::find_resource("theme/pdf/<file>")`：先 `.camus/theme/pdf/...`，再数据目录。
 3. `page.html` / `style.css` 均不存在时 `logging::fatal("read pdf theme content failed name=...")`，退出 127；`fonts.css` 可选。
-4. `theme/pdf/fonts/` 按同一顺序查找，存在时递归复制到 `dist/pdf/fonts/`。
+4. 字体不放在 `theme/pdf/`：使用站点 `assets/fonts/`，构建后由 `copy_pdf_asset_fonts()` 复制到 `dist/pdf/assets/fonts/`，`fonts.css` 以 `assets/fonts/<file>` 引用。
 
 静态资源（`writer::emit_assets()`）：
 
@@ -153,7 +154,7 @@ PDF 模板、样式与字体（`writer.cpp` 的 `read_pdf_theme_file()` / `copy_
 | macOS（productbuild，当前用户域） | `Library/Application Support/Camus` → `~/Library/Application Support/Camus` |
 | macOS（productbuild，系统域，如 `installer -target /`） | `Library/Application Support/Camus` → `/Library/Application Support/Camus` |
 
-- 安装 `example/theme` 的整个目录，因此包含 `theme/pdf/{page.html,style.css,fonts.css}` 与 `theme/pdf/fonts/`。
+- 安装 `example/theme` 的整个目录，因此包含 `theme/pdf/{page.html,style.css,fonts.css}` 与 `example/assets`（含 `fonts/`）。
 - 可执行文件仍安装到 `/usr/local/bin/camus`。
 - macOS 通过 `CPACK_PRODUCTBUILD_DOMAINS` 同时启用用户域与系统域；用户域安装到 `~/Library/...`，系统域安装到 `/Library/...`，运行期按 §8.1 的顺序查找。
 
