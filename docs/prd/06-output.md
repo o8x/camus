@@ -207,7 +207,7 @@ flowchart TD
   |---|---|---|
   | 封面页 | `pdf.cover` | 仅输出站点标题（为空时回退 `Camus`）与 `site.subtitle`；不输出 `eyebrow` / `description` / `meta` |
   | 扉页 | `pdf.title_page`、`pdf.meta` | 站点标题、副标题、站点描述（`site.description`）、生成日期（`Generated`）、站点域名（`Site`，`public_url.domain_name`）、程序版本（`Version`）；不输出文章数 |
-  | 目录页 | `pdf.toc` | 标题 `Contents` + 按先序排列的文章序号、显示名、标签、正文起始页码（与页脚一致），条目链接到 `#pdf-article-{n}` |
+  | 目录页 | `pdf.toc` | 标题 `Contents` + 按真实目录树多级缩进的分组标题（目录名）与文章显示名；不显示序号与标签；文章条目显示正文起始页码（与页脚一致）并链接到 `#pdf-article-{n}` |
 
 - 页码从正文开始：封面、扉页、目录使用命名页 `page: front`，不输出页脚页码；`#pdf-intro` 引导页为正文第 1 页。`theme/pdf/style.css` 使用 `html { counter-reset: page {{ pdf_page_offset }}; }` 整体偏移页计数，并由 `@page { @bottom-center { content: counter(page); } }` 在正文页底部居中输出页码；`--no-pdf-header-footer` 关闭浏览器自带页眉页脚，不影响该自定义页码。
 - 目录页码与页脚页码同源（均为正文页序）：第一遍 PDF 生成后由 `pdf::read_anchor_pages()` 解析 PDF 命名目标（`/Dests` 与页树 `/Kids`），以 `pdf-intro` 的物理页计算 `pdf_page_offset = 1 - intro_page`，再回填 `pdf.toc[].page = physical_page + pdf_page_offset`，随后重新渲染样式与 HTML 并再次打印。默认模板在 `<body>` 顶部放置一个隐藏的 `#pdf-intro` 链接以生成该命名目标；解析失败时保留第一遍产物，目录仍可点击跳转。目录页码列使用固定宽度占位，两次排版不会互相影响。

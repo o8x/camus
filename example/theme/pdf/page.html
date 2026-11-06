@@ -29,9 +29,10 @@
 </section>
 <section class="pdf-toc">
 <h2 class="pdf-toc__heading">Contents</h2>
-<ol class="pdf-toc__list">
-{% for item in pdf.toc %}<li class="pdf-toc__item"><a class="pdf-toc__link" href="#{{ item.anchor }}"><span class="pdf-toc__num">{{ item.number }}</span><span class="pdf-toc__title">{{ item.title }}</span><span class="pdf-toc__tags">{{ item.tags }}</span><span class="pdf-toc__page">{{ item.page }}</span></a></li>
-{% endfor %}</ol>
+<ul class="pdf-toc__list">
+{% for item in pdf.toc %}{% if item.is_dir %}<li class="pdf-toc__item pdf-toc__item--section" style="padding-left: calc({{ item.depth }} * 1.4em)"><span class="pdf-toc__section">{{ item.title }}</span></li>
+{% else %}<li class="pdf-toc__item" style="padding-left: calc({{ item.depth }} * 1.4em)"><a class="pdf-toc__link" href="#{{ item.anchor }}"><span class="pdf-toc__title">{{ item.title }}</span><span class="pdf-toc__page">{{ item.page }}</span></a></li>
+{% endif %}{% endfor %}</ul>
 </section>
 <main>
 <section id="pdf-intro" class="pdf-intro">

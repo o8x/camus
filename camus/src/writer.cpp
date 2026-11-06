@@ -967,52 +967,82 @@ namespace camus
 		nlohmann::json toc_items = nlohmann::json::array();
 		nlohmann::json article_items = nlohmann::json::array();
 
+		// 目录按真实目录树多级输出：目录节点作为分组标题，文章节点作为可跳转条目。
+		// 根节点（depth 0）只是容器，depth - 1 为模板中的显示层级。
 		int index = 0;
-		for (const auto &article : articles) {
-			++index;
-
-			const std::string label = article.node->property.display_name;
-			markdown += std::format("\n\n---\n\n## {}\n\n{}", label, article.markdown);
-
-			std::string tags;
-			for (const auto &tag : article.node->property.tags) {
-				if (!tags.empty()) {
-					tags += " · ";
-				}
-
-				tags += html_escape(tag);
+		std::function<void(const catalog::catalog_node &, int)> append_node;
+		append_node = [&](const catalog::catalog_node &node, const int depth) {
+			if (depth > 0 && node.is_directory()) {
+				toc_items.push_back({
+					{"anchor", ""},
+					{"index", 0},
+					{"number", ""},
+					{"title", html_escape(node.property.display_name)},
+					{"tags", ""},
+					{"page", ""},
+					{"depth", depth - 1},
+					{"is_dir", true},
+				});
 			}
 
-			const std::string anchor = std::format("pdf-article-{}", index);
-			const std::string number = std::format("{:02}", index);
+			if (!node.is_directory()) {
+				if (node.path.extension() != ".md" || node.property.visibility == catalog::hidden) {
+					return;
+				}
 
-			toc_items.push_back(
-				{
+				++index;
+
+				const std::string label = node.property.display_name;
+				const std::string article_markdown = strings::string_join(node.contents, "\n");
+				markdown += std::format("\n\n---\n\n## {}\n\n{}", label, article_markdown);
+
+				std::string tags;
+				for (const auto &tag : node.property.tags) {
+					if (!tags.empty()) {
+						tags += " · ";
+					}
+
+					tags += html_escape(tag);
+				}
+
+				const std::string anchor = std::format("pdf-article-{}", index);
+				const std::string number = std::format("{:02}", index);
+
+				toc_items.push_back({
 					{"anchor", anchor},
 					{"index", index},
 					{"number", number},
 					{"title", html_escape(label)},
 					{"tags", tags},
 					{"page", ""},
-				}
-			);
+					{"depth", depth - 1},
+					{"is_dir", false},
+				});
 
-			const std::string article_markdown = std::format("## {}\n\n{}", label, article.markdown);
-			article_items.push_back(
-				{
+				const std::string body_markdown = std::format("## {}\n\n{}", label, article_markdown);
+				article_items.push_back({
 					{"anchor", anchor},
 					{"index", index},
 					{"number", number},
 					{"title", html_escape(label)},
 					{"tags", tags},
-					{"content", render::render_markdown(
-						 article_markdown.c_str(),
+					{"content",
+					 render::render_markdown(
+						 body_markdown.c_str(),
 						 conf_.camus().render.markdown_engine,
 						 conf_.camus().render.markdown_options
 					 )},
-				}
-			);
-		}
+				});
+
+				return;
+			}
+
+			for (const auto &child : node.children) {
+				append_node(child, depth + 1);
+			}
+		};
+
+		append_node(catalog_, 0);
 
 		pdf["toc"] = std::move(toc_items);
 		pdf["articles"] = std::move(article_items);

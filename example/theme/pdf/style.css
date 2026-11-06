@@ -56,10 +56,10 @@ hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.5em 0; }
 .pdf-toc__heading { font-size: 1.9rem; margin: 0 0 1.4em; padding-bottom: 0.4em; border-bottom: 2px solid #161616; }
 .pdf-toc__list { list-style: none; margin: 0; padding: 0; }
 .pdf-toc__item { margin: 0; padding: 0; border-bottom: 1px dotted #d0d0d0; }
-.pdf-toc__link { display: flex; align-items: baseline; gap: 1em; padding: 0.55em 0; color: #262626; }
-.pdf-toc__num { flex: none; width: 2.4em; color: #8d8d8d; font-variant-numeric: tabular-nums; }
+.pdf-toc__item--section { border-bottom: none; margin-top: 0.7em; }
+.pdf-toc__section { display: block; padding: 0.35em 0 0.2em; font-weight: 600; color: #161616; page-break-after: avoid; break-after: avoid; }
+.pdf-toc__link { display: flex; align-items: baseline; justify-content: space-between; gap: 1em; padding: 0.5em 0; color: #262626; }
 .pdf-toc__title { flex: 1; }
-.pdf-toc__tags { flex: none; color: #8d8d8d; font-size: 0.82rem; }
 .pdf-toc__page { flex: none; min-width: 3em; text-align: right; color: #525252; font-variant-numeric: tabular-nums; }
 .pdf-intro { page-break-after: always; break-after: page; }
 .pdf-article { page-break-before: always; break-before: page; }
