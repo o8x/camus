@@ -33,7 +33,8 @@
 │   ├── SUMMARY.md              # 示例站点与目录元信息（可配置 PDF cover_image）
 │   └── private/                # 不参与构建的私有内容目录（安装时自动创建，含 README.md）
 ├── camus.yaml                 # 示例配置
-└── .gitignore                 # 示例忽略规则
+├── .gitignore                 # 示例忽略规则
+└── Justfile                   # 示例常用命令
 ```
 
 ## 8.2 安装与复制
@@ -46,11 +47,12 @@
 - `posts/private/`（不存在时也会自动创建，并写入说明用途的 `README.md`）
 - `camus.yaml`
 - `.gitignore`
+- `Justfile`（常用命令脚本）
 
 ```mermaid
 flowchart TD
     A[查找数据目录 camus.yaml] -->|未找到| X[报错, 返回 1]
-    A -->|找到| B[逐个检查 posts/camus.yaml/.gitignore]
+    A -->|找到| B[逐个检查 posts/camus.yaml/.gitignore/Justfile]
     B --> C{工作目录已存在?}
     C -->|是| S[跳过该项]
     C -->|否| D[复制到工作目录]
@@ -76,7 +78,7 @@ flowchart TD
     A[解析 source_data_dir] -->|无资源| X[报错, 返回 1]
     A -->|找到| F{--full?}
     F -->|否| M[创建 <workdir>/assets/css、js、fonts<br/>复制 style.css、onload.js；fonts 为空目录]
-    M --> S[补齐工作目录 posts/camus.yaml/.gitignore<br/>确保 posts/private]
+    M --> S[补齐工作目录 posts/camus.yaml/.gitignore/Justfile<br/>确保 posts/private]
     F -->|是| B{.camus 已存在且非空?}
     B -->|否| D[创建 .camus 并复制全部文件]
     B -->|是且无 -f| W[WARN 已复制, 跳过复制]
@@ -90,7 +92,7 @@ flowchart TD
 - 最小复制可重复执行：`-f` 覆盖已有的 `style.css` / `onload.js`，未指定时保留现有文件；`fonts/` 只确保存在，不写入内置字体，已有内容保留。
 - `--full` 下 `.camus` 已存在且非空、未指定 `-f`：打印 WARN，仅补齐工作目录根部示例文件，不覆盖 `.camus`。
 - `--full -f`：先删除 `.camus`（受 §6.1 的 >200 文件保护），再复制。
-- 复制完成后，对 `posts`、`camus.yaml`、`.gitignore`：仅当工作目录根部不存在同名路径时才补齐；`posts/private/` 始终确保存在。
+- 复制完成后，对 `posts`、`camus.yaml`、`.gitignore`、`Justfile`：仅当工作目录根部不存在同名路径时才补齐；`posts/private/` 始终确保存在。
 - 工作目录不存在时由 `<workdir>/assets` 或 `<workdir>/.camus` 的 `create_directories` 一并创建。
 - 复制结果持久于磁盘；`-c` 成功后不会退出，是否构建由 `--build` 决定（见 §2.4）。
 
@@ -100,7 +102,7 @@ flowchart TD
 
 - `-c --theme`：复制整个 `theme/`（含 `theme/pdf/`）。
 - `-c --theme pixel`：只复制 `theme/pixel/` 到 `<workdir>/theme/pixel`。
-- 同时复制最小资源：`assets/css/style.css`、`assets/js/onload.js`，并创建空 `assets/fonts/`；不复制其他 assets，不补齐工作目录根部的 `posts` / `camus.yaml` / `.gitignore`，也不受 `--full` 影响。
+- 同时复制最小资源：`assets/css/style.css`、`assets/js/onload.js`，并创建空 `assets/fonts/`；不复制其他 assets，不补齐工作目录根部的 `posts` / `camus.yaml` / `.gitignore` / `Justfile`，也不受 `--full` 影响。
 - 不加 `-f` 时跳过目标中已存在的文件（可重复执行补齐缺失主题）；加 `-f` 时覆盖同名文件。
 - `--theme` 未搭配 `-c` 时打印错误并返回 1；主题名非法（绝对路径或含 `.` / `..`）时返回 1。
 
@@ -146,7 +148,7 @@ PDF 模板、样式与字体（`writer.cpp` 的 `read_pdf_theme_file()` / `copy_
 
 ## 8.4 安装位置（CPack）
 
-`camus/CMakeLists.txt` 安装 `example/` 下的 `theme/`、`assets/`、`posts/`（含各目录的 `SUMMARY.md`）、`camus.yaml` 与 `.gitignore`：
+`camus/CMakeLists.txt` 安装 `example/` 下的 `theme/`、`assets/`、`posts/`（含各目录的 `SUMMARY.md`）、`camus.yaml`、`.gitignore` 与 `Justfile`：
 
 | 平台 / 生成器 | 资源安装目标 |
 |---|---|

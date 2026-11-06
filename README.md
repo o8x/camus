@@ -35,7 +35,7 @@ Or create a new site in an empty directory:
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # install example camus.yaml, posts (with SUMMARY.md, plus posts/private/) and .gitignore
+/path/to/camus -i      # install example camus.yaml, posts (with SUMMARY.md, plus posts/private/), .gitignore and Justfile
 /path/to/camus --build # build
 ```
 
@@ -51,7 +51,7 @@ mkdir my-site && cd my-site
 | `camus -W` | Watch for changes and serve locally (implies build) |
 | `camus -D --build` | Dry run: parse and render without writing files |
 | `camus --check` | Validate configuration, assets, PDF settings and run a dry build |
-| `camus -i` | Install example `camus.yaml`, `posts` (with `SUMMARY.md`, plus `posts/private/`) and `.gitignore` |
+| `camus -i` | Install example `camus.yaml`, `posts` (with `SUMMARY.md`, plus `posts/private/`), `.gitignore` and `Justfile` |
 | `camus --new <dir>` | Create a site directory and install example files |
 | `camus --create <path>` | Create an article `.md` under `src/` or `posts/` (missing directories are created; last segment is the file name) |
 | `camus --repo [url]` | Run `git init`; set `origin` when a URL is provided |

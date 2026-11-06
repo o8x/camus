@@ -40,13 +40,13 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 | macOS（回退） | `/Library/Application Support/Camus` | 安装到系统域（如 `installer -target /`）时的位置 |
 | Linux | `/var/lib/camus` | 由 deb 安装包写入 |
 
-目录内容为 `theme/`、`assets/`、`posts/`（含各目录的 `SUMMARY.md`）、`camus.yaml` 与 `.gitignore`。查找规则：
+目录内容为 `theme/`、`assets/`、`posts/`（含各目录的 `SUMMARY.md`）、`camus.yaml`、`.gitignore` 与 `Justfile`。查找规则：
 
 - 主题：工作目录 `theme/{name}/{type}.html` → `.camus/theme/...` → 数据目录。
 - PDF 模板/样式：工作目录 `theme/pdf/{page.html,style.css,fonts.css}` → `.camus/theme/pdf/...` → 数据目录；字体使用站点 `assets/fonts/`。
 - 静态资源：工作目录 `./assets` 优先；否则 `.camus/assets`，再否则数据目录 `assets/`。
 
-构建不再向可执行文件追加模板。`-i` 从数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与自动创建的 `posts/private/`）、`.gitignore` 到工作目录根部。`-c` 默认复制最小资源骨架到工作目录 `assets/`，`-c --full` 复制完整资源到 `.camus`，`-c --theme [name]` 把整个或单个主题复制到 `theme/`，`-f` 覆盖已有资源（详见 §8）。
+构建不再向可执行文件追加模板。`-i` 从数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与自动创建的 `posts/private/`）、`.gitignore`、`Justfile` 到工作目录根部。`-c` 默认复制最小资源骨架到工作目录 `assets/`，`-c --full` 复制完整资源到 `.camus`，`-c --theme [name]` 把整个或单个主题复制到 `theme/`，`-f` 覆盖已有资源（详见 §8）。
 
 ## 1.4 构建流水线
 

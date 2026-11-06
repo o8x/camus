@@ -27,7 +27,7 @@
 `camus/CMakeLists.txt`：
 
 - 静态库 `camus`（`src/*`）+ 可执行文件 `Camus`，输出名为 `camus`，目录 `${CMAKE_BINARY_DIR}/bin`。
-- 安装 `example/` 的 `theme/`（含 `theme/pdf/`）、`assets/`、`posts/`（含各目录的 `SUMMARY.md`）、`camus.yaml` 与 `.gitignore` 到平台数据目录（Linux `var/lib/camus`，macOS `Library/Application Support/Camus`，见 §8.4）。
+- 安装 `example/` 的 `theme/`（含 `theme/pdf/`）、`assets/`、`posts/`（含各目录的 `SUMMARY.md`）、`camus.yaml`、`.gitignore` 与 `Justfile` 到平台数据目录（Linux `var/lib/camus`，macOS `Library/Application Support/Camus`，见 §8.4）。
 - 注册 CTest `build-test-site`：在源码根目录执行 `${CMAKE_BINARY_DIR}/bin/camus -d site`，超时 10 秒。
 - CPack 配置见 §9.5。
 

@@ -17,7 +17,7 @@ camus [选项] [--workdir <目录>]
 | `-h` | `--help` | 无 | 打印帮助并退出（注意退出码为 1） | `main.cpp:90` |
 | `-v` | `--version` | 无 | 打印版本、构建信息与 git hash 后退出 0 | `main.cpp:91` |
 | `-b` | `--build` | 无 | 构建站点；不指定时默认不构建 | `main.cpp` |
-| `-i` | `--install` | 无 | 从平台数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`.gitignore` 到工作目录（已存在的不覆盖）；不触发构建，除非同时指定 `--build` | `main.cpp` |
+| `-i` | `--install` | 无 | 从平台数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`.gitignore`、`Justfile` 到工作目录（已存在的不覆盖）；不触发构建，除非同时指定 `--build` | `main.cpp` |
 | `-c` | `--copy` | 无 | 把精简资源复制到 `<workdir>/assets`（创建 `assets/css`、`assets/js`、空 `assets/fonts` 并复制 `style.css`、`onload.js`）；不触发构建，除非同时指定 `--build` | `main.cpp` |
 |  | `--theme` | 可选值：主题名 | 仅与 `--copy` 搭配：无值时复制整个 `theme/`，有值时只复制 `theme/<name>/` 到 `<workdir>/theme`；同时复制最小 assets（`style.css`、`onload.js`）并创建空 `fonts/`，不补齐示例文件，也不执行 `--full` | `main.cpp` |
 |  | `--full` | 无 | 与 `--copy` 搭配时复制平台数据目录的完整资源树到 `.camus` | `main.cpp` |
@@ -96,11 +96,11 @@ flowchart TD
 要点：
 
 - 只有指定 `--build`、`-W`、`--check` 或 `--open` 时才构建。仅执行安装 / 复制 / 建目录 / 创建文章 / `git init` 时完成后直接返回 0；完全没有操作时打印 usage 并返回 0（不再默认构建）。
-- `--new <dir>` 先把目标解析为「`--workdir` 下的相对路径」或绝对路径并创建，随后等同于同时传入 `--install`：补齐 `camus.yaml`、`posts`（含 `SUMMARY.md`、`posts/private/`）与 `.gitignore`。之后若指定 `--repo` 再初始化仓库；需要构建时另加 `--build`。
+- `--new <dir>` 先把目标解析为「`--workdir` 下的相对路径」或绝对路径并创建，随后等同于同时传入 `--install`：补齐 `camus.yaml`、`posts`（含 `SUMMARY.md`、`posts/private/`）、`.gitignore` 与 `Justfile`。之后若指定 `--repo` 再初始化仓库；需要构建时另加 `--build`。
 - `--create <path>` 在源目录下创建文章：源目录按 `src/` → `posts/` → 默认 `src/` 探测（与构建一致）。路径必须是相对路径且不含 `.` / `..` 段，最后一级为文件名，未以 `.md` 结尾时自动补 `.md`，缺失父目录递归创建；目标文件已存在时打印告警但不覆盖，仍返回 0。
-- `-i` 只补齐工作目录根部的 `posts`（含各目录的 `SUMMARY.md` 与空的 `posts/private/`）、`camus.yaml`、`.gitignore`，同名路径已存在则保持不动；`posts/private/` 每次都会确保存在。
+- `-i` 只补齐工作目录根部的 `posts`（含各目录的 `SUMMARY.md` 与空的 `posts/private/`）、`camus.yaml`、`.gitignore`、`Justfile`，同名路径已存在则保持不动；`posts/private/` 每次都会确保存在。
 - `-c` 默认最小复制：只创建 `<workdir>/assets/css`、`assets/js`、`assets/fonts`，并从数据目录复制 `style.css`、`onload.js`；`fonts/` 只创建空目录（合并查找，无需复制内置字体），随后补齐工作目录根部缺失的示例文件。
-- `-c --full` 复制完整资源（`theme/`、`assets/`、`posts/`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`camus.yaml`、`.gitignore`）到 `.camus`，并补齐工作目录根部缺失的示例文件。
+- `-c --full` 复制完整资源（`theme/`、`assets/`、`posts/`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`camus.yaml`、`.gitignore`、`Justfile`）到 `.camus`，并补齐工作目录根部缺失的示例文件。
 - `-c --theme` 只复制 `theme/` 到 `<workdir>/theme`；`-c --theme pixel` 只复制 `theme/pixel/`；同时复制最小 assets（`style.css`、`onload.js`）并创建空 `fonts/`，不补齐示例文件，且优先于 `--full`。`--theme` 未搭配 `-c` 时打印错误并返回 1。
 - `-f` 仅在 `-c` 时生效：最小复制时覆盖已存在的 `style.css` / `onload.js`；完整复制时先清空 `<workdir>/.camus`（受 §6.1 文件数保护）再重新复制，工作目录已有文件不会被覆盖；`--theme` 时覆盖工作目录 `theme/` 与 `assets/` 中已存在的同名文件，否则跳过。
 - `--repo` 在 `--workdir` 执行 `git -C <workdir> init -q`；提供远程地址时进一步执行 `git remote get-url origin`，已存在则 `remote set-url origin`，否则 `remote add origin`。无远程地址时只初始化。失败返回 1。

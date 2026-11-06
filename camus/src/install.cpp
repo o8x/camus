@@ -13,7 +13,7 @@
 
 namespace
 {
-	const std::vector<std::string> template_entries{"posts", "camus.yaml", ".gitignore"};
+	const std::vector<std::string> template_entries{"posts", "camus.yaml", ".gitignore", "Justfile"};
 	const std::vector<std::filesystem::path> minimal_asset_entries{
 		std::filesystem::path("css") / "style.css",
 		std::filesystem::path("js") / "onload.js"

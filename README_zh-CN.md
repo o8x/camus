@@ -35,7 +35,7 @@ cd example
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # 安装示例 camus.yaml、posts（含 SUMMARY.md 与 posts/private/）与 .gitignore
+/path/to/camus -i      # 安装示例 camus.yaml、posts（含 SUMMARY.md 与 posts/private/）、.gitignore 与 Justfile
 /path/to/camus --build # 构建
 ```
 
@@ -51,7 +51,7 @@ mkdir my-site && cd my-site
 | `camus -W` | 监听文件变化并启动本地服务（隐含构建） |
 | `camus -D --build` | 干跑：解析与渲染，但不写文件 |
 | `camus --check` | 校验配置、资源与 PDF 设置，并执行干跑构建 |
-| `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `SUMMARY.md` 与 `posts/private/`）与 `.gitignore` |
+| `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `SUMMARY.md` 与 `posts/private/`）、`.gitignore` 与 `Justfile` |
 | `camus --new <dir>` | 创建站点目录并安装示例文件 |
 | `camus --create <path>` | 在 `src/` 或 `posts/` 下创建文章 `.md`（自动创建缺失目录；最后一级为文件名） |
 | `camus --repo [url]` | 执行 `git init`；提供地址时设置 `origin` |
