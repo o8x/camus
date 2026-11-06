@@ -27,7 +27,7 @@ camus [选项] [--workdir <目录>]
 | `-D` | `--dryrun` | 无 | 干跑：不写任何输出文件 | `main.cpp:12` |
 | `-C` | `--check` | 无 | 校验配置、资源与 PDF 设置，并执行一次干跑构建后输出检查报告；不写文件 | `main.cpp` |
 |  | `--new` | 目录字符串 | 创建目录（相对 `--workdir` 或绝对路径），自动执行 `--install`，并继续执行 `--repo`；不触发构建，除非同时指定 `--build` | `main.cpp` |
-| `--create` | 路径字符串 | 在源目录（`src/` 优先，其次 `posts/`）下创建文章：最后一级视为文件名（自动补 `.md`），缺失目录递归创建，并写入模板（注释的 `title`、当前 UTC 时间的 `create-time`、`## 文件名` 正文）；文件已存在时不覆盖。不触发构建 | `main.cpp` |
+| `--create` | 路径字符串 | 在源目录（`src/` 优先，其次 `posts/`）下创建文章：最后一级视为文件名（自动补 `.md`），缺失目录递归创建，并写入模板（注释的 `title`、当前 UTC 时间的 `create-time`、`## 文件名` 正文）；每个新建目录同时生成 `SUMMARY.md`（Front Matter 仅 `title: <目录名>`，已存在则不覆盖）；文件已存在时不覆盖。不触发构建 | `main.cpp` |
 |  | `--repo` | 可选值：远程地址 | 在 `--workdir` 执行 `git init`；提供值时设置 `origin`（已存在则更新），不提供时只 init | `main.cpp` |
 |  | `--open` | 可选值：`project`（默认）/`runtime` | 只打开目录，不触发构建：`project` 用 VS Code 打开工作目录，`runtime` 用系统文件管理器打开数据目录；未知值打印 WARN 并按 `project` 处理。与 `--build` 同用时构建成功后再打开 | `main.cpp` |
 | `-w` | `--workdir` | 目录字符串，默认 `.` | 工作目录 | `main.cpp:14` |
@@ -99,7 +99,7 @@ flowchart TD
 
 - 只有指定 `--build`、`-W` 或 `--check` 时才构建。仅执行安装 / 复制 / 建目录 / 创建文章 / `git init` / `--open` 时完成后直接返回 0；完全没有操作时打印 usage 并返回 0（不再默认构建）。
 - `--new <dir>` 先把目标解析为「`--workdir` 下的相对路径」或绝对路径并创建，随后等同于同时传入 `--install`：补齐 `camus.yaml`、`posts`（含 `SUMMARY.md`、`posts/private/`）、`.gitignore` 与 `Justfile`。之后若指定 `--repo` 再初始化仓库；需要构建时另加 `--build`。
-- `--create <path>` 在源目录下创建文章：源目录按 `src/` → `posts/` → 默认 `src/` 探测（与构建一致）。路径必须是相对路径且不含 `.` / `..` 段，最后一级为文件名，未以 `.md` 结尾时自动补 `.md`，缺失父目录递归创建；目标文件已存在时打印告警但不覆盖，仍返回 0。
+- `--create <path>` 在源目录下创建文章：源目录按 `src/` → `posts/` → 默认 `src/` 探测（与构建一致）。路径必须是相对路径且不含 `.` / `..` 段，最后一级为文件名，未以 `.md` 结尾时自动补 `.md`，缺失父目录递归创建；对本次新建的每个目录（不含源目录本身）生成 `SUMMARY.md`，内容为 `---\ntitle: <目录名>\n---`，已存在的 `SUMMARY.md` 不覆盖；目标文件已存在时打印告警但不覆盖，仍返回 0。
 - `-i` 只补齐工作目录根部的 `posts`（含各目录的 `SUMMARY.md` 与空的 `posts/private/`）、`camus.yaml`、`.gitignore`、`Justfile`，同名路径已存在则保持不动；`posts/private/` 每次都会确保存在。
 - `-c` 默认最小复制：只创建 `<workdir>/assets/css`、`assets/js`、`assets/fonts`，并从数据目录复制 `style.css`、`onload.js`；`fonts/` 只创建空目录（合并查找，无需复制内置字体），随后补齐工作目录根部缺失的示例文件。
 - `-c --full` 复制完整资源（`theme/`、`assets/`、`posts/`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`camus.yaml`、`.gitignore`、`Justfile`）到 `.camus`，并补齐工作目录根部缺失的示例文件。
@@ -159,7 +159,7 @@ camus -icw mysite --build # 安装示例文件并复制最小资源后构建
 camus -w mysite --build   # 构建 mysite
 camus -Ww mysite          # 监听 mysite 并自动重建（隐含构建）
 camus --check             # 校验配置、资源与 PDF 设置，并输出目录树
-camus --create notes/idea # 在源目录创建 notes/idea.md（自动建目录）
+camus --create notes/idea # 在源目录创建 notes/idea.md（自动建目录并生成 notes/SUMMARY.md）
 camus --new mysite        # 创建 mysite、安装示例文件（不构建）
 camus --new mysite --repo git@github.com:user/site.git  # 创建并初始化仓库（不构建）
 camus --repo              # 在当前工作目录 git init

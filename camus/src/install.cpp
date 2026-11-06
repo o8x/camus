@@ -254,6 +254,17 @@ namespace camus
 		}
 
 		const std::filesystem::path target = workdir / source_dir / relative;
+		const std::filesystem::path source_root = workdir / source_dir;
+
+		// 记录本次将要新建的目录（不含源目录本身），用于补建 SUMMARY.md。
+		std::vector<std::filesystem::path> created_dirs;
+		for (auto dir = target.parent_path(); dir != source_root && !dir.empty(); dir = dir.parent_path()) {
+			if (std::filesystem::exists(dir)) {
+				break;
+			}
+
+			created_dirs.push_back(dir);
+		}
 
 		try {
 			std::filesystem::create_directories(target.parent_path());
@@ -261,6 +272,20 @@ namespace camus
 			if (std::filesystem::exists(target)) {
 				logging::warn("article already exists path={}", filesystem::path_abs(target));
 				return 0;
+			}
+
+			// 新建目录同时生成 SUMMARY.md，目录显示名取目录名。
+			for (auto it = created_dirs.rbegin(); it != created_dirs.rend(); ++it) {
+				const std::filesystem::path summary = *it / CAMUS_SUMMARY_NAME;
+				if (std::filesystem::exists(summary)) {
+					continue;
+				}
+
+				filesystem::write_file(
+					summary,
+					std::format("---\ntitle: {}\n---\n", it->filename().string())
+				);
+				logging::info("summary created at '{}'", filesystem::path_abs(summary));
 			}
 
 			const std::string name = relative.stem().string();
