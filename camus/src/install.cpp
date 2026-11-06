@@ -122,8 +122,9 @@ namespace camus
 
 		try {
 			if (!full) {
-				copy_minimal_assets(source, local_dir, force);
-				logging::info("minimal resources installed at '{}'", filesystem::path_abs(local_dir));
+				// 最小资源复制到工作目录根部（assets/），作为本地覆盖层；仅 --full 使用 .camus。
+				copy_minimal_assets(source, workdir, force);
+				logging::info("minimal resources installed at '{}'", filesystem::path_abs(workdir / "assets"));
 				scaffold_workdir(workdir, source);
 				return 0;
 			}
@@ -198,8 +199,7 @@ namespace camus
 			return 1;
 		}
 
-		const std::filesystem::path target =
-			workdir / paths::local_data_dir() / "theme" / relative;
+		const std::filesystem::path target = workdir / "theme" / relative;
 
 		try {
 			std::filesystem::create_directories(target.parent_path());
@@ -209,8 +209,8 @@ namespace camus
 							 : std::filesystem::copy_options::skip_existing;
 			std::filesystem::copy(source, target, options);
 
-			// --theme 同时复制最小资源骨架（css/style.css、js/onload.js、fonts/）。
-			copy_minimal_assets(source_root, workdir / paths::local_data_dir(), force);
+			// --theme 同时复制最小资源骨架（css/style.css、js/onload.js、空 fonts/）到工作目录根部。
+			copy_minimal_assets(source_root, workdir, force);
 		} catch (const std::exception &e) {
 			logging::error("theme copy failed error={}", e.what());
 			return 1;

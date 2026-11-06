@@ -16,7 +16,7 @@
 加载顺序（`yaml_config.cpp:244-264`）：
 
 1. 若本地存在 `theme/{theme_name}/{type}.html`，优先使用本地覆盖。
-2. 否则查找 `.camus/theme/{theme_name}/{type}.html`（`-c` 复制）。
+2. 否则查找 `.camus/theme/{theme_name}/{type}.html`（`-c --full` 复制）。
 3. 仍未找到时在平台数据目录中查找同名文件（macOS `~/Library/Application Support/Camus`，Linux `/var/lib/camus`）。
 4. 文件不存在时 `logging::fatal("read theme content failed ...")`，进程退出 127。
 
@@ -156,7 +156,7 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 加载顺序（`writer::emit_pdf()` → `read_pdf_theme_file()`，`writer.cpp`）：
 
 1. 工作目录 `theme/pdf/<file>`（显式本地覆盖）。
-2. `paths::find_resource("theme/pdf/<file>")`：先 `.camus/theme/pdf/<file>`（`-c` 复制），再平台数据目录。
+2. `paths::find_resource("theme/pdf/<file>")`：先 `.camus/theme/pdf/<file>`（`-c --full` 复制），再平台数据目录。
 3. `page.html` / `style.css` 均不存在时 `logging::fatal("read pdf theme content failed name=...")`，退出 127；`fonts.css` 可选，缺失时 `pdf.fonts` 为空串并继续生成。
 
 `page.html` 使用 inja 渲染，上下文为 §3.7 的配置 JSON 加上 `pdf` 对象：

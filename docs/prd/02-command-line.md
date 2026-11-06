@@ -17,10 +17,10 @@ camus [选项] [--workdir <目录>]
 | `-h` | `--help` | 无 | 打印帮助并退出（注意退出码为 1） | `main.cpp:90` |
 | `-v` | `--version` | 无 | 打印版本、构建信息与 git hash 后退出 0 | `main.cpp:91` |
 | `-i` | `--install` | 无 | 从平台数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`.gitignore` 到工作目录（已存在的不覆盖），随后继续构建 | `main.cpp` |
-| `-c` | `--copy` | 无 | 把精简资源复制到 `<workdir>/.camus`（仅创建 `assets/css`、`assets/js` 并复制 `style.css`、`onload.js`），随后继续构建 | `main.cpp` |
-|  | `--theme` | 可选值：主题名 | 仅与 `--copy` 搭配：无值时复制整个 `theme/`，有值时只复制 `theme/<name>/` 到 `<workdir>/.camus/theme`；同时复制最小 assets（`style.css`、`onload.js`）并创建空 `fonts/`，不补齐示例文件，也不执行 `--full` | `main.cpp` |
+| `-c` | `--copy` | 无 | 把精简资源复制到 `<workdir>/assets`（创建 `assets/css`、`assets/js`、空 `assets/fonts` 并复制 `style.css`、`onload.js`），随后继续构建 | `main.cpp` |
+|  | `--theme` | 可选值：主题名 | 仅与 `--copy` 搭配：无值时复制整个 `theme/`，有值时只复制 `theme/<name>/` 到 `<workdir>/theme`；同时复制最小 assets（`style.css`、`onload.js`）并创建空 `fonts/`，不补齐示例文件，也不执行 `--full` | `main.cpp` |
 |  | `--full` | 无 | 与 `--copy` 搭配时复制平台数据目录的完整资源树到 `.camus` | `main.cpp` |
-| `-f` | `--force` | 无 | `--copy` 时覆盖 `.camus` 中已存在的同名资源 | `main.cpp` |
+| `-f` | `--force` | 无 | `--copy` 时覆盖目标（`assets` 或 `--full` 的 `.camus`）中已存在的同名资源 | `main.cpp` |
 | `-d` | `--debug` | 无 | 开启调试日志 | `main.cpp:11` |
 | `-W` | `--watch` | 无 | 监听文件变化并自动重建，同时启动本地服务 | `main.cpp:11` |
 | `-D` | `--dryrun` | 无 | 干跑：不写任何输出文件 | `main.cpp:12` |
@@ -30,7 +30,7 @@ camus [选项] [--workdir <目录>]
 |  | `--open` | 可选值：`project`（默认）/`runtime` | 构建成功后打开目录：`project` 用 VS Code 打开工作目录，`runtime` 用系统文件管理器打开数据目录；未知值打印 WARN 并按 `project` 处理 | `main.cpp` |
 | `-w` | `--workdir` | 目录字符串，默认 `.` | 工作目录 | `main.cpp:14` |
 
-> 资源来源：主题、默认资源与示例模板由安装包放到平台数据目录。`-i` 只安装工作目录根部的示例文件；`-c` 默认只生成最小可编辑资源骨架（`assets/css/style.css`、`assets/js/onload.js`），`-c --full` 才复制完整资源到 `.camus`，`-c --theme [name]` 则只复制主题。复制后资源查找会叠加 `.camus`，未复制时使用数据目录（见 §8）。
+> 资源来源：主题、默认资源与示例模板由安装包放到平台数据目录。`-i` 只安装工作目录根部的示例文件；`-c` 默认只生成最小可编辑资源骨架到工作目录 `assets/`（`css/style.css`、`js/onload.js`、空 `fonts/`），`-c --full` 才复制完整资源到 `.camus`，`-c --theme [name]` 则把主题复制到工作目录 `theme/`。资源查找会依次叠加数据目录、`.camus` 与本地 `./assets` / `theme/`（见 §8）。
 
 ## 2.3 解析规则
 
@@ -60,8 +60,8 @@ flowchart TD
     INS -->|失败| IF[返回 1]
     INS -->|成功| CP
     CP -->|是| TH{给了 --theme?}
-    TH -->|是| CT[copy_theme: 整份或单个主题到 .camus/theme]
-    TH -->|否| COPY[copy_resources 到 .camus]
+    TH -->|是| CT[copy_theme: 整份或单个主题到 theme/]
+    TH -->|否| COPY[copy_resources: 最小到 assets/, --full 到 .camus]
     CT -->|失败| CF[返回 1]
     COPY -->|失败| CF
     CT -->|成功| R{--repo?}
@@ -87,10 +87,10 @@ flowchart TD
 
 - `--new <dir>` 先把目标解析为「`--workdir` 下的相对路径」或绝对路径并创建，随后等同于同时传入 `--install`：补齐 `camus.yaml`、`posts`（含 `SUMMARY.md`、`posts/private/`）与 `.gitignore`。之后若指定 `--repo` 再初始化仓库，最后继续构建。
 - `-i` 只补齐工作目录根部的 `posts`（含各目录的 `SUMMARY.md` 与空的 `posts/private/`）、`camus.yaml`、`.gitignore`，同名路径已存在则保持不动；`posts/private/` 每次都会确保存在。
-- `-c` 默认最小复制：只创建 `<workdir>/.camus/assets/css`、`.camus/assets/js`、`.camus/assets/fonts`，并从数据目录复制 `style.css`、`onload.js`；`fonts/` 只创建空目录（合并查找，无需复制内置字体），随后补齐工作目录根部缺失的示例文件。
+- `-c` 默认最小复制：只创建 `<workdir>/assets/css`、`assets/js`、`assets/fonts`，并从数据目录复制 `style.css`、`onload.js`；`fonts/` 只创建空目录（合并查找，无需复制内置字体），随后补齐工作目录根部缺失的示例文件。
 - `-c --full` 复制完整资源（`theme/`、`assets/`、`posts/`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`camus.yaml`、`.gitignore`）到 `.camus`，并补齐工作目录根部缺失的示例文件。
-- `-c --theme` 只复制 `theme/` 到 `<workdir>/.camus/theme`；`-c --theme pixel` 只复制 `theme/pixel/`；同时复制最小 assets（`style.css`、`onload.js`）并创建空 `fonts/`，不补齐示例文件，且优先于 `--full`。`--theme` 未搭配 `-c` 时打印错误并返回 1。
-- `-f` 仅在 `-c` 时生效：最小复制时覆盖已存在的 `style.css` / `onload.js`；完整复制时先清空 `<workdir>/.camus`（受 §6.1 文件数保护）再重新复制，工作目录已有文件不会被覆盖；`--theme` 时覆盖已存在的同名主题与 assets 文件，否则跳过。
+- `-c --theme` 只复制 `theme/` 到 `<workdir>/theme`；`-c --theme pixel` 只复制 `theme/pixel/`；同时复制最小 assets（`style.css`、`onload.js`）并创建空 `fonts/`，不补齐示例文件，且优先于 `--full`。`--theme` 未搭配 `-c` 时打印错误并返回 1。
+- `-f` 仅在 `-c` 时生效：最小复制时覆盖已存在的 `style.css` / `onload.js`；完整复制时先清空 `<workdir>/.camus`（受 §6.1 文件数保护）再重新复制，工作目录已有文件不会被覆盖；`--theme` 时覆盖工作目录 `theme/` 与 `assets/` 中已存在的同名文件，否则跳过。
 - `--repo` 在 `--workdir` 执行 `git -C <workdir> init -q`；提供远程地址时进一步执行 `git remote get-url origin`，已存在则 `remote set-url origin`，否则 `remote add origin`。无远程地址时只初始化。失败返回 1。
 - `--check` 在构建前执行：内部把 dryrun 置为 true，重新加载配置并执行一次干跑构建，然后输出工作目录、源目录、主题、资源、PDF 资源和目录树等检查信息；不写文件，结果以退出码 0（OK）/1（FAILED）表示。
 - `-W` 时即使首次 `build()` 返回非 0，也会进入 `watch()` 循环继续等待变化。
@@ -135,11 +135,11 @@ Build Time: 2025-07-24 15:44:00 hash=<40 位 git hash>
 
 ```bash
 camus -iw mysite          # 安装示例配置/文章到 mysite 并构建
-camus -cw mysite          # 复制最小资源骨架到 mysite/.camus 并构建
+camus -cw mysite          # 复制最小资源骨架到 mysite/assets 并构建
 camus -c --full -w mysite  # 复制完整资源到 mysite/.camus 并构建
 camus -cf --full -w mysite # 强制重装完整资源到 mysite/.camus 并构建
-camus -c --theme -w mysite          # 只复制整个 theme 到 mysite/.camus/theme
-camus -c --theme pixel -w mysite    # 只复制 theme/pixel 到 mysite/.camus/theme/pixel
+camus -c --theme -w mysite          # 只复制整个 theme 到 mysite/theme
+camus -c --theme pixel -w mysite    # 只复制 theme/pixel 到 mysite/theme/pixel
 camus -cf --theme pixel -w mysite   # 强制覆盖已存在的 pixel 主题文件
 camus -icw mysite         # 安装示例文件并复制完整资源后构建
 camus -w mysite           # 构建 mysite

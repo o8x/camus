@@ -2,7 +2,7 @@
 
 实现：`camus/src/install.h`、`camus/src/install.cpp`、`common/common/paths/paths.h`、`common/common/paths/paths.cpp`、`camus/src/yaml_config.cpp`、`camus/src/writer.cpp`、`camus/CMakeLists.txt`。
 
-> 旧版的「单文件自包含」已移除：可执行文件不再追加示例压缩包。`-i/--install` 只把示例配置与文章安装到工作目录根部；`-c/--copy` 默认复制最小资源骨架，`-c --full` 才复制完整资源到 `.camus`，`-c --theme [name]` 只复制整个或单个主题。
+> 旧版的「单文件自包含」已移除：可执行文件不再追加示例压缩包。`-i/--install` 只把示例配置与文章安装到工作目录根部；`-c/--copy` 默认把最小资源骨架复制到工作目录 `assets/`，`-c --full` 才把完整资源复制到 `.camus`，`-c --theme [name]` 把整个或单个主题复制到 `theme/` 并补齐最小资源。
 
 ## 8.1 数据目录
 
@@ -64,18 +64,18 @@ flowchart TD
 - 工作目录不存在时自动创建（`create_directories`），因此 `-iw /tmp/site` 可直接用于全新目录。
 - 成功后不退出，主程序继续构建（见 §2.4）。
 
-### 8.2.2 `-c/--copy`（最小资源 / `--full` 完整资源）
+### 8.2.2 `-c/--copy`（最小资源到 `assets/` / `--full` 完整资源到 `.camus`）
 
 `copy_resources()` 根据 `--full` 选择复制范围：
 
-- 默认（最小）：只创建 `<workdir>/.camus/assets/css`、`.camus/assets/js` 与 `.camus/assets/fonts`，并从数据目录复制 `css/style.css`、`js/onload.js`；`fonts/` 只创建空目录（资源目录合并查找，无需复制内置字体）；目标文件已存在且未指定 `-f` 时跳过。
+- 默认（最小）：只创建 `<workdir>/assets/css`、`assets/js` 与 `assets/fonts`，并从数据目录复制 `css/style.css`、`js/onload.js`；`fonts/` 只创建空目录（资源目录合并查找，无需复制内置字体）；目标文件已存在且未指定 `-f` 时跳过。
 - `--full`：把 `source_data_dir()` 的全部内容复制到 `<workdir>/.camus`。
 
 ```mermaid
 flowchart TD
     A[解析 source_data_dir] -->|无资源| X[报错, 返回 1]
     A -->|找到| F{--full?}
-    F -->|否| M[创建 .camus/assets/css、js、fonts<br/>复制 style.css、onload.js；fonts 为空目录]
+    F -->|否| M[创建 <workdir>/assets/css、js、fonts<br/>复制 style.css、onload.js；fonts 为空目录]
     M --> S[补齐工作目录 posts/camus.yaml/.gitignore<br/>确保 posts/private]
     F -->|是| B{.camus 已存在且非空?}
     B -->|否| D[创建 .camus 并复制全部文件]
@@ -91,15 +91,15 @@ flowchart TD
 - `--full` 下 `.camus` 已存在且非空、未指定 `-f`：打印 WARN，仅补齐工作目录根部示例文件，不覆盖 `.camus`。
 - `--full -f`：先删除 `.camus`（受 §6.1 的 >200 文件保护），再复制。
 - 复制完成后，对 `posts`、`camus.yaml`、`.gitignore`：仅当工作目录根部不存在同名路径时才补齐；`posts/private/` 始终确保存在。
-- 工作目录不存在时由 `<workdir>/.camus` 的 `create_directories` 一并创建。
+- 工作目录不存在时由 `<workdir>/assets` 或 `<workdir>/.camus` 的 `create_directories` 一并创建。
 - 复制结果持久于磁盘；`-c` 成功后不会退出，主程序继续构建（见 §2.4）。
 
-### 8.2.3 `-c --theme [name]`（只复制主题）
+### 8.2.3 `-c --theme [name]`（复制主题与最小资源）
 
 `copy_theme()` 复制 `source_data_dir()/theme` 这个范围，并同时复制最小资源骨架：
 
 - `-c --theme`：复制整个 `theme/`（含 `theme/pdf/`）。
-- `-c --theme pixel`：只复制 `theme/pixel/` 到 `.camus/theme/pixel`。
+- `-c --theme pixel`：只复制 `theme/pixel/` 到 `<workdir>/theme/pixel`。
 - 同时复制最小资源：`assets/css/style.css`、`assets/js/onload.js`，并创建空 `assets/fonts/`；不复制其他 assets，不补齐工作目录根部的 `posts` / `camus.yaml` / `.gitignore`，也不受 `--full` 影响。
 - 不加 `-f` 时跳过目标中已存在的文件（可重复执行补齐缺失主题）；加 `-f` 时覆盖同名文件。
 - `--theme` 未搭配 `-c` 时打印错误并返回 1；主题名非法（绝对路径或含 `.` / `..`）时返回 1。
@@ -108,8 +108,8 @@ flowchart TD
 flowchart TD
     A[解析 source_data_dir] -->|无资源| X[报错, 返回 1]
     A -->|找到| T{name 为空?}
-    T -->|是| C[复制整个 theme -> .camus/theme]
-    T -->|否| O[校验主题名并复制 theme/name -> .camus/theme/name]
+    T -->|是| C[复制整个 theme -> <workdir>/theme]
+    T -->|否| O[校验主题名并复制 theme/name -> <workdir>/theme/name]
     C --> AS[复制最小 assets: style.css/onload.js，创建空 fonts]
     O --> AS
     AS --> S{--force?}
@@ -121,7 +121,7 @@ flowchart TD
 
 ## 8.3 资源查找顺序
 
-复制完整资源后优先使用工作目录 `.camus`；未复制时使用平台数据目录。
+主题查找：工作目录 `theme/` → `.camus/theme` → 平台数据目录。静态资源：平台数据目录 `assets` → `.camus/assets` → 本地 `./assets`（后层覆盖前层）。
 
 主题（`yaml_config.cpp` 的 `read_theme()`）：
 
@@ -139,7 +139,7 @@ PDF 模板、样式与字体（`writer.cpp` 的 `read_pdf_theme_file()` / `copy_
 静态资源（`writer::emit_assets()`）：
 
 1. 平台数据目录 `assets/`（`paths::resource_assets_dir()`）作为基础资源。
-2. `.camus/assets`：存在且非空时覆盖基础资源（`-c/--copy` 的最小或完整复制）。
+2. `.camus/assets`：存在且非空时覆盖基础资源（`-c --full` 的完整复制）。
 3. 本地 `./assets`：存在且非空时整体覆盖前两层。
 4. 三者都不可用时记录 debug 并跳过。
 5. 资源最终提升到输出根目录（详见 §6.9）。
@@ -160,6 +160,6 @@ PDF 模板、样式与字体（`writer.cpp` 的 `read_pdf_theme_file()` / `copy_
 
 ## 8.5 持久性
 
-- `-i` 安装的根部示例文件与 `posts/private/` 持久于工作目录；`-c` 复制结果持久于工作目录 `.camus`；`-c --full` 可复制完整资源，`-f` 可覆盖已有资源。
+- `-i` 安装的根部示例文件与 `posts/private/` 持久于工作目录；`-c` 最小复制持久于工作目录 `assets/`，`-c --theme` 持久于 `theme/`，`-c --full` 持久于 `.camus`；`-f` 可覆盖已有资源。
 - 数据目录中的资源由安装包持久化；升级安装包会覆盖同名文件。
 - 工作目录的 `theme/` 与 `./assets` 始终拥有最高优先级。
