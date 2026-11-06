@@ -193,12 +193,16 @@ namespace camus::config
 			{"commit_hash", GIT_COMMIT_HASH}
 		};
 
+		std::string compiler_name = "unknown";
 		std::string compiler_version = "unknown";
 #if defined(__clang__)
+		compiler_name = "clang";
 		compiler_version = std::format("clang v{}.{}.{}", __clang_major__, __clang_minor__, __clang_patchlevel__);
 #elif defined(__GNUC__) || defined(__GNUG__)
+		compiler_name = "gcc";
 		compiler_version = std::format("gcc v{}.{}.{}", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #elif defined(_MSC_VER)
+		compiler_name = "msvc";
 		compiler_version = std::format("msvc v{}", _MSC_VER);
 #endif
 
@@ -216,6 +220,7 @@ namespace camus::config
 			{"version", PROJECT_VERSION},
 			{"version_major", std::to_string(PROJECT_VERSION_MAJOR)},
 			{"compiler", compiler_version},
+			{"compiler_name", compiler_name},
 		};
 
 		const std::string powered_by = R"(
@@ -226,9 +231,9 @@ namespace camus::config
 <br />
 <small>
 	<em>Powered by <a href="{{ git.repo }}/releases/tag/v{{ build.version }}" target="_blank" title="Camus v{{ build.version }}">
-		Camus
+		Camus v{{ build.version }}
 	</a>
-	built with {{ build.compiler }}</em>
+	built with {{ build.compiler_name }}</em>
 </small>
 )";
 

@@ -214,7 +214,8 @@ build:
 | `version` | 项目版本（`PROJECT_VERSION`，以 `docs/PRD.md` 项目表 / `CMakeLists.txt` 为准） |
 | `version_major` | 主版本号（`PROJECT_VERSION_MAJOR`） |
 | `compiler` | 编译器版本字符串 |
-| `powered_by` | 预渲染的页脚 HTML 片段 |
+| `compiler_name` | 编译器名称（`clang` / `gcc` / `msvc` / `unknown`） |
+| `powered_by` | 预渲染的页脚 HTML 片段（含版本号与编译器名称） |
 
 示例（inja）：
 
