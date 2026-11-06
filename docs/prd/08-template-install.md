@@ -44,7 +44,7 @@
 `install_templates()` 从 `paths::find("camus.yaml")` 所在的数据目录，把以下内容复制到工作目录根部（已存在的同名路径跳过）：
 
 - `posts/`（含各目录的 `SUMMARY.md`）
-- `posts/private/`（不存在时也会自动创建）
+- `posts/private/`（不存在时也会自动创建，并写入说明用途的 `README.md`）
 - `camus.yaml`
 - `.gitignore`
 
@@ -61,7 +61,7 @@ flowchart TD
 ```
 
 - 不会创建或修改 `.camus`。
-- 无论 `posts/` 是否已存在，都会确保 `<工作目录>/posts/private/` 存在（`CAMUS_PRIVATE_DIR`）。
+- 无论 `posts/` 是否已存在，都会确保 `<工作目录>/posts/private/` 存在，并在缺失时写入 `README.md`（`CAMUS_PRIVATE_DIR`）。
 - 工作目录不存在时自动创建（`create_directories`），因此 `-iw /tmp/site` 可直接用于全新目录。
 - 成功后不退出，主程序继续构建（见 §2.4）。
 

@@ -19,9 +19,24 @@ namespace
 		std::filesystem::path("js") / "onload.js"
 	};
 
+	constexpr const char *private_readme = R"(# private
+
+This directory is excluded from builds.
+
+- Any directory named `private` is skipped when scanning sources.
+- Files here are never rendered or published to the generated site or PDF.
+- Use it for local drafts, notes, and private assets.
+)";
+
 	void ensure_private_dir(const std::filesystem::path &workdir)
 	{
-		std::filesystem::create_directories(workdir / "posts" / CAMUS_PRIVATE_DIR);
+		const std::filesystem::path dir = workdir / "posts" / CAMUS_PRIVATE_DIR;
+		std::filesystem::create_directories(dir);
+
+		const std::filesystem::path readme = dir / "README.md";
+		if (!std::filesystem::exists(readme)) {
+			filesystem::write_file(readme, private_readme);
+		}
 	}
 
 	void scaffold_workdir(const std::filesystem::path &workdir, const std::filesystem::path &source_dir)
