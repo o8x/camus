@@ -151,16 +151,19 @@ jobs:
                     path: packages
                     merge-multiple: true
 
+            -   name: Setup Pages
+                if: steps.verify.outputs.deploy == 'true'
+                id: pages
+                uses: actions/configure-pages@v5
+
             -   name: Build Pages
                 if: steps.verify.outputs.deploy == 'true'
+                env:
+                    CAMUS_PUBLIC_URL: ${{ steps.pages.outputs.base_url }}
                 run: |
                     apt update -y
                     dpkg -i packages/camus-*.deb
                     camus -dw example
-
-            -   name: Setup Pages
-                if: steps.verify.outputs.deploy == 'true'
-                uses: actions/configure-pages@v5
 
             -   name: Upload artifact
                 if: steps.verify.outputs.deploy == 'true'

@@ -1,6 +1,7 @@
 #include "yaml_config.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -376,6 +377,13 @@ namespace camus::config
 					camus_.cdn_url.pop_back();
 				}
 				continue;
+			}
+		}
+
+		// 配置未提供 public_url 时，允许通过环境变量覆盖（供 CI 自动注入部署前缀）
+		if (camus_.public_url.url.empty()) {
+			if (const char *public_url = std::getenv("CAMUS_PUBLIC_URL"); public_url != nullptr && *public_url != '\0') {
+				camus_.public_url = parse_public_url(public_url);
 			}
 		}
 

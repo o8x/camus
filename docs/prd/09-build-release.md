@@ -82,7 +82,7 @@
 | `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `mold`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` + `camus -cw /tmp/site-copy` | `build/release/packages` |
 | `build-macos` | `macos-15` | brew 安装依赖 → submodule → `make package` → `sudo installer -pkg *.pkg -target /` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` | `build/release/packages` |
 | `release` | `ubuntu-24.04` | 仅在 tag 上运行：下载并合并产物 → `softprops/action-gh-release` 发布（匹配 `*.dmg/*.pkg/*.rpm/*.deb/*.exe`） | GitHub Release |
-| `pages` | `ubuntu-24.04` 容器 | 仅在 tag 上运行且 tag 提交位于 `main` 历史时部署：安装 git → 全量 checkout → `safe.directory` 后校验 tag 在 `main` → 安装 deb → `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |
+| `pages` | `ubuntu-24.04` 容器 | 仅在 tag 上运行且 tag 提交位于 `main` 历史时部署：安装 git → 全量 checkout → `safe.directory` 后校验 tag 在 `main` → `actions/configure-pages` 取得 `base_url` 并经 `CAMUS_PUBLIC_URL` 注入 → 安装 deb → `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |
 
 工作流权限：`contents: write`、`pages: write`、`id-token: write`；`pages` concurrency。
 
