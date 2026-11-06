@@ -29,6 +29,8 @@
 
 两个文件在默认资源中为空文件；用户可在本地 `./assets` 下提供同名文件覆盖，不存在时构建不会报错。
 
+`pixel` 主题在 `assets/css/pixel-inja.css` 中设置 `html { font-size: 85%; }`，字体与基于 rem 的元素尺寸整体约缩小 15%。
+
 ## 5.2 Markdown 渲染
 
 `render_markdown(html, engine, opt)`（`render.cpp`）：

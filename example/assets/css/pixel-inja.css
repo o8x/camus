@@ -1,4 +1,6 @@
 /* pixel-inja — shared base for all pixel/inja templates */
+html { font-size: 85%; }
+
 :root {
     --bg: #1a1a2e;
     --card-bg: #16213e;
