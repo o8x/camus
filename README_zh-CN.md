@@ -75,7 +75,7 @@ filename_case: keep        # keep | uuid
 # https://stdout.com.cn/camus -> https:// + stdout.com.cn + /camus
 public_url: https://stdout.com.cn/camus
 
-# 可选的 CDN 地址，供 with_cdn() 使用；默认空，为空时 with_cdn(path) 原样返回 path
+# 可选的 CDN 地址，供 with_cdn() 使用；默认空，为空时 with_cdn(path) 返回 with_prefix(path)（含 path_prefix）
 cdn_url: ''                # 例如 https://cdn.stdout.com.cn/camus
 
 theme: terminal
@@ -104,7 +104,7 @@ build:
 
 `public_url` 可带协议也可省略：省略时默认 `https://`，末尾多余的 `/` 会被归一化。它用于绝对链接、sitemap 与 PDF 封面信息。
 
-`cdn_url` 可选、默认空。设置后 `with_cdn(path)` 返回 `cdn_url + with_prefix(path)`；为空时原样返回 `path`。监听模式（`-W`）下会忽略 `public_url` 与 `cdn_url`，本地构建使用根相对路径。
+`cdn_url` 可选、默认空。设置后 `with_cdn(path)` 返回 `cdn_url + with_prefix(path)`；为空时返回 `with_prefix(path)`，始终带上 `public_url.path_prefix`。监听模式（`-W`）下会忽略 `public_url` 与 `cdn_url`，本地构建使用根相对路径。
 
 ### 目录元信息（`SUMMARY.md`）
 
@@ -190,7 +190,7 @@ visibility: open
 | 函数 | 说明 |
 |---|---|
 | `{{ with_prefix("/css/site.css") }}` | 为路径加上 `path_prefix` |
-| `{{ with_cdn("/css/site.css") }}` | 用 `cdn_url + path_prefix` 拼接；`cdn_url` 为空时原样返回路径 |
+| `{{ with_cdn("/css/site.css") }}` | 用 `cdn_url + path_prefix` 拼接；`cdn_url` 为空时回退到 `with_prefix(path)`（含 `path_prefix`） |
 
 ## 输出
 

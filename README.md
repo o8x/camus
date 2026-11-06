@@ -76,7 +76,7 @@ filename_case: keep        # keep | uuid
 public_url: https://stdout.com.cn/camus
 
 # Optional CDN base URL used by with_cdn(). Empty by default; when empty,
-# with_cdn(path) returns path unchanged.
+# with_cdn(path) returns with_prefix(path) (including path_prefix).
 cdn_url: ''                # e.g. https://cdn.stdout.com.cn/camus
 
 theme: terminal
@@ -105,7 +105,7 @@ build:
 
 `public_url` accepts with or without a protocol. Missing protocols default to `https://`; a trailing slash is normalized away. It drives absolute links, the sitemap, and PDF cover data.
 
-`cdn_url` is optional and empty by default. When set, `with_cdn(path)` returns `cdn_url + with_prefix(path)`; when empty it returns `path` unchanged. In watch mode (`-W`), both `public_url` and `cdn_url` are ignored so local builds use root-relative paths.
+`cdn_url` is optional and empty by default. When set, `with_cdn(path)` returns `cdn_url + with_prefix(path)`; when empty it returns `with_prefix(path)`, so the `public_url.path_prefix` is always applied. In watch mode (`-W`), both `public_url` and `cdn_url` are ignored so local builds use root-relative paths.
 
 ### Directory metadata (`SUMMARY.md`)
 
@@ -191,7 +191,7 @@ Themes contain `home.html`, `page.html`, `stats.html` and `friends.html`, loaded
 | Helper | Description |
 |---|---|
 | `{{ with_prefix("/css/site.css") }}` | Prefix a path with `path_prefix` |
-| `{{ with_cdn("/css/site.css") }}` | Prefix with `cdn_url` plus `path_prefix`; returns the path unchanged when `cdn_url` is empty |
+| `{{ with_cdn("/css/site.css") }}` | Prefix with `cdn_url` plus `path_prefix`; falls back to `with_prefix(path)` when `cdn_url` is empty |
 
 ## Output
 

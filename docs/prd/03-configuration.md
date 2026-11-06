@@ -40,7 +40,7 @@
 | `protocol` | 字符串（只读派生） | 默认 `https://` | `public_url` 的协议部分，含 `://` | 同上 |
 | `domain_name` | 字符串（只读派生） | 空 | `public_url` 的域名部分（含端口，去除空格） | 同上 |
 | `path_prefix` | 字符串（只读派生） | 空 | `public_url` 的路径部分，以 `/` 开头且不带尾斜杠 | 同上 |
-| `cdn_url` | 字符串 | 空 | `with_cdn()` 使用的 CDN 基地址；为空时 `with_cdn(path)` 原样返回 `path`，末尾多余 `/` 会被去除；`-W` 监听模式下忽略（按空处理） | `yaml_config.cpp` |
+| `cdn_url` | 字符串 | 空 | `with_cdn()` 使用的 CDN 基地址；为空时 `with_cdn(path)` 返回 `with_prefix(path)`（包含 `path_prefix`），末尾多余 `/` 会被去除；`-W` 监听模式下忽略（按空处理） | `yaml_config.cpp` |
 | `theme` | 字符串 | 默认 `default` | 主题目录名 | `yaml_config.cpp` |
 | `markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp` |
 | `pdf_engine` | 字符串 | 可选 | PDF 引擎：`chromium`/`chrome`/`edge`，或可执行文件路径；非空且不为 `disable` 时启用 PDF 生成 | `yaml_config.cpp` |
