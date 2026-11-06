@@ -89,8 +89,16 @@ namespace camus::paths
 			return local;
 		}
 
+		return resource_assets_dir();
+	}
+
+	std::filesystem::path resource_assets_dir()
+	{
 		for (const auto &root : data_dirs()) {
-			if (const std::filesystem::path candidate = root / "assets"; non_empty_dir(candidate)) {
+			std::error_code ec;
+			const std::filesystem::path candidate = root / "assets";
+			if (std::filesystem::is_directory(candidate, ec) && !ec && !std::filesystem::is_empty(candidate, ec) &&
+				!ec) {
 				return candidate;
 			}
 		}

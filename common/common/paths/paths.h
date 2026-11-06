@@ -22,4 +22,6 @@ namespace camus::paths
 	[[nodiscard]] std::filesystem::path source_data_dir();
 	// 默认静态资源目录：优先 .camus/assets，其次数据目录 assets；找不到返回空路径
 	[[nodiscard]] std::filesystem::path default_assets_dir();
+	// 平台数据目录中的静态资源（不含 .camus 覆盖）；找不到返回空路径
+	[[nodiscard]] std::filesystem::path resource_assets_dir();
 } // namespace camus::paths

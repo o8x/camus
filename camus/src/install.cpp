@@ -14,6 +14,15 @@
 namespace
 {
 	const std::vector<std::string> template_entries{"posts", "camus.yaml", ".gitignore"};
+	const std::vector<std::filesystem::path> minimal_asset_entries{
+		std::filesystem::path("css") / "style.css",
+		std::filesystem::path("js") / "onload.js"
+	};
+
+	void ensure_private_dir(const std::filesystem::path &workdir)
+	{
+		std::filesystem::create_directories(workdir / "posts" / CAMUS_PRIVATE_DIR);
+	}
 
 	void scaffold_workdir(const std::filesystem::path &workdir, const std::filesystem::path &source_dir)
 	{
@@ -30,6 +39,28 @@ namespace
 			}
 
 			std::filesystem::copy(source, target, std::filesystem::copy_options::recursive);
+		}
+
+		ensure_private_dir(workdir);
+	}
+
+	void copy_minimal_assets(const std::filesystem::path &source, const std::filesystem::path &local_dir, const bool force)
+	{
+		const std::filesystem::path source_assets = source / "assets";
+		const std::filesystem::path target_assets = local_dir / "assets";
+
+		std::filesystem::create_directories(target_assets / "css");
+		std::filesystem::create_directories(target_assets / "js");
+
+		for (const auto &relative : minimal_asset_entries) {
+			const std::filesystem::path from = source_assets / relative;
+			const std::filesystem::path to = target_assets / relative;
+
+			if (!std::filesystem::exists(from) || (std::filesystem::exists(to) && !force)) {
+				continue;
+			}
+
+			std::filesystem::copy_file(from, to, std::filesystem::copy_options::overwrite_existing);
 		}
 	}
 
@@ -61,7 +92,7 @@ namespace camus
 		return 0;
 	}
 
-	int copy_resources(const std::filesystem::path &workdir, const bool force)
+	int copy_resources(const std::filesystem::path &workdir, const bool force, const bool full)
 	{
 		const std::filesystem::path source = paths::source_data_dir();
 		if (source.empty()) {
@@ -72,6 +103,13 @@ namespace camus
 		const std::filesystem::path local_dir = workdir / paths::local_data_dir();
 
 		try {
+			if (!full) {
+				copy_minimal_assets(source, local_dir, force);
+				logging::info("minimal resources installed at '{}'", filesystem::path_abs(local_dir));
+				scaffold_workdir(workdir, source);
+				return 0;
+			}
+
 			const bool installed = std::filesystem::is_directory(local_dir) && !std::filesystem::is_empty(local_dir);
 
 			if (installed && !force) {

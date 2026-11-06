@@ -4,11 +4,11 @@
 
 Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章与主题模板，生成静态 HTML 站点。核心特性：
 
-- 外部资源安装：主题、默认静态资源与示例模板由安装包放到平台数据目录；`-c` 可把完整资源复制到工作目录 `.camus`，`-i` 只安装示例配置与文章，复制后优先使用 `.camus`。
+- 外部资源安装：主题、默认静态资源与示例模板由安装包放到平台数据目录；`-c` 默认只复制最小资源骨架到工作目录 `.camus`，`-c --full` 复制完整资源，`-i` 只安装示例配置、文章与 `posts/private/`；资源按数据目录 → `.camus` → 本地 `./assets` 叠加。
 - Markdown（cmark-gfm）渲染，支持 Front Matter 与隐藏片段。
 - 多主题：数据目录内置 `default`、`document`、`pixel`、`terminal` 等主题，本地 `theme/` 可覆盖或自定义。
 - 目录树与目录索引页、统计页、友链页、`sitemap.xml`、`meta.json` 生成。
-- 可选 PDF 输出：把全部可见文章合并为单个 Markdown，经 cmark-gfm 转 HTML 后调用 Chrome/Edge 无头模式打印为 PDF；PDF 的 HTML 模板、打印样式、字体样式与自定义字体位于 `theme/pdf/`，同样支持本地覆盖。
+- 可选 PDF 输出：把全部可见文章合并为单个 Markdown，经 cmark-gfm 转 HTML 后调用 Chrome/Edge 无头模式打印为 PDF；PDF 的 HTML 模板、打印样式、字体样式与自定义字体位于 `theme/pdf/`，同样支持本地覆盖。封面优先使用 `assets/imgs/cover.png` 整页铺满，并注入可交互书签大纲。
 - `-W` 监听模式：轮询文件变化并自动重建，同时提供本地 HTTP 服务。
 - `--open`：构建成功后用 VS Code 打开工作目录；`--open runtime` 用系统文件管理器打开数据目录。
 - `private` 目录：源目录下任意名为 `private` 的子目录不参与扫描与生成，也不能作为目录页路由。
@@ -46,7 +46,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 - PDF 模板/样式/字体：工作目录 `theme/pdf/{page.html,style.css,fonts.css,fonts/}` → `.camus/theme/pdf/...` → 数据目录。
 - 静态资源：工作目录 `./assets` 优先；否则 `.camus/assets`，再否则数据目录 `assets/`。
 
-构建不再向可执行文件追加模板。`-i` 从数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md`）、`.gitignore` 到工作目录根部。`-c` 复制完整资源到 `.camus`，`-f` 覆盖已有 `.camus`（详见 §8）。
+构建不再向可执行文件追加模板。`-i` 从数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与自动创建的 `posts/private/`）、`.gitignore` 到工作目录根部。`-c` 默认复制最小资源骨架，`-c --full` 复制完整资源到 `.camus`，`-f` 覆盖已有资源（详见 §8）。
 
 ## 1.4 构建流水线
 

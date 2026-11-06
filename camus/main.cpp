@@ -45,7 +45,8 @@ int main(const int argc, char **argv)
 	arg.add("help", 'h', "print this help and exit");
 	arg.add("version", 'v', "print version and exit");
 	arg.add("install", 'i', "install camus.yaml, posts and .gitignore from data dir");
-	arg.add("copy", 'c', "copy full resources into .camus from data dir");
+	arg.add("copy", 'c', "copy resources into .camus from data dir");
+	arg.add("full", 0, "copy the complete resource tree with --copy");
 	arg.add("force", 'f', "overwrite existing .camus when copying");
 	arg.add("debug", 'd', "enable debugging");
 	arg.add("watch", 'W', "automate building when changes occur");
@@ -92,7 +93,8 @@ int main(const int argc, char **argv)
 		}
 
 		if (arg.exist("copy")) {
-			if (const int copied = camus::copy_resources(cmd.workdir, arg.exist("force")); copied != 0) {
+			if (const int copied = camus::copy_resources(cmd.workdir, arg.exist("force"), arg.exist("full"));
+				copied != 0) {
 				return copied;
 			}
 		}

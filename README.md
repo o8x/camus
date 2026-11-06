@@ -35,7 +35,7 @@ Or create a new site in an empty directory:
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # install example camus.yaml, posts (with SUMMARY.md) and .gitignore
+/path/to/camus -i      # install example camus.yaml, posts (with SUMMARY.md, plus posts/private/) and .gitignore
 /path/to/camus         # build
 ```
 
@@ -50,9 +50,10 @@ mkdir my-site && cd my-site
 | `camus -W` | Watch for changes and serve locally |
 | `camus -D` | Dry run: parse and render without writing files |
 | `camus -I` | Inspect the parsed configuration and catalog tree |
-| `camus -i` | Install example `camus.yaml`, `posts` (with `SUMMARY.md`) and `.gitignore` |
-| `camus -c` | Copy the complete bundled resources into `./.camus` |
-| `camus -c -f` | Force re-copy `./.camus` |
+| `camus -i` | Install example `camus.yaml`, `posts` (with `SUMMARY.md`, plus `posts/private/`) and `.gitignore` |
+| `camus -c` | Copy minimal editable resources (`assets/css/style.css`, `assets/js/onload.js`) into `./.camus` |
+| `camus -c --full` | Copy the complete bundled resource tree into `./.camus` |
+| `camus -c -f` | Force re-copy the selected `./.camus` resources |
 | `camus --open` | Build, then open the workdir in VS Code |
 | `camus --open runtime` | Build, then open the data directory in the file manager |
 

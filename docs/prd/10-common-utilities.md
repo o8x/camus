@@ -89,10 +89,11 @@
 | `path find_resource(relative_path)` | 先查 `.camus/relative`，再调用 `find`；找不到返回空路径 |
 | `path find_local_or_resource(relative_path)` | 先查工作目录下的相对路径（显式本地覆盖），再调用 `find_resource`；找不到返回空路径 |
 | `path source_data_dir()` | 返回第一个同时包含 `theme/` 与 `assets/` 的数据目录，供 `-c` 使用 |
-| `path default_assets_dir()` | 优先 `.camus/assets`，其次第一个存在且非空的数据目录 `assets/`；找不到返回空路径 |
+| `path default_assets_dir()` | 优先 `.camus/assets`，其次 `resource_assets_dir()`；找不到返回空路径 |
+| `path resource_assets_dir()` | 返回第一个存在且非空的数据目录 `assets/`（不含 `.camus` 覆盖）；找不到返回空路径 |
 
 - 常量来源：`config.h.in` 的 `CAMUS_LOCAL_DATA_DIR`、`CAMUS_DATA_DIR_MACOS` 与 `CAMUS_DATA_DIR_LINUX`。
-- 供 `-i` 安装示例文件、`-c` 复制完整资源（§8.2）、主题查找（§5.1、§8.3）与静态资源输出（§6.9、§8.3）使用；构建过程不写入数据目录。
+- 供 `-i` 安装示例文件、`-c` 复制最小/完整资源（§8.2）、主题查找（§5.1、§8.3）与静态资源输出（§6.9、§8.3）使用；构建过程不写入数据目录。
 
 ## 10.7 命令行 `cmdline`（`common/common/cmdline/cmdline.h`）
 

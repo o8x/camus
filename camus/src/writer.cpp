@@ -812,26 +812,38 @@ namespace camus
 			return;
 		}
 
-		const std::filesystem::path default_dir = paths::default_assets_dir();
+		const std::filesystem::path default_dir = paths::resource_assets_dir();
+		const std::filesystem::path local_dir = paths::local_data_dir() / "assets";
 		const std::filesystem::path user_dir = conf_.camus().assets_dir;
 
-		const bool has_default = !default_dir.empty() && std::filesystem::is_directory(default_dir) &&
-								 !std::filesystem::is_empty(default_dir);
-		const bool has_user =
-			!user_dir.empty() && std::filesystem::is_directory(user_dir) && !std::filesystem::is_empty(user_dir);
+		const auto non_empty_dir = [](const std::filesystem::path &path) {
+			return !path.empty() && std::filesystem::is_directory(path) && !std::filesystem::is_empty(path);
+		};
 
-		if (!has_default && !has_user) {
-			logging::debug("skip assets: no default or user assets found");
+		const bool has_default = non_empty_dir(default_dir);
+		const bool has_local = non_empty_dir(local_dir);
+		const bool has_user = non_empty_dir(user_dir);
+
+		if (!has_default && !has_local && !has_user) {
+			logging::debug("skip assets: no default, local or user assets found");
 			return;
 		}
 
 		std::filesystem::create_directories(conf_.camus().dest_dir());
 
-		// 资源文件夹拷贝到目标目录，用户资源整体覆盖默认资源
+		// 资源文件夹按默认 -> .camus -> 本地 ./assets 的顺序叠加，后层覆盖前层
 		const std::filesystem::path dest_dir = conf_.camus().dest_dir() / "assets";
 		if (has_default) {
 			std::filesystem::copy(
 				default_dir,
+				dest_dir,
+				std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
+			);
+		}
+
+		if (has_local) {
+			std::filesystem::copy(
+				local_dir,
 				dest_dir,
 				std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
 			);
@@ -874,8 +886,9 @@ namespace camus
 
 		logging::debug(
 			std::format(
-				"assets: promote copy default={} user={} files={}",
+				"assets: promote copy default={} local={} user={} files={}",
 				has_default ? std::filesystem::relative(default_dir, cmd_.workdir).string() : "-",
+				has_local ? std::filesystem::relative(local_dir, cmd_.workdir).string() : "-",
 				has_user ? std::filesystem::relative(user_dir, cmd_.workdir).string() : "-",
 				count
 			)

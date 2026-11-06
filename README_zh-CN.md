@@ -35,7 +35,7 @@ cd example
 
 ```bash
 mkdir my-site && cd my-site
-/path/to/camus -i      # 安装示例 camus.yaml、posts（含 SUMMARY.md）与 .gitignore
+/path/to/camus -i      # 安装示例 camus.yaml、posts（含 SUMMARY.md 与 posts/private/）与 .gitignore
 /path/to/camus         # 构建
 ```
 
@@ -50,9 +50,10 @@ mkdir my-site && cd my-site
 | `camus -W` | 监听文件变化并启动本地服务 |
 | `camus -D` | 干跑：解析与渲染，但不写文件 |
 | `camus -I` | 打印解析后的配置与目录树 |
-| `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `SUMMARY.md`）与 `.gitignore` |
-| `camus -c` | 把完整内置资源复制到 `./.camus` |
-| `camus -c -f` | 强制重装 `./.camus` |
+| `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `SUMMARY.md` 与 `posts/private/`）与 `.gitignore` |
+| `camus -c` | 把最小可编辑资源（`assets/css/style.css`、`assets/js/onload.js`）复制到 `./.camus` |
+| `camus -c --full` | 把完整内置资源树复制到 `./.camus` |
+| `camus -c -f` | 强制重装所选 `./.camus` 资源 |
 | `camus --open` | 构建后在 VS Code 中打开工作目录 |
 | `camus --open runtime` | 构建后用文件管理器打开数据目录 |
 
