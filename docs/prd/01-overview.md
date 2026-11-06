@@ -8,7 +8,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 - Markdown（cmark-gfm）渲染，支持 Front Matter 与隐藏片段。
 - 多主题：数据目录内置 `default`、`document`、`pixel`、`terminal` 等主题，本地 `theme/` 可覆盖或自定义。
 - 目录树与目录索引页、统计页、友链页、`sitemap.xml`、`meta.json` 生成。
-- 可选 PDF 输出：把全部可见文章合并为单个 Markdown，经 cmark-gfm 转 HTML 后调用 Chrome/Edge 无头模式打印为 PDF；PDF 的 HTML 模板、打印样式、字体样式与自定义字体位于 `theme/pdf/`，同样支持本地覆盖。封面优先使用 `assets/imgs/cover.png` 整页铺满，并注入可交互书签大纲。
+- 可选 PDF 输出：把全部可见文章合并为单个 Markdown，经 cmark-gfm 转 HTML 后调用 Chrome/Edge 无头模式打印为 PDF；PDF 的 HTML 模板、打印样式、字体样式与自定义字体位于 `theme/pdf/`，同样支持本地覆盖。封面优先使用根 `SUMMARY.md` 的 `cover_image`（相对 `camus.yaml` 所在目录）整页铺满，并注入可交互书签大纲。
 - `-W` 监听模式：轮询文件变化并自动重建，同时提供本地 HTTP 服务。
 - `--open`：构建成功后用 VS Code 打开工作目录；`--open runtime` 用系统文件管理器打开数据目录。
 - `private` 目录：源目录下任意名为 `private` 的子目录不参与扫描与生成，也不能作为目录页路由。

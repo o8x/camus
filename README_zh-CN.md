@@ -62,7 +62,7 @@ mkdir my-site && cd my-site
 站点由一个主配置文件与可选的目录元信息驱动：
 
 - `camus.yaml`：站点、输出、渲染、友链与搬运配置
-- `SUMMARY.md`：可选的目录元信息（`title` / `subtitle` / `description`）
+- `SUMMARY.md`：可选的目录元信息（`title` / `subtitle` / `description` / `cover_image`）
 
 ### `camus.yaml`
 
@@ -114,6 +114,7 @@ build:
 ---
 title: Well-known musicals
 subtitle: 可选的简短摘要
+cover_image: assets/cover.jpg
 ---
 
 可选的目录页简介。
@@ -121,7 +122,8 @@ subtitle: 可选的简短摘要
 
 解析规则：
 
-- `title` / `subtitle` / `description` 可写在可选的 YAML Front Matter 中。
+- `title` / `subtitle` / `description` / `cover_image` 可写在可选的 YAML Front Matter 中。
+- 根目录 `SUMMARY.md` 的 `cover_image` 用作 PDF 封面；相对路径以 `camus.yaml` 所在目录为起点，绝对路径直接使用。
 - 缺少 `title` 时使用正文中第一个 `# 标题`。
 - 缺少 `description` 时使用剩余正文。
 - 未设置的字段继承根目录；根目录的 `SUMMARY.md`（`posts/SUMMARY.md` 或 `src/SUMMARY.md`）定义站点标题/副标题/简介。

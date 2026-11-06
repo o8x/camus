@@ -38,6 +38,7 @@ namespace camus::config
 			std::string title;
 			std::string subtitle;
 			std::string description;
+			std::string cover_image;
 		};
 
 		std::string normalize_meta(std::string value)
@@ -90,6 +91,7 @@ namespace camus::config
 							meta.title = read("title");
 							meta.subtitle = read("subtitle");
 							meta.description = read("description");
+							meta.cover_image = read("cover_image");
 						}
 					} catch (const std::exception &e) {
 						logging::warn(
@@ -128,6 +130,7 @@ namespace camus::config
 			meta.title = normalize_meta(meta.title);
 			meta.subtitle = normalize_meta(meta.subtitle);
 			meta.description = normalize_meta(meta.description);
+			meta.cover_image = strings::trim_space(meta.cover_image);
 			return meta;
 		}
 
@@ -491,6 +494,10 @@ namespace camus::config
 
 			if (!meta.description.empty()) {
 				route.description = meta.description;
+			}
+
+			if (!meta.cover_image.empty()) {
+				route.cover_image = meta.cover_image;
 			}
 		};
 

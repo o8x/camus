@@ -1076,34 +1076,36 @@ namespace camus
 		filesystem::write_file(markdown_path, markdown);
 		copy_pdf_theme_fonts(pdf_dir);
 
-		const std::vector<std::filesystem::path> cover_candidates{
-			conf_.camus().assets_dir / "imgs" / "cover.png",
-			paths::local_data_dir() / "assets" / "imgs" / "cover.png",
-			paths::resource_assets_dir() / "imgs" / "cover.png",
-		};
-
-		for (const auto &candidate : cover_candidates) {
-			if (candidate.empty() || !std::filesystem::is_regular_file(candidate)) {
-				continue;
+		if (const std::string cover_image = strings::trim_space(conf_.camus().site.cover_image);
+			!cover_image.empty()) {
+			std::filesystem::path cover_path(cover_image);
+			if (cover_path.is_relative()) {
+				cover_path = cmd_.workdir / cover_path;
 			}
 
-			std::error_code cover_ec;
-			if (std::filesystem::copy_file(
-					candidate,
-					pdf_dir / "cover.png",
-					std::filesystem::copy_options::overwrite_existing,
-					cover_ec
-				)) {
-				pdf["cover"]["image"] = "cover.png";
-				logging::debug("pdf cover image source={}", candidate.string());
+			if (!std::filesystem::is_regular_file(cover_path)) {
+				logging::warn("pdf cover image not found path={}", cover_path.string());
 			} else {
-				logging::warn(
-					"pdf cover image copy failed source={} error={}",
-					candidate.string(),
-					cover_ec.message()
-				);
+				const std::string extension = cover_path.extension().string();
+				const std::string target_name = "cover" + (extension.empty() ? ".png" : extension);
+
+				std::error_code cover_ec;
+				if (std::filesystem::copy_file(
+						cover_path,
+						pdf_dir / target_name,
+						std::filesystem::copy_options::overwrite_existing,
+						cover_ec
+					)) {
+					pdf["cover"]["image"] = target_name;
+					logging::debug("pdf cover image source={}", cover_path.string());
+				} else {
+					logging::warn(
+						"pdf cover image copy failed source={} error={}",
+						cover_path.string(),
+						cover_ec.message()
+					);
+				}
 			}
-			break;
 		}
 
 		view["pdf"] = std::move(pdf);

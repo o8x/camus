@@ -40,7 +40,7 @@ dist/
     ├── index.md                    # 合并后的 Markdown
     ├── index.html                  # PDF 中间 HTML
     ├── index.pdf                   # 最终 PDF（可由 pdf_options 自定义路径）
-    ├── cover.png                   # 找到 assets/imgs/cover.png 时复制为封面
+    ├── cover.<ext>                 # cover_image 有效时复制为封面（保留原扩展名）
     └── fonts/                      # theme/pdf/fonts/ 存在时复制
         └── <字体文件>
 ```
@@ -189,7 +189,7 @@ flowchart TD
     C --> D[合并为单个 Markdown]
     D --> E[写 dist/pdf/index.md]
     E --> F[逐篇 cmark-gfm 渲染为 HTML, 组装 pdf.toc / pdf.articles / 封面等数据]
-    F --> CV[查找 assets/imgs/cover.png, 复制为 dist/pdf/cover.png]
+    F --> CV[解析根 SUMMARY.md 的 cover_image, 复制为 dist/pdf/cover.<ext>]
     CV --> G[读取 theme/pdf/page.html / style.css / fonts.css, 用 inja 渲染完整文档]
     G --> H[复制 theme/pdf/fonts -> dist/pdf/fonts, 写 dist/pdf/index.html（内联样式与字体样式）]
     H --> I[调用浏览器 --headless --print-to-pdf=<解析后的输出路径>]
@@ -209,7 +209,7 @@ flowchart TD
 
   | 页面 | 模板数据 | 说明 |
   |---|---|---|
-  | 封面页 | `pdf.cover` | 优先使用 `assets/imgs/cover.png`（本地 `./assets`、`.camus/assets` 或数据目录）复制为 `dist/pdf/cover.png` 并整页铺满（`@page cover` 四边 0 边距、`object-fit: cover`）；找不到图片时回退站点标题（为空时 `Camus`）与 `site.subtitle` |
+  | 封面页 | `pdf.cover` | 使用根目录 `SUMMARY.md` Front Matter 的 `cover_image`：相对路径以 `camus.yaml` 所在目录为起点，绝对路径直接使用；有效时复制为 `dist/pdf/cover.<ext>` 并整页铺满（`@page cover` 四边 0 边距、`object-fit: cover`）；未配置或文件不存在时回退站点标题（为空时 `Camus`）与 `site.subtitle` |
   | 扉页 | `pdf.title_page`、`pdf.meta` | 站点标题、副标题、站点描述（`site.description`）、生成日期（`Generated`）、站点域名（`Site`，`public_url.domain_name`）、程序版本（`Version`）；不输出文章数；标题等字号已缩小以避免与封面重复 |
   | 目录页 | `pdf.toc` | 标题 `Contents` + 按真实目录树多级缩进的分组标题（目录名）与文章显示名；不显示序号与标签；文章条目显示正文起始页码（与页脚一致）并链接到 `#pdf-article-{n}` |
 

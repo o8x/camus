@@ -62,7 +62,7 @@ mkdir my-site && cd my-site
 A site uses one main config file plus optional per-directory metadata:
 
 - `camus.yaml` — site, output, rendering, friends and transfer configuration
-- `SUMMARY.md` — optional metadata for a directory (`title`, `subtitle`, `description`)
+- `SUMMARY.md` — optional metadata for a directory (`title`, `subtitle`, `description`, `cover_image`)
 
 ### `camus.yaml`
 
@@ -115,6 +115,7 @@ Every directory in the source tree may contain a `SUMMARY.md` that describes it.
 ---
 title: Well-known musicals
 subtitle: Optional short summary
+cover_image: assets/cover.jpg
 ---
 
 Optional description shown on the directory page.
@@ -122,7 +123,8 @@ Optional description shown on the directory page.
 
 Parsing rules:
 
-- `title`, `subtitle` and `description` may be provided in an optional YAML front matter block.
+- `title`, `subtitle`, `description` and `cover_image` may be provided in an optional YAML front matter block.
+- `cover_image` in the root `SUMMARY.md` sets the PDF cover. Relative paths are resolved from the directory containing `camus.yaml`; absolute paths are used as-is.
 - If `title` is missing, the first `# Heading` in the body is used.
 - If `description` is missing, the remaining body is used.
 - Unset fields inherit from the root route; the root `SUMMARY.md` (`posts/SUMMARY.md` or `src/SUMMARY.md`) defines the site title/subtitle/description.

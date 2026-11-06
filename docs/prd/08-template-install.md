@@ -28,11 +28,10 @@
 ├── theme/pdf/fonts/                    # 自定义 PDF 字体文件（构建时复制到 dist/pdf/fonts）
 ├── assets/                    # 默认静态资源（css/js/fonts/imgs/robots.txt 等）
 │   ├── css/style.css          # 公共样式入口，默认空文件
-│   ├── js/onload.js           # 公共脚本入口，默认空文件
-│   └── imgs/cover.png         # 可选：PDF 封面图（存在时整页铺满）
+│   └── js/onload.js           # 公共脚本入口，默认空文件
 ├── posts/                     # 示例文章
-│   ├── SUMMARY.md              # 示例站点与目录元信息
-│   └── private/                # 不参与构建的私有内容目录（安装时自动创建）
+│   ├── SUMMARY.md              # 示例站点与目录元信息（可配置 PDF cover_image）
+│   └── private/                # 不参与构建的私有内容目录（安装时自动创建，含 README.md）
 ├── camus.yaml                 # 示例配置
 └── .gitignore                 # 示例忽略规则
 ```

@@ -32,9 +32,10 @@ namespace camus::config
 		std::string title;
 		std::string subtitle;
 		std::string description;
+		std::string cover_image;
 		std::vector<route_transfer_conf> transfers;
 
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(route_conf, path, title, subtitle, description, transfers);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(route_conf, path, title, subtitle, description, cover_image, transfers);
 
 		[[nodiscard]] std::filesystem::path match_transfer(const std::filesystem::path &path) const
 		{
