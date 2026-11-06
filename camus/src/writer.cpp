@@ -1178,6 +1178,7 @@ namespace camus
 			std::filesystem::remove(browser_log_path, ec);
 		}
 
+		logging::info("pdf generated dest={}", pdf_path.string());
 		logging::debug("make pdf dest={} engine={}", pdf_path.string(), engine);
 	}
 
