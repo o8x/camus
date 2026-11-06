@@ -39,7 +39,7 @@ mkdir my-site && cd my-site
 /path/to/camus --build # build
 ```
 
-`camus` looks for Markdown sources in `src/` first, then `posts/`. The generated site is written to `dist/html/` (and PDF to `dist/pdf/` when configured). Building only happens when explicitly requested with `--build`, `-W`, `--check` or `--open`; running `camus` without any option prints usage.
+`camus` looks for Markdown sources in `src/` first, then `posts/`. The generated site is written to `dist/html/` (and PDF to `dist/pdf/` when configured). Building only happens when explicitly requested with `--build`, `-W` or `--check`; running `camus` without any option prints usage.
 
 ### Common commands
 
@@ -53,7 +53,7 @@ mkdir my-site && cd my-site
 | `camus --check` | Validate configuration, assets, PDF settings and run a dry build |
 | `camus -i` | Install example `camus.yaml`, `posts` (with `SUMMARY.md`, plus `posts/private/`), `.gitignore` and `Justfile` |
 | `camus --new <dir>` | Create a site directory and install example files |
-| `camus --create <path>` | Create an article `.md` under `src/` or `posts/` (missing directories are created; last segment is the file name) |
+| `camus --create <path>` | Create an article `.md` under `src/` or `posts/` with a starter template (missing directories are created; last segment is the file name) |
 | `camus --repo [url]` | Run `git init`; set `origin` when a URL is provided |
 | `camus --new <dir> --repo <url>` | Create, install and initialize git |
 | `camus -c` | Copy minimal editable resources (`assets/css/style.css`, `assets/js/onload.js`, empty `assets/fonts/`) into `./assets` |
@@ -61,8 +61,8 @@ mkdir my-site && cd my-site
 | `camus -c --theme` | Copy the whole `theme/` directory into `./theme`, plus minimal `assets/` |
 | `camus -c --theme <name>` | Copy only `theme/<name>/` into `./theme/<name>`, plus minimal `assets/` |
 | `camus -c -f` | Force re-copy the selected resources |
-| `camus --open` | Build, then open the workdir in VS Code |
-| `camus --open runtime` | Build, then open the data directory in the file manager |
+| `camus --open` | Open the workdir in VS Code (does not build) |
+| `camus --open runtime` | Open the data directory in the file manager (does not build) |
 
 ## Configuration
 

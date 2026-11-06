@@ -173,11 +173,14 @@ int main(const int argc, char **argv)
 			}
 		}
 
-		// 构建只由显式请求触发：--build、--watch、--check 或 --open。
+		// 构建只由显式请求触发：--build、--watch 或 --check。
 		// 其余情况只执行已指定的操作；完全没有操作时打印用法。
-		const bool build_requested =
-			arg.exist("build") || arg.exist("watch") || arg.exist("check") || arg.exist("open");
+		const bool build_requested = arg.exist("build") || arg.exist("watch") || arg.exist("check");
 		if (!build_requested) {
+			if (arg.exist("open")) {
+				return camus::open_target(arg.get<std::string>("open"), cmd.workdir);
+			}
+
 			const bool acted = arg.exist("install") || arg.exist("new") || arg.exist("copy") ||
 							   arg.exist("repo") || arg.exist("create");
 			if (!acted) {

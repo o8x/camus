@@ -1,5 +1,6 @@
 #include "install.h"
 
+#include <ctime>
 #include <exception>
 #include <filesystem>
 #include <string>
@@ -8,6 +9,7 @@
 #include <build/build.h>
 
 #include "common/filesystem/filesystem.h"
+#include "common/functions/functions.h"
 #include "common/logging/logging.h"
 #include "common/paths/paths.h"
 
@@ -261,7 +263,14 @@ namespace camus
 				return 0;
 			}
 
-			filesystem::write_file(target, "");
+			const std::string name = relative.stem().string();
+			const std::string content = std::format(
+				"---\n# title: {}\ncreate-time: {}\n---\n\n\n## {}\n",
+				name,
+				functions::format_time_t(std::time(nullptr)),
+				name
+			);
+			filesystem::write_file(target, content);
 			logging::info("article created at '{}'", filesystem::path_abs(target));
 		} catch (const std::exception &e) {
 			logging::error("create failed error={}", e.what());

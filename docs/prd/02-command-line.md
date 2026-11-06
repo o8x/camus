@@ -8,7 +8,7 @@
 camus [选项] [--workdir <目录>]
 ```
 
-所有选项均为可选；带值选项为 `-w/--workdir`、`--new`、`--create`；`--open` 与 `--repo` 的值可省略（裸 `--open` 等价 `--open project`，裸 `--repo` 等价只执行 `git init`）。不带任何操作选项直接运行 `camus` 只打印 usage，不触发构建；构建必须显式指定 `--build`（`-W`、`--check`、`--open` 隐含构建）。
+所有选项均为可选；带值选项为 `-w/--workdir`、`--new`、`--create`；`--open` 与 `--repo` 的值可省略（裸 `--open` 等价 `--open project`，裸 `--repo` 等价只执行 `git init`）。不带任何操作选项直接运行 `camus` 只打印 usage，不触发构建；构建必须显式指定 `--build`（`-W`、`--check` 隐含构建）。
 
 ## 2.2 选项表
 
@@ -27,9 +27,9 @@ camus [选项] [--workdir <目录>]
 | `-D` | `--dryrun` | 无 | 干跑：不写任何输出文件 | `main.cpp:12` |
 | `-C` | `--check` | 无 | 校验配置、资源与 PDF 设置，并执行一次干跑构建后输出检查报告；不写文件 | `main.cpp` |
 |  | `--new` | 目录字符串 | 创建目录（相对 `--workdir` 或绝对路径），自动执行 `--install`，并继续执行 `--repo`；不触发构建，除非同时指定 `--build` | `main.cpp` |
-| `--create` | 路径字符串 | 在源目录（`src/` 优先，其次 `posts/`）下创建文章：最后一级视为文件名（自动补 `.md`），缺失目录递归创建；文件已存在时不覆盖。不触发构建 | `main.cpp` |
+| `--create` | 路径字符串 | 在源目录（`src/` 优先，其次 `posts/`）下创建文章：最后一级视为文件名（自动补 `.md`），缺失目录递归创建，并写入模板（注释的 `title`、当前 UTC 时间的 `create-time`、`## 文件名` 正文）；文件已存在时不覆盖。不触发构建 | `main.cpp` |
 |  | `--repo` | 可选值：远程地址 | 在 `--workdir` 执行 `git init`；提供值时设置 `origin`（已存在则更新），不提供时只 init | `main.cpp` |
-|  | `--open` | 可选值：`project`（默认）/`runtime` | 隐含构建；构建成功后打开目录：`project` 用 VS Code 打开工作目录，`runtime` 用系统文件管理器打开数据目录；未知值打印 WARN 并按 `project` 处理 | `main.cpp` |
+|  | `--open` | 可选值：`project`（默认）/`runtime` | 只打开目录，不触发构建：`project` 用 VS Code 打开工作目录，`runtime` 用系统文件管理器打开数据目录；未知值打印 WARN 并按 `project` 处理。与 `--build` 同用时构建成功后再打开 | `main.cpp` |
 | `-w` | `--workdir` | 目录字符串，默认 `.` | 工作目录 | `main.cpp:14` |
 
 > 资源来源：主题、默认资源与示例模板由安装包放到平台数据目录。`-i` 只安装工作目录根部的示例文件；`-c` 默认只生成最小可编辑资源骨架到工作目录 `assets/`（`css/style.css`、`js/onload.js`、空 `fonts/`），`-c --full` 才复制完整资源到 `.camus`，`-c --theme [name]` 则把主题复制到工作目录 `theme/`。资源查找会依次叠加数据目录、`.camus` 与本地 `./assets` / `theme/`（见 §8）。
@@ -76,8 +76,10 @@ flowchart TD
     CR -->|是| NEW[create_article: 在源目录创建 .md]
     CR -->|否| GATE
     NEW -->|失败| CF2[返回 1]
-    NEW -->|成功| GATE{--build / -W / --check / --open?}
-    GATE -->|否| ACT{有 install/new/copy/repo/create?}
+    NEW -->|成功| GATE{--build / -W / --check?}
+    GATE -->|否| OP0{--open?}
+    OP0 -->|是| OPEN0[open_target, 返回 0/1]
+    OP0 -->|否| ACT{有 install/new/copy/repo/create?}
     ACT -->|否| USAGE[打印 usage, 返回 0]
     ACT -->|是| RET0[返回 0]
     GATE -->|是| C[构造 writer]
@@ -95,7 +97,7 @@ flowchart TD
 
 要点：
 
-- 只有指定 `--build`、`-W`、`--check` 或 `--open` 时才构建。仅执行安装 / 复制 / 建目录 / 创建文章 / `git init` 时完成后直接返回 0；完全没有操作时打印 usage 并返回 0（不再默认构建）。
+- 只有指定 `--build`、`-W` 或 `--check` 时才构建。仅执行安装 / 复制 / 建目录 / 创建文章 / `git init` / `--open` 时完成后直接返回 0；完全没有操作时打印 usage 并返回 0（不再默认构建）。
 - `--new <dir>` 先把目标解析为「`--workdir` 下的相对路径」或绝对路径并创建，随后等同于同时传入 `--install`：补齐 `camus.yaml`、`posts`（含 `SUMMARY.md`、`posts/private/`）、`.gitignore` 与 `Justfile`。之后若指定 `--repo` 再初始化仓库；需要构建时另加 `--build`。
 - `--create <path>` 在源目录下创建文章：源目录按 `src/` → `posts/` → 默认 `src/` 探测（与构建一致）。路径必须是相对路径且不含 `.` / `..` 段，最后一级为文件名，未以 `.md` 结尾时自动补 `.md`，缺失父目录递归创建；目标文件已存在时打印告警但不覆盖，仍返回 0。
 - `-i` 只补齐工作目录根部的 `posts`（含各目录的 `SUMMARY.md` 与空的 `posts/private/`）、`camus.yaml`、`.gitignore`、`Justfile`，同名路径已存在则保持不动；`posts/private/` 每次都会确保存在。
@@ -106,7 +108,7 @@ flowchart TD
 - `--repo` 在 `--workdir` 执行 `git -C <workdir> init -q`；提供远程地址时进一步执行 `git remote get-url origin`，已存在则 `remote set-url origin`，否则 `remote add origin`。无远程地址时只初始化。失败返回 1。
 - `--check` 在构建前执行：内部把 dryrun 置为 true，重新加载配置并执行一次干跑构建，然后输出工作目录、源目录、主题、资源、PDF 资源和目录树等检查信息；不写文件，结果以退出码 0（OK）/1（FAILED）表示。
 - `-W` 时即使首次 `build()` 返回非 0，也会进入 `watch()` 循环继续等待变化。
-- `--open` 仅在 `build()` 返回 0 时执行，且只执行一次：非 watch 模式在打开后按结果退出，watch 模式先打开再进入监听循环。
+- `--open` 单独使用时直接打开目标目录并返回，不构建；与 `--build` 同用时仅在 `build()` 返回 0 后执行，且只执行一次：非 watch 模式在打开后按结果退出，watch 模式先打开再进入监听循环。
 - `--open project` 依次尝试 `code <workdir>` 与 macOS 的 `open -a "Visual Studio Code" <workdir>`；`--open runtime` 在 macOS 使用 `open <数据目录>`，其它平台使用 `xdg-open <数据目录>`。打开失败打印错误并返回 1（watch 模式不退出）。
 
 ## 2.5 版本输出
@@ -164,6 +166,6 @@ camus --repo              # 在当前工作目录 git init
 camus --repo git@github.com:user/site.git               # git init 并设置 origin
 camus -D -v               # 版本信息（-D 对 -v 无影响）
 camus -dw /tmp/site --build # 调试日志 + 构建
-camus --open              # 构建后在 VS Code 打开工作目录
-camus --open runtime      # 构建后用文件管理器打开数据目录
+camus --open              # 在 VS Code 打开工作目录（不构建）
+camus --open runtime      # 用文件管理器打开数据目录（不构建）
 ```

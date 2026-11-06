@@ -6,6 +6,12 @@ camus := require("camus")
 default:
     @{{camus}} --check
 
+open:
+    @{{camus}} --open
+
+create name="":
+    @{{camus}} --create "{{name}}.md"
+
 build size="A4":
     @CAMUS_PDF_OPTIONS_PAGE_SIZE={{size}} {{camus}} --build
 

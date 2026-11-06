@@ -39,7 +39,7 @@ mkdir my-site && cd my-site
 /path/to/camus --build # 构建
 ```
 
-`camus` 优先从 `src/` 读取 Markdown，不存在时回退 `posts/`。生成的站点写入 `dist/html/`（配置 PDF 时另写入 `dist/pdf/`）。只有显式指定 `--build`、`-W`、`--check` 或 `--open` 时才会构建；直接运行 `camus` 只打印用法。
+`camus` 优先从 `src/` 读取 Markdown，不存在时回退 `posts/`。生成的站点写入 `dist/html/`（配置 PDF 时另写入 `dist/pdf/`）。只有显式指定 `--build`、`-W` 或 `--check` 时才会构建；直接运行 `camus` 只打印用法。
 
 ### 常用命令
 
@@ -53,7 +53,7 @@ mkdir my-site && cd my-site
 | `camus --check` | 校验配置、资源与 PDF 设置，并执行干跑构建 |
 | `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `SUMMARY.md` 与 `posts/private/`）、`.gitignore` 与 `Justfile` |
 | `camus --new <dir>` | 创建站点目录并安装示例文件 |
-| `camus --create <path>` | 在 `src/` 或 `posts/` 下创建文章 `.md`（自动创建缺失目录；最后一级为文件名） |
+| `camus --create <path>` | 在 `src/` 或 `posts/` 下创建带初始模板的文章 `.md`（自动创建缺失目录；最后一级为文件名） |
 | `camus --repo [url]` | 执行 `git init`；提供地址时设置 `origin` |
 | `camus --new <dir> --repo <url>` | 创建、安装并初始化 git |
 | `camus -c` | 把最小可编辑资源（`assets/css/style.css`、`assets/js/onload.js`，并创建空 `assets/fonts/`）复制到 `./assets` |
@@ -61,8 +61,8 @@ mkdir my-site && cd my-site
 | `camus -c --theme` | 把整个 `theme/` 复制到 `./theme`，并创建最小 `assets/` |
 | `camus -c --theme <name>` | 把 `theme/<name>/` 复制到 `./theme/<name>`，并创建最小 `assets/` |
 | `camus -c -f` | 强制重装所选资源 |
-| `camus --open` | 构建后在 VS Code 中打开工作目录 |
-| `camus --open runtime` | 构建后用文件管理器打开数据目录 |
+| `camus --open` | 在 VS Code 中打开工作目录（不构建） |
+| `camus --open runtime` | 用文件管理器打开数据目录（不构建） |
 
 ## 配置
 
