@@ -80,7 +80,7 @@
   - `--print-to-pdf={{dest_dir}}/docs/book.pdf`：输出到 `<dest_dir>/docs/book.pdf`；
   - `--print-to-pdf=book.pdf`：相对路径按 `<dest_dir>/book.pdf` 解析。
 - 兼容旧写法：`pdf_options` 直接写成字符串数组时，等价于把这些项放入 `pdf_options.build`。
-- `pdf_options.page.size` 与 `pdf_options.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加到打印样式末尾，作用于未命名页；默认 `A4` / `20mm 18mm`。命名页（`cover` / `front`）仍以 `theme/pdf/style.css` 中的定义为准。取值同时作为 `pdf.page.size` / `pdf.page.margin` 提供给模板（见 §5.10）。
+- `pdf_options.page.size` 与 `pdf_options.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加到打印样式末尾，作用于未命名页；默认 `A4` / `20mm 18mm`。同时追加 `@page cover { size: ...; margin: 0; }`，使封面命名页也使用配置的尺寸（边距保持 0）；`front` 命名页继承全局尺寸。取值同时作为 `pdf.page.size` / `pdf.page.margin` 提供给模板（见 §5.10）。
 - 未显式提供 `--headless` 时自动追加；始终追加临时 `--user-data-dir`（构建结束删除），避免污染用户浏览器配置。
 - PDF 中间 HTML 使用 `theme/pdf/page.html` 模板、`theme/pdf/style.css` 样式与 `theme/pdf/fonts.css` 字体样式；字体文件放在站点 `assets/fonts/`，构建时复制到 `dist/pdf/assets/fonts/`。该目录不通过 `camus.yaml` 配置，查找顺序与可用模板变量见 §5.10、§8.3。
 

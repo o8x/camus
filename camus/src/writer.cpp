@@ -286,7 +286,9 @@ namespace
 			margin = camus::config::pdf_page_margin_default;
 		}
 
-		return "\n@page { size: " + size + "; margin: " + margin + "; }\n";
+				// 封面使用独立的命名页（margin: 0），这里同步使用配置的页面尺寸，
+		// 否则会在全局尺寸之外继续沿用主题里硬编码的 A4。
+		return "\n@page { size: " + size + "; margin: " + margin + "; }\n@page cover { size: " + size + "; margin: 0; }\n";
 	}
 } // namespace
 
