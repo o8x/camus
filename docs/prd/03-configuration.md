@@ -20,7 +20,7 @@
 
 ## 3.2 解析总则
 
-- 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`theme`、`pdf_engine`、`pdf_options`、`markdown_options`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。不再接受 `render` 嵌套段；出现时打印 WARN 并忽略其内容。
+- 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`theme`、`pdf`、`markdown_options`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。不再接受 `render` 嵌套段；出现时打印 WARN 并忽略其内容。
 - `SUMMARY.md` 在目录扫描时跳过，不进入文章树。
 - 字符串值会做 `trim_space`；`SUMMARY.md` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`；`cover_image` 只做 `trim_space`，保留原始路径。
 - 源目录、资源目录与输出目录不再可配置：
@@ -29,7 +29,7 @@
   - HTML 输出固定为 `./dist/html`，PDF 输出固定为 `./dist/pdf`。
 - `html_engine` 固定为 `default`，`markdown_engine` 固定为 `cmark-gfm`，均不从配置读取。
 - 路径在解析后转为绝对路径供内部使用；模板 JSON 中保留解析后的值（见 §3.7）。
-- **环境变量注入**：所有标量配置项都可用环境变量覆盖，变量名为 `CAMUS_` + 配置路径（大写、层级与非法字符转为 `_`），例如 `pdf_options.page.size` → `CAMUS_PDF_OPTIONS_PAGE_SIZE`、`theme` → `CAMUS_THEME`、`meta` → `CAMUS_META`。环境变量优先于 `camus.yaml` 中的值；即使配置文件中没有该键，也可注入已知标量项（`meta`、`sitemap`、`filename_case`、`public_url`、`cdn_url`、`theme`、`pdf_engine`、`pdf_options.page.size`、`pdf_options.page.margin`）。数组 / 列表字段（`markdown_options`、`pdf_options.build`、`friends`、`build` / `transfer` 及其元素字段）**不支持**注入。`-W` 监听模式仍会清空 `public_url` / `cdn_url`。
+- **环境变量注入**：所有标量配置项都可用环境变量覆盖，变量名为 `CAMUS_` + 配置路径（大写、层级与非法字符转为 `_`），例如 `pdf.page.size` → `CAMUS_PDF_PAGE_SIZE`、`pdf.engine` → `CAMUS_PDF_ENGINE`、`pdf.sort` → `CAMUS_PDF_SORT`、`theme` → `CAMUS_THEME`、`meta` → `CAMUS_META`。环境变量优先于 `camus.yaml` 中的值；即使配置文件中没有该键，也可注入已知标量项（`meta`、`sitemap`、`filename_case`、`public_url`、`cdn_url`、`theme`、`pdf.engine`、`pdf.page.size`、`pdf.page.margin`、`pdf.sort`）。为兼容旧配置，仍接受 `CAMUS_PDF_ENGINE`（对应旧 `pdf_engine`，与 `pdf.engine` 同名）与 `CAMUS_PDF_OPTIONS_PAGE_SIZE` / `CAMUS_PDF_OPTIONS_PAGE_MARGIN`（旧 `pdf_options.page.*`），新键优先。数组 / 列表字段（`markdown_options`、`pdf.build`、`friends`、`build` / `transfer` 及其元素字段）**不支持**注入。`-W` 监听模式仍会清空 `public_url` / `cdn_url`。
 
 ## 3.3 顶层配置字段
 
@@ -45,8 +45,8 @@
 | `cdn_url` | 字符串 | 空 | `with_cdn()` 使用的 CDN 基地址；为空时 `with_cdn(path)` 返回 `with_prefix(path)`（包含 `path_prefix`），末尾多余 `/` 会被去除；`-W` 监听模式下忽略（按空处理） | `yaml_config.cpp` |
 | `theme` | 字符串 | 默认 `default` | 主题目录名 | `yaml_config.cpp` |
 | `markdown_options` | 字符串数组 | 可选 | cmark-gfm 选项名列表，见 §3.4 | `yaml_config.cpp` |
-| `pdf_engine` | 字符串 | 可选 | PDF 引擎：`chromium`/`chrome`/`edge`，或可执行文件路径；非空且不为 `disable` 时启用 PDF 生成 | `yaml_config.cpp` |
-| `pdf_options` | 对象 | 可选 | PDF 参数：`build`（字符串数组，Chrome/Edge 启动参数）与 `page`（`size` / `margin`，应用到 `@page`）；旧写法顶层字符串数组等价于 `build` | `yaml_config.cpp` |
+| `pdf` | 对象 | 可选 | PDF 配置：`engine`（字符串）、`build`（字符串数组）、`page`（`size` / `margin`）、`sort`（`file_first` / `dir_first` / `mixed`，默认 `file_first`），见 §3.3.1 | `yaml_config.cpp` |
+| `pdf_engine` / `pdf_options` | 旧键 | 可选（已弃用） | 兼容旧配置：分别等价于 `pdf.engine` 与 `pdf.build` / `pdf.page`；存在顶层 `pdf` 时旧键被忽略。加载时输出 WARN 提示迁移 | `yaml_config.cpp` |
 
 `public_url` 拆解规则（`parse_public_url()`）：
 
@@ -63,9 +63,9 @@
 
 `-W` 监听模式由本地服务访问，`public_url` 与 `cdn_url` 在解析后被清空（`path_prefix` 随之为空），构建产物使用根相对路径。
 
-### 3.3.1 PDF 引擎与参数
+### 3.3.1 PDF 引擎、参数与排序
 
-`pdf_engine` 非空且不为 `disable` 时构建末尾执行 PDF 生成（见 §6.11）；`disable` 不区分大小写并忽略首尾空格：
+`pdf.engine` 非空且不为 `disable` 时构建末尾执行 PDF 生成（见 §6.11）；`disable` 不区分大小写并忽略首尾空格：
 
 | 配置值 | macOS 解析 | Linux 解析 |
 |---|---|---|
@@ -73,14 +73,22 @@
 | `edge` / `msedge` / `microsoft-edge` | `/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge` | `microsoft-edge`、`microsoft-edge-stable`、`microsoft-edge-beta`（按 PATH 查找） |
 | 含 `/` 的路径 | 直接作为可执行文件路径 | 同左 |
 
-- `pdf_engine: disable` 表示显式禁用 PDF：不解析引擎、不产生 `dist/pdf` 内容，也不输出告警。
+- `pdf.engine: disable` 表示显式禁用 PDF：不解析引擎、不产生 `dist/pdf` 内容，也不输出告警。
 - 引擎找不到时输出 WARN 并跳过 PDF，不影响 HTML 构建。
-- `pdf_options.build` 中的字符串原样作为启动参数；其中以 `--print-to-pdf` 开头的项只取第一个并统一重写，支持 `{{dest_dir}}` 占位符（占位符代表 PDF 输出目录 `./dist/pdf`）：
+- `pdf.build` 中的字符串原样作为启动参数；其中以 `--print-to-pdf` 开头的项只取第一个并统一重写，支持 `{{dest_dir}}` 占位符（占位符代表 PDF 输出目录 `./dist/pdf`）：
   - `--print-to-pdf=`：默认输出 `<dest_dir>/index.pdf`；
   - `--print-to-pdf={{dest_dir}}/docs/book.pdf`：输出到 `<dest_dir>/docs/book.pdf`；
   - `--print-to-pdf=book.pdf`：相对路径按 `<dest_dir>/book.pdf` 解析。
-- 兼容旧写法：`pdf_options` 直接写成字符串数组时，等价于把这些项放入 `pdf_options.build`。
-- `pdf_options.page.size` 与 `pdf_options.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加到打印样式末尾，作用于未命名页；默认 `A4` / `20mm 18mm`。同时追加 `@page cover { size: ...; margin: 0; }`，使封面命名页也使用配置的尺寸（边距保持 0）；`front` 命名页继承全局尺寸。取值同时作为 `pdf.page.size` / `pdf.page.margin` 提供给模板（见 §5.10）。
+- `pdf.page.size` 与 `pdf.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加到打印样式末尾，作用于未命名页；默认 `A4` / `20mm 18mm`。同时追加 `@page cover { size: ...; margin: 0; }`，使封面命名页也使用配置的尺寸（边距保持 0）；`front` 命名页继承全局尺寸。取值同时作为 `pdf.page.size` / `pdf.page.margin` 提供给模板（见 §5.10）。
+- `pdf.sort` 控制 PDF 中同一层内文件与子目录的排列（同时影响正文、目录页与书签大纲），默认 `file_first`：
+
+  | 取值 | 效果 |
+  |---|---|
+  | `file_first` | 先文件、后子目录；两组内部按相对路径字符串字典序升序 |
+  | `dir_first` | 先子目录、后文件；两组内部按相对路径字符串字典序升序 |
+  | `mixed` | 不区分文件 / 目录，完全按相对路径字符串字典序升序 |
+
+  取值不区分大小写并忽略首尾空格；未知值输出 WARN 并回退 `file_first`。该顺序仅作用于 PDF，与 HTML 站点排序（目录优先、按 `write_time` 降序）互不影响。
 - 未显式提供 `--headless` 时自动追加；始终追加临时 `--user-data-dir`（构建结束删除），避免污染用户浏览器配置。
 - PDF 中间 HTML 使用 `theme/pdf/page.html` 模板、`theme/pdf/style.css` 样式与 `theme/pdf/fonts.css` 字体样式；字体文件放在站点 `assets/fonts/`，构建时复制到 `dist/pdf/assets/fonts/`。该目录不通过 `camus.yaml` 配置，查找顺序与可用模板变量见 §5.10、§8.3。
 
@@ -186,7 +194,7 @@ build:
 
 | 顶层键 | 结构 | 说明 |
 |---|---|---|
-| `camus` | 对象 | 兼容保留的聚合对象：`source_dir`、`assets_dir`、`site`、`meta`、`sitemap`、`filename_case`、`public_url`、`protocol`、`domain_name`、`path_prefix`、`cdn_url`、`render`、`friends`；`render.options` 为选项展示串 |
+| `camus` | 对象 | 兼容保留的聚合对象：`source_dir`、`assets_dir`、`site`、`meta`、`sitemap`、`filename_case`、`public_url`、`protocol`、`domain_name`、`path_prefix`、`cdn_url`、`render`、`pdf`、`friends`；`render.options` 为选项展示串 |
 | `source_dir` | 字符串 | 解析后的源目录绝对路径（`src`→`posts` 探测） |
 | `assets_dir` | 字符串 | 解析后的资源目录绝对路径 |
 | `meta` | bool | 是否输出 `meta.json` |
@@ -197,7 +205,8 @@ build:
 | `domain_name` | 字符串 | `public_url` 的域名部分 |
 | `path_prefix` | 字符串 | `public_url` 的路径前缀 |
 | `cdn_url` | 字符串 | CDN 基地址（默认空） |
-| `render` | 对象 | 模板兼容聚合对象（`theme_name`、`html_engine`、`markdown_engine`、`pdf_engine`、`pdf_options`）；对应配置项在 `camus.yaml` 顶层，此对象仅用于模板数据 |
+| `render` | 对象 | 模板兼容聚合对象（`theme_name`、`html_engine`、`markdown_engine`）；对应配置项在 `camus.yaml` 顶层，此对象仅用于模板数据 |
+| `pdf` | 对象 | PDF 配置：`engine`、`build`、`page`（`size`/`margin`）、`sort`（序列化为 `file_first` / `dir_first` / `mixed`）；PDF 模板中的 `pdf` 会被页面数据覆盖，见 §5.10 |
 | `friends` | 数组 | 友情链接 |
 | `site` | 对象 | 根路由（`path/title/subtitle/description/cover_image/transfers`） |
 | `route` | 数组 | 全部路由（继承后） |

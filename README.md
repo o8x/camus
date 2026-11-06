@@ -87,8 +87,9 @@ public_url: https://stdout.com.cn/camus
 cdn_url: ''                # e.g. https://cdn.stdout.com.cn/camus
 
 theme: terminal
-pdf_engine: chrome         # use "disable" to skip PDF generation
-pdf_options:
+pdf:
+  engine: chrome           # use "disable" to skip PDF generation
+  sort: file_first         # file_first / dir_first / mixed
   build:
     - --headless
     - --print-to-pdf={{dest_dir}}/index.pdf
@@ -114,7 +115,7 @@ build:
         target: /intro/Well-known
 ```
 
-All scalar config values can be overridden by a `CAMUS_<PATH>` environment variable (e.g. `pdf_options.page.size` → `CAMUS_PDF_OPTIONS_PAGE_SIZE`, `theme` → `CAMUS_THEME`). Arrays/lists such as `markdown_options`, `pdf_options.build`, `friends` and `build` cannot be injected.
+All scalar config values can be overridden by a `CAMUS_<PATH>` environment variable (e.g. `pdf.page.size` → `CAMUS_PDF_PAGE_SIZE`, `theme` → `CAMUS_THEME`). Arrays/lists such as `markdown_options`, `pdf.build`, `friends` and `build` cannot be injected.
 
 `public_url` accepts with or without a protocol. Missing protocols default to `https://`; a trailing slash is normalized away. It drives absolute links, the sitemap, and PDF cover data.
 
@@ -213,5 +214,5 @@ Themes contain `home.html`, `page.html`, `stats.html` and `friends.html`, loaded
 ```text
 dist/
 ├── html/            # static HTML site (index pages, articles, stats, friends, sitemap, meta)
-└── pdf/             # when pdf_engine is configured and not "disable"
+└── pdf/             # when pdf.engine is configured and not "disable"
 ```

@@ -6,8 +6,9 @@
 # cdn_url: ''                               # CDN 地址，默认空；为空时 with_cdn(path) 返回 with_prefix(path)（含 path_prefix）
 # 页面渲染配置
 theme: pixel                             # 加载 theme/name/*.html
-pdf_engine: chrome                          # PDF 引擎：chromium/chrome/edge（Linux 自动按 PATH 查找）；disable 时不生成 PDF
-pdf_options:
+pdf:
+    engine: chrome                          # PDF 引擎：chromium/chrome/edge（Linux 自动按 PATH 查找）；disable 时不生成 PDF
+    sort: file_first                        # PDF 排序：file_first 文件在前、dir_first 目录在前、mixed 按路径字典序混排
     build:                                  # Chrome/Edge 启动参数
         - --headless
         - --enable-logging

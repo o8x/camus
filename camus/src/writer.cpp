@@ -989,7 +989,7 @@ namespace camus
 
 	void writer::emit_pdf()
 	{
-		const std::string pdf_engine = strings::trim_space(conf_.camus().render.pdf_engine);
+		const std::string pdf_engine = strings::trim_space(conf_.camus().pdf.engine);
 		if (pdf_engine.empty() || strings::to_lower(pdf_engine) == "disable") {
 			return;
 		}
@@ -1040,7 +1040,7 @@ namespace camus
 		view["pdf_page_offset"] = 0;
 		std::string markdown = std::format("# {}\n\n{}\n", site_title, conf_.camus().site.description);
 
-		const camus::config::pdf_page_conf page_conf = conf_.camus().render.pdf_options.page;
+		const camus::config::pdf_page_conf page_conf = conf_.camus().pdf.page;
 		const std::string page_size = strings::trim_space(page_conf.size).empty()
 										  ? camus::config::pdf_page_size_default
 										  : strings::trim_space(page_conf.size);
@@ -1090,6 +1090,7 @@ namespace camus
 
 		// 目录按真实目录树多级输出：目录节点作为分组标题，文章节点作为可跳转条目。
 		// 根节点（depth 0）只是容器，depth - 1 为模板中的显示层级。
+		const config::pdf_sort_mode sort_mode = conf_.camus().pdf.sort;
 		int index = 0;
 		std::function<void(const catalog::catalog_node &, int)> append_node;
 		append_node = [&](const catalog::catalog_node &node, const int depth) {
@@ -1162,16 +1163,17 @@ namespace camus
 				return;
 			}
 
-			// PDF 顺序：同层文件在前、目录在后，各自按相对路径字典序升序。
+			// PDF 顺序由 pdf.sort 决定：file_first / dir_first 分别把同层文件或目录
+			// 排在前面，groups 内部按相对路径字典序升序；mixed 完全按路径字典序。
 			std::vector<const catalog::catalog_node *> ordered;
 			ordered.reserve(node.children.size());
 			for (const auto &child : node.children) {
 				ordered.push_back(&child);
 			}
 
-			std::ranges::sort(ordered, [](const catalog::catalog_node *a, const catalog::catalog_node *b) {
-				if (a->is_directory() != b->is_directory()) {
-					return !a->is_directory();
+			std::ranges::sort(ordered, [sort_mode](const catalog::catalog_node *a, const catalog::catalog_node *b) {
+				if (sort_mode != config::PDF_SORT_MIXED && a->is_directory() != b->is_directory()) {
+					return sort_mode == config::PDF_SORT_DIR_FIRST ? a->is_directory() : !a->is_directory();
 				}
 
 				return a->path.string() < b->path.string();
@@ -1252,7 +1254,7 @@ namespace camus
 		bool has_print_to_pdf = false;
 		bool has_user_data_dir = false;
 
-		for (const auto &option : conf_.camus().render.pdf_options.build) {
+		for (const auto &option : conf_.camus().pdf.build) {
 			if (option.empty()) {
 				continue;
 			}
@@ -1665,7 +1667,7 @@ namespace camus
 		check_output_dir(camus.dest_dir(), "output dir");
 		check_output_dir(camus.pdf_dir(), "pdf dir");
 
-		const std::string pdf_engine_name = strings::trim_space(camus.render.pdf_engine);
+		const std::string pdf_engine_name = strings::trim_space(camus.pdf.engine);
 		std::string pdf_state = "disabled";
 		if (!pdf_engine_name.empty() && strings::to_lower(pdf_engine_name) != "disable") {
 			const std::string engine = resolve_pdf_engine(pdf_engine_name);

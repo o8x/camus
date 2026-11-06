@@ -59,11 +59,47 @@ namespace camus::config
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(pdf_page_conf, size, margin);
 	};
 
-	struct pdf_options_conf {
+	enum pdf_sort_mode : uint8_t {
+		PDF_SORT_FILE_FIRST = 0,
+		PDF_SORT_DIR_FIRST = 1,
+		PDF_SORT_MIXED = 2,
+	};
+
+	inline void to_json(nlohmann::json &json, const pdf_sort_mode &mode)
+	{
+		switch (mode) {
+		case PDF_SORT_DIR_FIRST:
+			json = "dir_first";
+			break;
+		case PDF_SORT_MIXED:
+			json = "mixed";
+			break;
+		case PDF_SORT_FILE_FIRST:
+		default:
+			json = "file_first";
+			break;
+		}
+	}
+
+	inline void from_json(const nlohmann::json &json, pdf_sort_mode &mode)
+	{
+		const std::string value = json.is_string() ? json.get<std::string>() : "";
+		if (value == "dir_first") {
+			mode = PDF_SORT_DIR_FIRST;
+		} else if (value == "mixed") {
+			mode = PDF_SORT_MIXED;
+		} else {
+			mode = PDF_SORT_FILE_FIRST;
+		}
+	}
+
+	struct pdf_conf {
+		std::string engine;
 		std::vector<std::string> build;
 		pdf_page_conf page;
+		pdf_sort_mode sort = PDF_SORT_FILE_FIRST;
 
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(pdf_options_conf, build, page);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(pdf_conf, engine, build, page, sort);
 	};
 
 	enum camus_theme_type : uint8_t {
@@ -77,13 +113,11 @@ namespace camus::config
 		std::string theme_name = "default";
 		std::string html_engine = "default";
 		std::string markdown_engine = "cmark-gfm";
-		std::string pdf_engine;
-		pdf_options_conf pdf_options;
 		int markdown_options = 0;
 		// 主题数据
 		std::unordered_map<camus_theme_type, std::string> theme;
 
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(render_conf, theme_name, html_engine, markdown_engine, pdf_engine, pdf_options);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(render_conf, theme_name, html_engine, markdown_engine);
 	};
 
 	struct output_conf {
@@ -122,6 +156,8 @@ namespace camus::config
 		std::string cdn_url;
 		// 渲染
 		render_conf render;
+		// PDF 引擎、参数与排序
+		pdf_conf pdf;
 		// 友情链接
 		std::vector<friend_link_conf> friends;
 

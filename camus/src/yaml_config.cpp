@@ -173,7 +173,7 @@ namespace camus::config
 		}
 
 		// 标量配置项对应的环境变量名：CAMUS_ + 大写路径（非字母数字转为 '_'）。
-		// 例如 pdf_options.page.size -> CAMUS_PDF_OPTIONS_PAGE_SIZE。
+		// 例如 pdf.page.size -> CAMUS_PDF_PAGE_SIZE。
 		std::string env_override_name(const std::string &path)
 		{
 			std::string name = "CAMUS_";
@@ -218,6 +218,25 @@ namespace camus::config
 
 			return std::nullopt;
 		}
+
+		pdf_sort_mode parse_pdf_sort(const std::string &raw)
+		{
+			const std::string value = strings::to_lower(strings::trim_space(raw));
+			if (value.empty() || value == "file_first") {
+				return PDF_SORT_FILE_FIRST;
+			}
+
+			if (value == "dir_first") {
+				return PDF_SORT_DIR_FIRST;
+			}
+
+			if (value == "mixed") {
+				return PDF_SORT_MIXED;
+			}
+
+			logging::warn("invalid pdf.sort value, fallback to file_first value={}", raw);
+			return PDF_SORT_FILE_FIRST;
+		}
 	} // namespace
 
 	void yaml_config::supplement_other_vars()
@@ -237,6 +256,7 @@ namespace camus::config
 		public_config_["path_prefix"] = camus_.public_url.path_prefix;
 		public_config_["cdn_url"] = camus_.cdn_url;
 		public_config_["render"] = camus_.render;
+		public_config_["pdf"] = camus_.pdf;
 		public_config_["friends"] = camus_.friends;
 
 		public_config_["git"] = std::unordered_map<std::string, std::string>{
@@ -331,17 +351,56 @@ namespace camus::config
 		};
 
 		std::vector<std::string> markdown_options;
-		camus_.render.pdf_options = {};
 		camus_.render.markdown_options = CMARK_OPT_DEFAULT;
 		if (WORK_ON_DEBUG) {
 			camus_.render.markdown_options |= CMARK_OPT_SOURCEPOS;
+		}
+
+		const auto parse_pdf_node = [&](const YAML::Node &node) {
+			if (!node || !node.IsMap()) {
+				return;
+			}
+
+			if (const YAML::Node engine = node["engine"]; engine && engine.IsScalar()) {
+				camus_.pdf.engine = get_string(engine);
+			}
+
+			if (const YAML::Node build = node["build"]; build && build.IsSequence()) {
+				for (const auto &opt : build) {
+					camus_.pdf.build.push_back(opt.as<std::string>());
+				}
+			}
+
+			if (const YAML::Node page = node["page"]; page && page.IsMap()) {
+				if (const YAML::Node size = page["size"]; size && size.IsScalar()) {
+					camus_.pdf.page.size = strings::trim_space(size.as<std::string>());
+				}
+
+				if (const YAML::Node margin = page["margin"]; margin && margin.IsScalar()) {
+					camus_.pdf.page.margin = strings::trim_space(margin.as<std::string>());
+				}
+			}
+
+			if (const YAML::Node sort = node["sort"]; sort && sort.IsScalar()) {
+				camus_.pdf.sort = parse_pdf_sort(sort.as<std::string>());
+			}
+		};
+
+		const YAML::Node pdf_node = root["pdf"];
+		const bool has_pdf_config = pdf_node && !pdf_node.IsNull();
+		if (has_pdf_config) {
+			if (!pdf_node.IsMap()) {
+				logging::warn("ignore invalid pdf config reason=not a map");
+			} else {
+				parse_pdf_node(pdf_node);
+			}
 		}
 
 		for (const auto &it : camus_data) {
 			const auto key = strings::trim_space(it.first.as<std::string>());
 
 			if (key == "render") {
-				logging::warn("config key 'render' is no longer supported, move theme/pdf_engine/pdf_options/markdown_options to top level");
+				logging::warn("config key 'render' is no longer supported, move theme/pdf/markdown_options to top level");
 				continue;
 			}
 
@@ -352,33 +411,50 @@ namespace camus::config
 				continue;
 			}
 
+			if (key == "pdf") {
+				// 已在循环前解析，避免与旧键重复处理。
+				continue;
+			}
+
 			if (key == "pdf_engine") {
-				camus_.render.pdf_engine = get_string(it.second);
+				if (has_pdf_config) {
+					logging::warn("config key 'pdf_engine' ignored because 'pdf' is set");
+					continue;
+				}
+
+				logging::warn("config key 'pdf_engine' is deprecated, use 'pdf.engine'");
+				camus_.pdf.engine = get_string(it.second);
 				continue;
 			}
 
 			if (key == "pdf_options") {
+				if (has_pdf_config) {
+					logging::warn("config key 'pdf_options' ignored because 'pdf' is set");
+					continue;
+				}
+
+				logging::warn("config key 'pdf_options' is deprecated, use 'pdf'");
 				// 兼容旧写法：顶层字符串序列直接作为 build 参数。
 				if (it.second && it.second.IsSequence()) {
 					for (const auto &opt : it.second) {
-						camus_.render.pdf_options.build.push_back(opt.as<std::string>());
+						camus_.pdf.build.push_back(opt.as<std::string>());
 					}
 				} else if (it.second && it.second.IsMap()) {
 					const YAML::Node build = it.second["build"];
 					if (build && build.IsSequence()) {
 						for (const auto &opt : build) {
-							camus_.render.pdf_options.build.push_back(opt.as<std::string>());
+							camus_.pdf.build.push_back(opt.as<std::string>());
 						}
 					}
 
 					const YAML::Node page = it.second["page"];
 					if (page && page.IsMap()) {
 						if (const YAML::Node size = page["size"]; size && size.IsScalar()) {
-							camus_.render.pdf_options.page.size = strings::trim_space(size.as<std::string>());
+							camus_.pdf.page.size = strings::trim_space(size.as<std::string>());
 						}
 
 						if (const YAML::Node margin = page["margin"]; margin && margin.IsScalar()) {
-							camus_.render.pdf_options.page.margin = strings::trim_space(margin.as<std::string>());
+							camus_.pdf.page.margin = strings::trim_space(margin.as<std::string>());
 						}
 					}
 				}
@@ -487,16 +563,25 @@ namespace camus::config
 			}
 		}
 
-		if (const auto value = env_override("pdf_engine"); value.has_value()) {
-			camus_.render.pdf_engine = strings::trim_space(*value);
+		// pdf.engine 与旧键 pdf_engine 生成同一个环境变量 CAMUS_PDF_ENGINE。
+		if (const auto value = env_override("pdf.engine"); value.has_value()) {
+			camus_.pdf.engine = strings::trim_space(*value);
 		}
 
-		if (const auto value = env_override("pdf_options.page.size"); value.has_value()) {
-			camus_.render.pdf_options.page.size = strings::trim_space(*value);
+		if (const auto value = env_override("pdf.page.size"); value.has_value()) {
+			camus_.pdf.page.size = strings::trim_space(*value);
+		} else if (const auto legacy = env_override("pdf_options.page.size"); legacy.has_value()) {
+			camus_.pdf.page.size = strings::trim_space(*legacy);
 		}
 
-		if (const auto value = env_override("pdf_options.page.margin"); value.has_value()) {
-			camus_.render.pdf_options.page.margin = strings::trim_space(*value);
+		if (const auto value = env_override("pdf.page.margin"); value.has_value()) {
+			camus_.pdf.page.margin = strings::trim_space(*value);
+		} else if (const auto legacy = env_override("pdf_options.page.margin"); legacy.has_value()) {
+			camus_.pdf.page.margin = strings::trim_space(*legacy);
+		}
+
+		if (const auto value = env_override("pdf.sort"); value.has_value()) {
+			camus_.pdf.sort = parse_pdf_sort(*value);
 		}
 
 		// 监听模式由本地服务访问，公网地址无意义，按未配置处理
@@ -752,6 +837,7 @@ namespace camus::config
 		camus_json["path_prefix"] = camus_.public_url.path_prefix;
 		camus_json["cdn_url"] = camus_.cdn_url;
 		camus_json["render"] = camus_.render;
+		camus_json["pdf"] = camus_.pdf;
 		camus_json["friends"] = camus_.friends;
 		camus_json["render"]["options"] =
 			std::format("{}({})", camus_.render.markdown_options, strings::string_join(markdown_options, ","));

@@ -36,10 +36,10 @@ dist/
 │   ├── sitemap.xml                 # sitemap=true
 │   ├── meta.json                   # meta=true
 │   └── <assets 内容提升到根>        # css/ js/ fonts/ robots.txt favicon.ico ...
-└── pdf/                            # pdf_engine 非空且不为 disable 时
+└── pdf/                            # pdf.engine 非空且不为 disable 时
     ├── index.md                    # 合并后的 Markdown
     ├── index.html                  # PDF 中间 HTML
-    ├── index.pdf                   # 最终 PDF（可由 pdf_options 自定义路径）
+    ├── index.pdf                   # 最终 PDF（可由 pdf.build 的自定义路径）
     ├── assets.css                  # 站点 css/style.css 存在时复制（不覆盖 PDF 主题样式）
     ├── assets/fonts/               # 站点 assets/fonts 复制到 PDF（fonts.css 以 assets/fonts/... 引用）
     └── cover.<ext>                 # cover_image 有效时复制为封面（保留原扩展名）
@@ -54,7 +54,7 @@ dist/
 | `sitemap.xml` | `sitemap: true` | `writer.cpp:555` |
 | `meta.json` | `meta: true` | `writer.cpp:540-545` |
 | 静态资源 | 数据目录 `assets/` 或本地 `./assets` 非空 | `writer.cpp` `emit_assets()` |
-| `index.md` / `index.pdf` / `index.html`（均位于 `dist/pdf`） | `pdf_engine` 非空、不为 `disable` 且引擎可用 | `writer.cpp` `emit_pdf()` |
+| `index.md` / `index.pdf` / `index.html`（均位于 `dist/pdf`） | `pdf.engine` 非空、不为 `disable` 且引擎可用 | `writer.cpp` `emit_pdf()` |
 | `dist/pdf/assets.css` | 站点输出中存在 `css/style.css` | `writer.cpp` `copy_pdf_asset_style()` |
 | `dist/pdf/assets/fonts/` | 站点输出中存在 `fonts/`（来自 `assets/fonts/`） | `writer.cpp` `copy_pdf_asset_fonts()` |
 
@@ -179,14 +179,14 @@ flowchart TD
 
 ## 6.11 PDF 输出
 
-`emit_pdf()` 在 `flush_writes()` 之后执行，仅在顶层 `pdf_engine` 非空且不为 `disable` 时生效：
+`emit_pdf()` 在 `flush_writes()` 之后执行，仅在顶层 `pdf.engine` 非空且不为 `disable` 时生效：
 
 ```mermaid
 flowchart TD
-    A[pdf_engine 为空或为 disable] -->|是| Z[跳过]
+    A[pdf.engine 为空或为 disable] -->|是| Z[跳过]
     A -->|否| B[解析 Chrome/Edge 可执行文件]
     B -->|未找到| W[WARN 并跳过]
-    B -->|找到| C[按目录树顺序收集 visibility != hidden 的 .md：同层文件在前、目录在后，各自按路径字典序]
+    B -->|找到| C[按目录树顺序收集 visibility != hidden 的 .md：同层顺序由 pdf.sort 决定]
     C --> D[合并为单个 Markdown]
     D --> E[写 dist/pdf/index.md]
     E --> F[逐篇 cmark-gfm 渲染为 HTML, 组装 pdf.toc / pdf.articles / 封面等数据]
@@ -206,15 +206,15 @@ flowchart TD
 ```
 
 - 合并文档以 `# {site.title}` 开头，每篇文章为 `## {display_name}` + 正文，文章间用 `---` 分隔。
-- PDF 内文章与目录的排序：同一层内**先文件、后子目录**，两组内部均按相对路径字符串**字典序升序**（`writer.cpp` `emit_pdf()` 的 `append_node`）。该顺序同时决定 PDF 正文、目录页 `pdf.toc` 与书签大纲的排列；与 HTML 站点（TOC 目录优先、按 `write_time` 降序）不同。
+- PDF 内文章与目录的排序由 `pdf.sort` 决定（`writer.cpp` `emit_pdf()` 的 `append_node`，见 §3.3.1）：`file_first`（默认）先文件后子目录、`dir_first` 先子目录后文件，两组内部按相对路径字符串字典序升序；`mixed` 完全按路径字典序。该顺序同时决定 PDF 正文、目录页 `pdf.toc` 与书签大纲的排列；与 HTML 站点（TOC 目录优先、按 `write_time` 降序）不同。
 - PDF 中间 HTML 由 `theme/pdf/page.html`（inja）渲染，打印样式来自 `theme/pdf/style.css`，字体样式来自 `theme/pdf/fonts.css`；字体文件使用站点 `assets/fonts/`，构建时复制到 `dist/pdf/assets/fonts/`，`fonts.css` 以 `assets/fonts/<file>` 引用。PDF 模板/样式可被工作目录 `theme/pdf/`、`.camus/theme/pdf/` 或平台数据目录覆盖（详见 §5.10）。
-- `pdf_options.page.size` / `pdf_options.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加在打印样式末尾，覆盖未命名页的尺寸与边距；默认 `A4` / `20mm 18mm`。同时追加 `@page cover { size: ...; margin: 0; }`，封面页也使用配置的尺寸（边距仍为 0）。
+- `pdf.page.size` / `pdf.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加在打印样式末尾，覆盖未命名页的尺寸与边距；默认 `A4` / `20mm 18mm`。同时追加 `@page cover { size: ...; margin: 0; }`，封面页也使用配置的尺寸（边距仍为 0）。
 - HTML 站点的 `assets/` 会复制并渲染到站点输出目录（如 `dist/html/`）；PDF 阶段再单独把 `dist/html/css/style.css` 复制为 `dist/pdf/assets.css` 并以 `<link>` 引用，PDF 主题样式仍内联在 `<style>` 中且位于该链接之后，因此不会被覆盖或反向压制。
 - 默认模板在正文前依次输出三个独立页面，各自通过 `page-break-after: always` 强制分页：
 
   | 页面 | 模板数据 | 说明 |
   |---|---|---|
-  | 封面页 | `pdf.cover` | 使用根目录 `SUMMARY.md` Front Matter 的 `cover_image`：绝对路径直接使用；相对路径先按 `camus.yaml` 所在目录解析，找不到时依次回退到源目录与站点 `assets` 目录（解析顺序见 `resolve_cover_image()`）。有效时复制为 `dist/pdf/cover.<ext>` 并设置 `has_image=true`，整页铺满（`@page cover` 四边 0 边距、尺寸跟随 `pdf_options.page.size`、`object-fit: cover`）；未配置或文件不存在时 `has_image=false`，回退文字封面：站点标题（为空时 `Camus`）与 `site.subtitle`（空串在 inja 中为真值，模板用 `has_image` 判断而不是 `image`） |
+  | 封面页 | `pdf.cover` | 使用根目录 `SUMMARY.md` Front Matter 的 `cover_image`：绝对路径直接使用；相对路径先按 `camus.yaml` 所在目录解析，找不到时依次回退到源目录与站点 `assets` 目录（解析顺序见 `resolve_cover_image()`）。有效时复制为 `dist/pdf/cover.<ext>` 并设置 `has_image=true`，整页铺满（`@page cover` 四边 0 边距、尺寸跟随 `pdf.page.size`、`object-fit: cover`）；未配置或文件不存在时 `has_image=false`，回退文字封面：站点标题（为空时 `Camus`）与 `site.subtitle`（空串在 inja 中为真值，模板用 `has_image` 判断而不是 `image`） |
   | 扉页 | `pdf.title_page`、`pdf.meta` | 站点标题、副标题、站点描述（`site.description`）与元信息，元信息按 `Site`（`public_url.domain_name`）→ `Version` → `Generated` 顺序输出；`Site` 为空（`has_domain=false`）时省略该行；不输出文章数；标题等字号已缩小以避免与封面重复 |
   | 目录页 | `pdf.toc` | 标题 `Contents` + 按真实目录树多级缩进的分组标题（目录名）与文章显示名；不显示序号与标签，条目不画虚线下划线；文章条目显示正文起始页码（与页脚一致）并链接到 `#pdf-article-{n}` |
 
