@@ -22,6 +22,9 @@ add_library(common STATIC ${SOURCES})
 target_include_directories(common PUBLIC
         .
         ${PROJECT_BINARY_DIR}/include
+)
+
+target_include_directories(common SYSTEM PUBLIC
         ${CMAKE_SOURCE_DIR}/third-party/cmark-gfm/src
         ${CMAKE_BINARY_DIR}/third-party/cmark-gfm/src
         ../third-party/cpp-httplib
