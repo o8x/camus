@@ -39,6 +39,14 @@ namespace
 
 		return args;
 	}
+
+	void print_version()
+	{
+		std::cout
+			<< std::format("v{} {} with CMake {} and C++ {}", PROJECT_VERSION, BUILD_TYPE, CMAKE_VERSION, CXX_STANDARD)
+			<< std::endl
+			<< std::format("Build Time: {} hash={}", BUILD_TIMESTAMP, GIT_COMMIT_HASH) << std::endl;
+	}
 } // namespace
 
 int main(const int argc, char **argv)
@@ -108,11 +116,12 @@ int main(const int argc, char **argv)
 	}
 
 	if (arg.exist("version")) {
-		std::cout
-			<< std::format("v{} {} with CMake {} and C++ {}", PROJECT_VERSION, BUILD_TYPE, CMAKE_VERSION, CXX_STANDARD)
-			<< std::endl
-			<< std::format("Build Time: {} hash={}", BUILD_TIMESTAMP, GIT_COMMIT_HASH) << std::endl;
+		print_version();
 		return 0;
+	}
+
+	if (arg.exist("build") || arg.exist("check")) {
+		print_version();
 	}
 
 	try {
