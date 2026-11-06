@@ -375,6 +375,25 @@ std::map<std::string, int> pdf::read_anchor_pages(const std::filesystem::path &p
 	return result;
 }
 
+int pdf::page_count(const std::filesystem::path &path)
+{
+	const std::string data = read_binary_file(path);
+	if (data.empty()) {
+		return 0;
+	}
+
+	const int pages_ref =
+		first_int(data, R"(/Type\s*/Catalog[\s\S]*?/Pages\s+(\d+)\s+0\s+R)");
+	if (pages_ref == 0) {
+		return 0;
+	}
+
+	std::vector<int> page_objects;
+	std::set<int> seen;
+	collect_pages(data, pages_ref, page_objects, seen);
+	return static_cast<int>(page_objects.size());
+}
+
 bool pdf::write_outline(const std::filesystem::path &path, const std::vector<outline_entry> &entries)
 {
 	if (entries.empty()) {
@@ -498,16 +517,14 @@ bool pdf::write_outline(const std::filesystem::path &path, const std::vector<out
 				 << nodes[node.children.back()].object << " 0 R /Count " << node.count;
 		}
 
-		if (node.parent >= 0) {
-			const auto &siblings = nodes[node.parent].children;
-			const auto position = std::ranges::find(siblings, static_cast<int>(i));
-			if (position != siblings.begin()) {
-				body << " /Prev " << nodes[*(position - 1)].object << " 0 R";
-			}
+		const auto &siblings = node.parent >= 0 ? nodes[node.parent].children : roots;
+		const auto position = std::ranges::find(siblings, static_cast<int>(i));
+		if (position != siblings.begin()) {
+			body << " /Prev " << nodes[*(position - 1)].object << " 0 R";
+		}
 
-			if (position + 1 != siblings.end()) {
-				body << " /Next " << nodes[*(position + 1)].object << " 0 R";
-			}
+		if (position + 1 != siblings.end()) {
+			body << " /Next " << nodes[*(position + 1)].object << " 0 R";
 		}
 
 		body << " >>";

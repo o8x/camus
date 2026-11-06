@@ -6,9 +6,11 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <utility>
@@ -966,6 +968,7 @@ namespace camus
 			{"description", cover_desc},
 			{"meta", generated_at},
 			{"image", ""},
+			{"has_image", false},
 		};
 		pdf["title_page"] = {
 			{"title", cover_title},
@@ -976,6 +979,7 @@ namespace camus
 			{"article_count", articles.size()},
 			{"generated_at", generated_at},
 			{"domain", domain},
+			{"has_domain", !domain.empty()},
 			{"version", PROJECT_VERSION},
 		};
 
@@ -1098,6 +1102,7 @@ namespace camus
 						cover_ec
 					)) {
 					pdf["cover"]["image"] = target_name;
+					pdf["cover"]["has_image"] = true;
 					logging::debug("pdf cover image source={}", cover_path.string());
 				} else {
 					logging::warn(
@@ -1246,10 +1251,31 @@ namespace camus
 			numbered = true;
 		}
 
-		if (numbered) {
+		// Chrome 不支持 @counter-style 的 pad 描述符，页脚补零改为按总页数生成固定符号表。
+		const int total_pages = pdf::page_count(pdf_path);
+		if (numbered || total_pages > 0) {
+			const int width = std::max(3, static_cast<int>(std::to_string(std::max(total_pages, 1)).size()));
+			std::ostringstream symbols;
+			for (int number = 1; number <= std::max(total_pages, 1); ++number) {
+				if (number > 1) {
+					symbols << ' ';
+				}
+
+				symbols << '"' << std::setw(width) << std::setfill('0') << number << '"';
+			}
+
+			const std::string counter_css =
+				"\n@counter-style camus-page { system: fixed; first: 0; symbols: " + symbols.str() + "; }\n";
+
 			view["pdf_page_offset"] = page_offset;
-			view["pdf"]["style"] = render::inja_render(inja_, style_source, view);
-			logging::debug("pdf page offset={} toc page numbers resolved count={}", page_offset, anchor_pages.size());
+			view["pdf"]["style"] = render::inja_render(inja_, style_source, view) + counter_css;
+			logging::debug(
+				"pdf page offset={} toc page numbers resolved count={} total_pages={}",
+				page_offset,
+				anchor_pages.size(),
+				total_pages
+			);
+
 			if (!render_and_print()) {
 				logging::warn("pdf generation with toc page numbers failed, keep previous output");
 			}

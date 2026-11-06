@@ -197,7 +197,7 @@ flowchart TD
     J -->|否| W2[WARN 并跳过]
     J -->|是| N[解析 PDF 命名目标得到每篇起始物理页码]
     N --> O{解析到页码?}
-    O -->|是| P[回填 pdf.toc[].page/page_label, 重新渲染 index.html 并再次打印 PDF]
+    O -->|是| P[回填 pdf.toc[].page/page_label, 按总页数生成补零页脚样式, 重新渲染 index.html 并再次打印 PDF]
     O -->|否| K
     P --> K[注入 PDF 书签大纲 /Outlines]
     K --> DONE[完成]
@@ -209,13 +209,13 @@ flowchart TD
 
   | 页面 | 模板数据 | 说明 |
   |---|---|---|
-  | 封面页 | `pdf.cover` | 使用根目录 `SUMMARY.md` Front Matter 的 `cover_image`：相对路径以 `camus.yaml` 所在目录为起点，绝对路径直接使用；有效时复制为 `dist/pdf/cover.<ext>` 并整页铺满（`@page cover` 四边 0 边距、`object-fit: cover`）；未配置或文件不存在时回退站点标题（为空时 `Camus`）与 `site.subtitle` |
-  | 扉页 | `pdf.title_page`、`pdf.meta` | 站点标题、副标题、站点描述（`site.description`）、生成日期（`Generated`）、站点域名（`Site`，`public_url.domain_name`）、程序版本（`Version`）；不输出文章数；标题等字号已缩小以避免与封面重复 |
-  | 目录页 | `pdf.toc` | 标题 `Contents` + 按真实目录树多级缩进的分组标题（目录名）与文章显示名；不显示序号与标签；文章条目显示正文起始页码（与页脚一致）并链接到 `#pdf-article-{n}` |
+  | 封面页 | `pdf.cover` | 使用根目录 `SUMMARY.md` Front Matter 的 `cover_image`：相对路径以 `camus.yaml` 所在目录为起点，绝对路径直接使用；有效时复制为 `dist/pdf/cover.<ext>` 并设置 `has_image=true`，整页铺满（`@page cover` 四边 0 边距、`object-fit: cover`）；未配置或文件不存在时 `has_image=false`，回退文字封面：站点标题（为空时 `Camus`）与 `site.subtitle`（空串在 inja 中为真值，模板用 `has_image` 判断而不是 `image`） |
+  | 扉页 | `pdf.title_page`、`pdf.meta` | 站点标题、副标题、站点描述（`site.description`）与元信息，元信息按 `Site`（`public_url.domain_name`）→ `Version` → `Generated` 顺序输出；`Site` 为空（`has_domain=false`）时省略该行；不输出文章数；标题等字号已缩小以避免与封面重复 |
+  | 目录页 | `pdf.toc` | 标题 `Contents` + 按真实目录树多级缩进的分组标题（目录名）与文章显示名；不显示序号与标签，条目不画虚线下划线；文章条目显示正文起始页码（与页脚一致）并链接到 `#pdf-article-{n}` |
 
-- 页码从正文开始：封面使用独立命名页 `page: cover`（四边 0 边距），扉页、目录使用 `page: front`，均不输出页脚页码；`#pdf-intro` 引导页为正文第 1 页。`theme/pdf/style.css` 使用 `html { counter-reset: page {{ pdf_page_offset }}; }` 整体偏移页计数，并由 `@page { @bottom-center { content: counter(page, camus-page); color: #000; } }` 在正文页底部居中输出**黑色**页码；`@counter-style camus-page` 使用 `pad: 3 "0"`，不足 3 位前补 0（如 `001`）。`--no-pdf-header-footer` 关闭浏览器自带页眉页脚，不影响该自定义页码。
+- 页码从正文开始：封面使用独立命名页 `page: cover`（四边 0 边距），扉页、目录使用 `page: front`，均不输出页脚页码；`#pdf-intro` 引导页为正文第 1 页。`theme/pdf/style.css` 使用 `html { counter-reset: page {{ pdf_page_offset }}; }` 整体偏移页计数，并由 `@page { @bottom-center { content: counter(page, camus-page); color: #000; } }` 在正文页底部居中输出**黑色**页码。由于 Chrome 不支持 `@counter-style` 的 `pad` 描述符，第二遍渲染前由 `pdf::page_count()` 读取总页数，并追加 `@counter-style camus-page { system: fixed; first: 0; symbols: "001" "002" ... }` 覆盖样式，使页脚与目录页码统一为三位补零（如 `001`）。`--no-pdf-header-footer` 关闭浏览器自带页眉页脚，不影响该自定义页码。
 - 目录页码与页脚页码同源（均为正文页序）：第一遍 PDF 生成后由 `pdf::read_anchor_pages()` 解析 PDF 命名目标（`/Dests` 与页树 `/Kids`），以 `pdf-intro` 的物理页计算 `pdf_page_offset = 1 - intro_page`，再回填 `pdf.toc[].page = physical_page + pdf_page_offset` 与 `pdf.toc[].page_label`（`{:03}` 三位补零字符串），随后重新渲染样式与 HTML 并再次打印。默认模板在 `<body>` 顶部放置一个隐藏的 `#pdf-intro` 链接以生成该命名目标；解析失败时保留第一遍产物，目录仍可点击跳转。目录页码列使用固定宽度占位，两次排版不会互相影响。
-- 最终 PDF 由 `pdf::write_outline()` 注入可交互书签大纲：解析经典 xref 表，修改 Catalog（`/Outlines`、`/PageMode /UseOutlines`），追加分级 `/Outlines` 对象（目录分组 + 文章条目，文章使用 `/Dest /pdf-article-{n}` 命名目标），并重建 xref 与 `startxref`。书签层级与 `pdf.toc[].depth` 一致，默认展开；不支持的结构（如 xref stream）下不改动文件并打印 WARN。
+- 最终 PDF 由 `pdf::write_outline()` 注入可交互书签大纲：解析经典 xref 表，修改 Catalog（`/Outlines`、`/PageMode /UseOutlines`），追加分级 `/Outlines` 对象（目录分组 + 文章条目，文章使用 `/Dest /pdf-article-{n}` 命名目标），并重建 xref 与 `startxref`。书签层级与 `pdf.toc[].depth` 一致，默认展开；同级条目（含根级）通过 `/Prev`、`/Next` 双向链接，避免阅读器只显示首个顶层条目；不支持的结构（如 xref stream）下不改动文件并打印 WARN。
 - 默认模板为每篇文章输出 `<section id="pdf-article-{n}" class="pdf-article">`，并以 `page-break-before: always` 从新页开始；引导页 `pdf.intro`（`# site.title` + `site.description`）单独占一页。
 - 程序写入模板的站点字段（标题、副标题、描述、域名、目录标题/标签）均做 HTML 转义（`html_escape`）；文章正文与引导页为已渲染 HTML，原样插入。
 - 文章正文使用 Front Matter 解析后的内容；`hidden` 文章不参与，`hidden_in_toc` 参与。
