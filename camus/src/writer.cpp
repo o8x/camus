@@ -1021,6 +1021,8 @@ namespace camus
 		const std::filesystem::path markdown_path = pdf_dir / "index.md";
 		const std::filesystem::path html_path = pdf_dir / "index.html";
 		std::filesystem::path pdf_path = pdf_dir / "index.pdf";
+		const std::filesystem::path browser_log_path =
+			std::filesystem::temp_directory_path() / std::format("camus-pdf-{}.log", getpid());
 
 		std::filesystem::create_directories(pdf_dir);
 		filesystem::write_file(markdown_path, markdown);
@@ -1100,19 +1102,34 @@ namespace camus
 			command += " " + shell_quote(arg);
 		}
 
+		// 浏览器的噪声日志（如 macOS 的 CVDisplayLink 报错）不直接输出到终端，
+		// 重定向到临时文件，仅在失败时提示日志位置。
+		command += " 2>" + shell_quote(browser_log_path.string());
+
 		logging::debug("pdf command: {}", command);
 
+		bool keep_browser_log = false;
 		const auto render_and_print = [&]() {
 			filesystem::write_file(html_path, render::inja_render(inja_, template_source, view));
 
 			const int status = std::system(command.c_str());
 			if (status != 0) {
-				logging::warn("pdf generation command failed status={}", status);
+				keep_browser_log = true;
+				logging::warn(
+					"pdf generation command failed status={} log={}",
+					status,
+					browser_log_path.string()
+				);
 				return false;
 			}
 
 			if (!std::filesystem::exists(pdf_path) || std::filesystem::file_size(pdf_path, ec) == 0) {
-				logging::warn("pdf generation failed, output not found name={}", pdf_path.string());
+				keep_browser_log = true;
+				logging::warn(
+					"pdf generation failed, output not found name={} log={}",
+					pdf_path.string(),
+					browser_log_path.string()
+				);
 				return false;
 			}
 
@@ -1157,6 +1174,9 @@ namespace camus
 		}
 
 		std::filesystem::remove_all(profile_dir, ec);
+		if (!keep_browser_log) {
+			std::filesystem::remove(browser_log_path, ec);
+		}
 
 		logging::debug("make pdf dest={} engine={}", pdf_path.string(), engine);
 	}
