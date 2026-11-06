@@ -17,6 +17,10 @@ namespace
 
 	void scaffold_workdir(const std::filesystem::path &workdir, const std::filesystem::path &source_dir)
 	{
+		if (!workdir.empty()) {
+			std::filesystem::create_directories(workdir);
+		}
+
 		for (const auto &name : template_entries) {
 			const std::filesystem::path source = source_dir / name;
 			const std::filesystem::path target = workdir / name;

@@ -57,6 +57,7 @@ flowchart TD
 ```
 
 - 不会创建或修改 `.camus`。
+- 工作目录不存在时自动创建（`create_directories`），因此 `-iw /tmp/site` 可直接用于全新目录。
 - 成功后不退出，主程序继续构建（见 §2.4）。
 
 ### 8.2.2 `-c/--copy`（完整资源）
@@ -79,6 +80,7 @@ flowchart TD
 - `.camus` 已存在且非空、未指定 `-f`：打印 WARN，仅补齐工作目录根部示例文件，不覆盖 `.camus`。
 - `-f`：先删除 `.camus`（受 §6.1 的 >200 文件保护），再复制。
 - 复制完成后，对 `posts`、`camus.yaml`、`.gitignore`：仅当工作目录根部不存在同名路径时才从 `.camus` 复制。
+- 工作目录不存在时由 `<workdir>/.camus` 的 `create_directories` 一并创建。
 - 复制结果持久于磁盘；`-c` 成功后不会退出，主程序继续构建（见 §2.4）。
 
 ## 8.3 资源查找顺序
