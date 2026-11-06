@@ -136,6 +136,8 @@ jobs:
             -   name: Verify tag on main
                 id: verify
                 run: |
+                    git config --global --add safe.directory "$GITHUB_WORKSPACE"
+                    git rev-parse --verify origin/main
                     if git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
                         echo "deploy=true" >> "$GITHUB_OUTPUT"
                     else
