@@ -40,6 +40,7 @@ dist/
     ├── index.md                    # 合并后的 Markdown
     ├── index.html                  # PDF 中间 HTML
     ├── index.pdf                   # 最终 PDF（可由 pdf_options 自定义路径）
+    ├── assets.css                  # 站点 css/style.css 存在时复制（不覆盖 PDF 主题样式）
     ├── cover.<ext>                 # cover_image 有效时复制为封面（保留原扩展名）
     └── fonts/                      # theme/pdf/fonts/ 存在时复制
         └── <字体文件>
@@ -55,6 +56,7 @@ dist/
 | `meta.json` | `meta: true` | `writer.cpp:540-545` |
 | 静态资源 | 数据目录 `assets/` 或本地 `./assets` 非空 | `writer.cpp` `emit_assets()` |
 | `index.md` / `index.pdf` / `index.html`（均位于 `dist/pdf`） | `pdf_engine` 非空、不为 `disable` 且引擎可用 | `writer.cpp` `emit_pdf()` |
+| `dist/pdf/assets.css` | 站点输出中存在 `css/style.css` | `writer.cpp` `copy_pdf_asset_style()` |
 | `dist/pdf/fonts/` | `theme/pdf/fonts/` 存在 | `writer.cpp` `copy_pdf_theme_fonts()` |
 
 ## 6.3 文章输出
@@ -190,7 +192,8 @@ flowchart TD
     D --> E[写 dist/pdf/index.md]
     E --> F[逐篇 cmark-gfm 渲染为 HTML, 组装 pdf.toc / pdf.articles / 封面等数据]
     F --> CV[解析根 SUMMARY.md 的 cover_image, 复制为 dist/pdf/cover.<ext>]
-    CV --> G[读取 theme/pdf/page.html / style.css / fonts.css, 用 inja 渲染完整文档]
+    CV --> CA[复制 dist/html/css/style.css -> dist/pdf/assets.css]
+    CA --> G[读取 theme/pdf/page.html / style.css / fonts.css, 用 inja 渲染完整文档]
     G --> H[复制 theme/pdf/fonts -> dist/pdf/fonts, 写 dist/pdf/index.html（内联样式与字体样式）]
     H --> I[调用浏览器 --headless --print-to-pdf=<解析后的输出路径>]
     I --> J{退出码为 0 且 PDF 非空?}
@@ -206,7 +209,7 @@ flowchart TD
 - 合并文档以 `# {site.title}` 开头，每篇文章为 `## {display_name}` + 正文，文章间用 `---` 分隔。
 - PDF 中间 HTML 由 `theme/pdf/page.html`（inja）渲染，打印样式来自 `theme/pdf/style.css`，字体样式来自 `theme/pdf/fonts.css`；自定义字体放在 `theme/pdf/fonts/`，构建时复制到 `dist/pdf/fonts/`。这些资源均可被工作目录 `theme/pdf/`、`.camus/theme/pdf/` 或平台数据目录覆盖（详见 §5.10）。
 - `pdf_options.page.size` / `pdf_options.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加在打印样式末尾，覆盖未命名页的尺寸与边距；默认 `A4` / `20mm 18mm`。`@page cover` 的 0 边距等命名页规则不受影响。
-- HTML 站点的 `assets/` 只复制并渲染到站点输出目录（如 `dist/html/`），不参与 PDF；PDF 仅内联 `theme/pdf/style.css` 与 `theme/pdf/fonts.css`，因此二者互不覆盖同名文件。
+- HTML 站点的 `assets/` 会复制并渲染到站点输出目录（如 `dist/html/`）；PDF 阶段再单独把 `dist/html/css/style.css` 复制为 `dist/pdf/assets.css` 并以 `<link>` 引用，PDF 主题样式仍内联在 `<style>` 中且位于该链接之后，因此不会被覆盖或反向压制。
 - 默认模板在正文前依次输出三个独立页面，各自通过 `page-break-after: always` 强制分页：
 
   | 页面 | 模板数据 | 说明 |

@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <title>{{ pdf.title }}</title>
-<style>
+{% if pdf.asset_style %}<link rel="stylesheet" href="assets.css">
+{% endif %}<style>
 {{ pdf.style }}
 {{ pdf.fonts }}
 </style>

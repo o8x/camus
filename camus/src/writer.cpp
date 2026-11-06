@@ -202,6 +202,31 @@ namespace
 		logging::debug("copy pdf theme fonts from={} to={}", source.string(), target.string());
 	}
 
+	// 把站点 assets/css/style.css 复制为 PDF 目录下的 assets.css，避免与 PDF 主题样式同名冲突。
+	bool copy_pdf_asset_style(const std::filesystem::path &dest_dir, const std::filesystem::path &pdf_dir)
+	{
+		const std::filesystem::path source = dest_dir / "css" / "style.css";
+		std::error_code ec;
+		if (!std::filesystem::is_regular_file(source, ec) || ec) {
+			logging::debug("pdf asset style not found, skip copy path={}", source.string());
+			return false;
+		}
+
+		const std::filesystem::path target = pdf_dir / "assets.css";
+		std::filesystem::copy_file(source, target, std::filesystem::copy_options::overwrite_existing, ec);
+		if (ec) {
+			logging::warn(
+				"pdf asset style copy failed source={} error={}",
+				source.string(),
+				ec.message()
+			);
+			return false;
+		}
+
+		logging::debug("copy pdf asset style from={} to={}", source.string(), target.string());
+		return true;
+	}
+
 	std::string pdf_page_style(const camus::config::pdf_page_conf &page)
 	{
 		std::string size = strings::trim_space(page.size);
@@ -983,6 +1008,7 @@ namespace camus
 			{"margin", page_margin},
 		};
 		pdf["fonts"] = fonts_source.empty() ? "" : render::inja_render(inja_, fonts_source, view);
+		pdf["asset_style"] = false;
 		pdf["intro"] = render::render_markdown(
 			markdown.c_str(),
 			conf_.camus().render.markdown_engine,
@@ -1107,6 +1133,7 @@ namespace camus
 		std::filesystem::create_directories(pdf_dir);
 		filesystem::write_file(markdown_path, markdown);
 		copy_pdf_theme_fonts(pdf_dir);
+		pdf["asset_style"] = copy_pdf_asset_style(conf_.camus().dest_dir(), pdf_dir);
 
 		if (const std::string cover_image = strings::trim_space(conf_.camus().site.cover_image);
 			!cover_image.empty()) {

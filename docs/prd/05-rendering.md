@@ -168,6 +168,7 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 | `pdf.style` | 字符串 | `style.css` 经配置 JSON 渲染后的内容，末尾追加由 `pdf_options.page` 生成的 `@page { size; margin }` 覆盖规则（可写 inja 配置变量；另提供顶层 `pdf_page_offset` 供页码偏移使用） |
 | `pdf.page` | 对象 | `size`、`margin`，来自 `pdf_options.page`；默认 `A4` / `20mm 18mm`，空值回退默认 |
 | `pdf.fonts` | 字符串 | `fonts.css` 经配置 JSON 渲染后的内容；文件缺失时为空串 |
+| `pdf.asset_style` | 布尔 | 站点输出 `css/style.css` 是否存在并成功复制为 `dist/pdf/assets.css`；默认模板为真时在 `<style>` 前输出 `<link rel="stylesheet" href="assets.css">`，保证 PDF 主题样式优先 |
 | `pdf.intro` | 字符串 | 引导页 Markdown（`# site.title` + `site.description`）渲染后的 HTML，**未转义** |
 | `pdf.cover` | 对象 | `eyebrow`、`title`、`subtitle`、`description`、`meta`（生成日期）、`image`（根 `SUMMARY.md` 的 `cover_image` 指向有效文件时为其复制后的文件名，否则空串）、`has_image`（是否存在有效封面图；空串在 inja 中为真值，模板须用该布尔值判断）；标题等字段按模板需要预转义；默认模板优先输出整页封面图，无图时输出 `title`、`subtitle` |
 | `pdf.title_page` | 对象 | `title`、`subtitle`、`description`（`site.description`），均按模板需要预转义 |
@@ -182,6 +183,7 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 - **两遍渲染**：第一次生成 PDF 后解析其命名目标（anchor → 页对象）得到各锚点物理页码；以 `pdf-intro` 的物理页计算 `pdf_page_offset = 1 - intro_page`，回填 `pdf.toc[].page = article_page + pdf_page_offset` 并重新渲染 `pdf.style` 与 HTML，再次打印 PDF。解析失败时保留第一遍产物（目录页码为空、目录锚点仍可跳转）。目录页码列在首遍即占位固定宽度，避免第二遍排版位移。
 
 - `style.css` 与 `fonts.css` 先以配置 JSON 单独渲染（可使用 `{{ build.version }}`、`{{ site.title }}` 等配置变量），再分别作为 `pdf.style` / `pdf.fonts` 字符串插入 `page.html`；`page.html` 自身以「配置 JSON + `pdf` 对象」渲染。插入的样式内容不会被二次解析。第二遍打印前会再以更新后的 `pdf_page_offset` 重新渲染一次 `pdf.style`。
+- 站点资源中的 `assets/css/style.css`（构建后位于 `dist/html/css/style.css`）会在 PDF 阶段复制为 `dist/pdf/assets.css`，由默认模板以 `<link>` 引在 PDF 内联样式之前，因此不会覆盖 `theme/pdf/style.css`（PDF 主题规则在后、优先级更高）；文件不存在时 `pdf.asset_style` 为假、不输出该 `<link>`。
 - `body` 的字体定义默认位于 `fonts.css`，`style.css` 只保留颜色、行高等打印样式。`fonts.css` 中的自定义字体示例默认被注释：将 ttf 放入 `theme/pdf/fonts/`，取消 `@font-face` 与 `body` 覆盖注释即可启用。
 - `theme/pdf/fonts/` 存在时会在写 `dist/pdf/index.html` 前递归复制到 `dist/pdf/fonts/`，因此 `url("fonts/<file>.ttf")` 相对 `dist/pdf/index.html` 可正常加载；该目录缺失时跳过复制。
 - 默认模板的封面/扉页/目录/文章分页样式保持一致，其中封面为整页满铺图片（来源为根 `SUMMARY.md` 的 `cover_image`）、扉页字号较封面缩小、目录按真实目录树多级缩进；用户可整体替换 `page.html`，或只覆盖 `style.css` / `fonts.css` / `fonts/`。
