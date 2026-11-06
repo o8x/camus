@@ -78,18 +78,8 @@ This directory is excluded from builds.
 			std::filesystem::copy_file(from, to, std::filesystem::copy_options::overwrite_existing);
 		}
 
-		const std::filesystem::path source_fonts = source_assets / "fonts";
-		const std::filesystem::path target_fonts = target_assets / "fonts";
-		std::error_code ec;
-		if (!std::filesystem::is_directory(source_fonts, ec) || ec) {
-			return;
-		}
-
-		std::filesystem::create_directories(target_fonts);
-		std::filesystem::copy_options options = std::filesystem::copy_options::recursive;
-		options |= force ? std::filesystem::copy_options::overwrite_existing
-						 : std::filesystem::copy_options::skip_existing;
-		std::filesystem::copy(source_fonts, target_fonts, options);
+		// 字体目录采用合并查找，只需创建空目录让用户放入自己的字体，无需复制内置文件。
+		std::filesystem::create_directories(target_assets / "fonts");
 	}
 
 	std::filesystem::path template_source_dir()
