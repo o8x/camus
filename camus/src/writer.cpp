@@ -1397,6 +1397,20 @@ namespace camus
 		}
 
 		std::vector<pdf::outline_entry> outline_entries;
+
+		// 前置封面、目录页与正文第一页（页码 001）的顶层书签；仅当当前模板生成了对应命名目标时加入。
+		const std::pair<std::string, std::string> fixed_entries[] = {
+			{"Cover", "pdf-cover"},
+			{"Contents", "pdf-toc"},
+			{site_title.empty() ? "Camus" : site_title, "pdf-intro"},
+		};
+
+		for (const auto &[title, anchor] : fixed_entries) {
+			if (anchor_pages.contains(anchor)) {
+				outline_entries.push_back({.title = title, .anchor = anchor, .depth = 0});
+			}
+		}
+
 		for (const auto &item : view["pdf"]["toc"]) {
 			outline_entries.push_back({
 				.title = item.value("outline_title", item.value("title", "")),
