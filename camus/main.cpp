@@ -59,6 +59,14 @@ int main(const int argc, char **argv)
 	);
 	arg.add("full", 0, "copy the complete resource tree with --copy");
 	arg.add("force", 'f', "overwrite existing .camus when copying");
+	arg.add<std::string>(
+		"create",
+		0,
+		"create an article under the source directory; last segment is the file name",
+		false,
+		""
+	);
+	arg.add("build", 0, "build the site");
 	arg.add("debug", 'd', "enable debugging");
 	arg.add("watch", 'W', "automate building when changes occur");
 	arg.add("dryrun", 'D', "dry run");
@@ -87,6 +95,11 @@ int main(const int argc, char **argv)
 
 	if (arg.exist("new") && arg.get<std::string>("new").empty()) {
 		std::cout << "option needs value: --new" << std::endl << std::endl << arg.usage();
+		return 1;
+	}
+
+	if (arg.exist("create") && arg.get<std::string>("create").empty()) {
+		std::cout << "option needs value: --create" << std::endl << std::endl << arg.usage();
 		return 1;
 	}
 
@@ -142,6 +155,27 @@ int main(const int argc, char **argv)
 				initialized != 0) {
 				return initialized;
 			}
+		}
+
+		if (arg.exist("create")) {
+			if (const int created = camus::create_article(cmd.workdir, arg.get<std::string>("create"));
+				created != 0) {
+				return created;
+			}
+		}
+
+		// 构建只由显式请求触发：--build、--watch、--check 或 --open。
+		// 其余情况只执行已指定的操作；完全没有操作时打印用法。
+		const bool build_requested =
+			arg.exist("build") || arg.exist("watch") || arg.exist("check") || arg.exist("open");
+		if (!build_requested) {
+			const bool acted = arg.exist("install") || arg.exist("new") || arg.exist("copy") ||
+							   arg.exist("repo") || arg.exist("create");
+			if (!acted) {
+				std::cout << arg.usage() << std::endl;
+			}
+
+			return 0;
 		}
 
 		const auto c = new camus::writer(cmd);

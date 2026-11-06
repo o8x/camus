@@ -52,7 +52,7 @@
 ## 9.4 测试
 
 - `ctest --extra-verbose -R build-test-site --test-dir build/release`（`make serve` 已包含）。
-- 测试内容：对 `site` 目录执行 `camus -d site`（调试日志），验证默认构建链路。
+- 测试内容：对 `site` 目录执行 `camus -d --build site`（调试日志），验证默认构建链路。
 - CMake 复制 `LICENSE`、`README.md` 到构建目录供 CPack 使用。
 
 ## 9.5 打包（CPack）

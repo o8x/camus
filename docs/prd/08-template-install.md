@@ -56,13 +56,13 @@ flowchart TD
     C -->|否| D[复制到工作目录]
     S --> P[确保 posts/private 存在]
     D --> P
-    P --> OK[返回 0, 继续构建]
+    P --> OK[返回 0；构建由 --build 决定]
 ```
 
 - 不会创建或修改 `.camus`。
 - 无论 `posts/` 是否已存在，都会确保 `<工作目录>/posts/private/` 存在，并在缺失时写入 `README.md`（`CAMUS_PRIVATE_DIR`）。
 - 工作目录不存在时自动创建（`create_directories`），因此 `-iw /tmp/site` 可直接用于全新目录。
-- 成功后不退出，主程序继续构建（见 §2.4）。
+- 成功后不退出；是否构建由 `--build`（或 `-W` / `--check` / `--open`）决定（见 §2.4）。
 
 ### 8.2.2 `-c/--copy`（最小资源到 `assets/` / `--full` 完整资源到 `.camus`）
 
@@ -79,12 +79,12 @@ flowchart TD
     M --> S[补齐工作目录 posts/camus.yaml/.gitignore<br/>确保 posts/private]
     F -->|是| B{.camus 已存在且非空?}
     B -->|否| D[创建 .camus 并复制全部文件]
-    B -->|是且无 -f| W[WARN 已复制, 可继续构建]
+    B -->|是且无 -f| W[WARN 已复制, 跳过复制]
     B -->|是且有 -f| C[empty_path .camus 后复制]
     D --> S
     C --> S
     W --> S
-    S --> OK[返回 0, 继续构建]
+    S --> OK[返回 0；构建由 --build 决定]
 ```
 
 - 最小复制可重复执行：`-f` 覆盖已有的 `style.css` / `onload.js`，未指定时保留现有文件；`fonts/` 只确保存在，不写入内置字体，已有内容保留。
@@ -92,7 +92,7 @@ flowchart TD
 - `--full -f`：先删除 `.camus`（受 §6.1 的 >200 文件保护），再复制。
 - 复制完成后，对 `posts`、`camus.yaml`、`.gitignore`：仅当工作目录根部不存在同名路径时才补齐；`posts/private/` 始终确保存在。
 - 工作目录不存在时由 `<workdir>/assets` 或 `<workdir>/.camus` 的 `create_directories` 一并创建。
-- 复制结果持久于磁盘；`-c` 成功后不会退出，主程序继续构建（见 §2.4）。
+- 复制结果持久于磁盘；`-c` 成功后不会退出，是否构建由 `--build` 决定（见 §2.4）。
 
 ### 8.2.3 `-c --theme [name]`（复制主题与最小资源）
 
@@ -115,7 +115,7 @@ flowchart TD
     AS --> S{--force?}
     S -->|是| W[覆盖同名文件]
     S -->|否| K[跳过已存在文件]
-    W --> OK[返回 0, 继续构建]
+    W --> OK[返回 0；构建由 --build 决定]
     K --> OK
 ```
 

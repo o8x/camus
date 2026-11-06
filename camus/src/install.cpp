@@ -223,4 +223,51 @@ namespace camus
 		);
 		return 0;
 	}
+
+	int create_article(const std::filesystem::path &workdir, const std::string &path)
+	{
+		std::filesystem::path relative(path);
+		if (relative.empty() || relative.is_absolute()) {
+			logging::error("create failed: invalid article path={}", path);
+			return 1;
+		}
+
+		for (const auto &part : relative) {
+			if (part == "." || part == "..") {
+				logging::error("create failed: invalid article path={}", path);
+				return 1;
+			}
+		}
+
+		// 与构建时的源目录探测保持一致：优先 src，其次 posts，默认 src。
+		std::filesystem::path source_dir = "src";
+		if (std::filesystem::is_directory(workdir / "src")) {
+			source_dir = "src";
+		} else if (std::filesystem::is_directory(workdir / "posts")) {
+			source_dir = "posts";
+		}
+
+		if (relative.extension() != ".md") {
+			relative += ".md";
+		}
+
+		const std::filesystem::path target = workdir / source_dir / relative;
+
+		try {
+			std::filesystem::create_directories(target.parent_path());
+
+			if (std::filesystem::exists(target)) {
+				logging::warn("article already exists path={}", filesystem::path_abs(target));
+				return 0;
+			}
+
+			filesystem::write_file(target, "");
+			logging::info("article created at '{}'", filesystem::path_abs(target));
+		} catch (const std::exception &e) {
+			logging::error("create failed error={}", e.what());
+			return 1;
+		}
+
+		return 0;
+	}
 } // namespace camus

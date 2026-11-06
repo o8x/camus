@@ -18,4 +18,8 @@ namespace camus
 	// 非空时只复制 data_dir/theme/<name>；同时复制最小 assets 到 <workdir>/assets。
 	// force 为真时覆盖已有文件，否则跳过。返回 0 表示成功，非 0 表示失败
 	int copy_theme(const std::filesystem::path &workdir, const std::string &name, bool force);
+
+	// 在源目录（src 或 posts）下创建文章：path 的最后一级视为文件名（自动补 .md），
+	// 缺失的父目录会被递归创建；文件已存在时不覆盖。返回 0 表示成功，非 0 表示失败
+	int create_article(const std::filesystem::path &workdir, const std::string &path);
 } // namespace camus

@@ -8,7 +8,7 @@
 camus [选项] [--workdir <目录>]
 ```
 
-所有选项均为可选；带值选项为 `-w/--workdir`、`--new`；`--open` 与 `--repo` 的值可省略（裸 `--open` 等价 `--open project`，裸 `--repo` 等价只执行 `git init`）。
+所有选项均为可选；带值选项为 `-w/--workdir`、`--new`、`--create`；`--open` 与 `--repo` 的值可省略（裸 `--open` 等价 `--open project`，裸 `--repo` 等价只执行 `git init`）。不带任何操作选项直接运行 `camus` 只打印 usage，不触发构建；构建必须显式指定 `--build`（`-W`、`--check`、`--open` 隐含构建）。
 
 ## 2.2 选项表
 
@@ -16,18 +16,20 @@ camus [选项] [--workdir <目录>]
 |---|---|---|---|---|
 | `-h` | `--help` | 无 | 打印帮助并退出（注意退出码为 1） | `main.cpp:90` |
 | `-v` | `--version` | 无 | 打印版本、构建信息与 git hash 后退出 0 | `main.cpp:91` |
-| `-i` | `--install` | 无 | 从平台数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`.gitignore` 到工作目录（已存在的不覆盖），随后继续构建 | `main.cpp` |
-| `-c` | `--copy` | 无 | 把精简资源复制到 `<workdir>/assets`（创建 `assets/css`、`assets/js`、空 `assets/fonts` 并复制 `style.css`、`onload.js`），随后继续构建 | `main.cpp` |
+| `-b` | `--build` | 无 | 构建站点；不指定时默认不构建 | `main.cpp` |
+| `-i` | `--install` | 无 | 从平台数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`.gitignore` 到工作目录（已存在的不覆盖）；不触发构建，除非同时指定 `--build` | `main.cpp` |
+| `-c` | `--copy` | 无 | 把精简资源复制到 `<workdir>/assets`（创建 `assets/css`、`assets/js`、空 `assets/fonts` 并复制 `style.css`、`onload.js`）；不触发构建，除非同时指定 `--build` | `main.cpp` |
 |  | `--theme` | 可选值：主题名 | 仅与 `--copy` 搭配：无值时复制整个 `theme/`，有值时只复制 `theme/<name>/` 到 `<workdir>/theme`；同时复制最小 assets（`style.css`、`onload.js`）并创建空 `fonts/`，不补齐示例文件，也不执行 `--full` | `main.cpp` |
 |  | `--full` | 无 | 与 `--copy` 搭配时复制平台数据目录的完整资源树到 `.camus` | `main.cpp` |
 | `-f` | `--force` | 无 | `--copy` 时覆盖目标（`assets` 或 `--full` 的 `.camus`）中已存在的同名资源 | `main.cpp` |
 | `-d` | `--debug` | 无 | 开启调试日志 | `main.cpp:11` |
-| `-W` | `--watch` | 无 | 监听文件变化并自动重建，同时启动本地服务 | `main.cpp:11` |
+| `-W` | `--watch` | 无 | 监听文件变化并自动重建，同时启动本地服务（隐含 `--build`） | `main.cpp:11` |
 | `-D` | `--dryrun` | 无 | 干跑：不写任何输出文件 | `main.cpp:12` |
 | `-C` | `--check` | 无 | 校验配置、资源与 PDF 设置，并执行一次干跑构建后输出检查报告；不写文件 | `main.cpp` |
-|  | `--new` | 目录字符串 | 创建目录（相对 `--workdir` 或绝对路径），自动执行 `--install`，并继续执行 `--repo` 与构建 | `main.cpp` |
+|  | `--new` | 目录字符串 | 创建目录（相对 `--workdir` 或绝对路径），自动执行 `--install`，并继续执行 `--repo`；不触发构建，除非同时指定 `--build` | `main.cpp` |
+| `--create` | 路径字符串 | 在源目录（`src/` 优先，其次 `posts/`）下创建文章：最后一级视为文件名（自动补 `.md`），缺失目录递归创建；文件已存在时不覆盖。不触发构建 | `main.cpp` |
 |  | `--repo` | 可选值：远程地址 | 在 `--workdir` 执行 `git init`；提供值时设置 `origin`（已存在则更新），不提供时只 init | `main.cpp` |
-|  | `--open` | 可选值：`project`（默认）/`runtime` | 构建成功后打开目录：`project` 用 VS Code 打开工作目录，`runtime` 用系统文件管理器打开数据目录；未知值打印 WARN 并按 `project` 处理 | `main.cpp` |
+|  | `--open` | 可选值：`project`（默认）/`runtime` | 隐含构建；构建成功后打开目录：`project` 用 VS Code 打开工作目录，`runtime` 用系统文件管理器打开数据目录；未知值打印 WARN 并按 `project` 处理 | `main.cpp` |
 | `-w` | `--workdir` | 目录字符串，默认 `.` | 工作目录 | `main.cpp:14` |
 
 > 资源来源：主题、默认资源与示例模板由安装包放到平台数据目录。`-i` 只安装工作目录根部的示例文件；`-c` 默认只生成最小可编辑资源骨架到工作目录 `assets/`（`css/style.css`、`js/onload.js`、空 `fonts/`），`-c --full` 才复制完整资源到 `.camus`，`-c --theme [name]` 则把主题复制到工作目录 `theme/`。资源查找会依次叠加数据目录、`.camus` 与本地 `./assets` / `theme/`（见 §8）。
@@ -40,7 +42,7 @@ camus [选项] [--workdir <目录>]
 - 非选项位置参数被收集到 `rest()`，当前主程序**未使用**。
 - 解析成功后，`-d` 或编译期 `WORK_ON_DEBUG=true`（Debug/RelWithDebInfo 构建）会把日志级别设为 DEBUG。
 - `--open` / `--repo` / `--new` 的值处理：解析前会把裸 `--open` 归一化为 `--open=project`、裸 `--repo` 归一化为 `--repo=`；若下一参数不以 `-` 开头（如 `--open runtime`、`--repo <url>`、`--new mysite`），则作为其值消费。`--name=value` 写法直接按值解析。
-- `--new` 必须提供非空目录值；`--new=` 或裸 `--new` 会打印 `option needs value: --new` 并退出 1。
+- `--new` 必须提供非空目录值；`--new=` 或裸 `--new` 会打印 `option needs value: --new` 并退出 1。`--create` 同理，缺值打印 `option needs value: --create` 并退出 1。
 
 ## 2.4 模式与执行流程
 
@@ -69,8 +71,16 @@ flowchart TD
     CP -->|否| R
     R -->|是| GIT[git init; 有值则设置 origin]
     GIT -->|失败| GF[返回 1]
-    GIT -->|成功| C[构造 writer]
-    R -->|否| C
+    GIT -->|成功| CR{--create?}
+    R -->|否| CR
+    CR -->|是| NEW[create_article: 在源目录创建 .md]
+    CR -->|否| GATE
+    NEW -->|失败| CF2[返回 1]
+    NEW -->|成功| GATE{--build / -W / --check / --open?}
+    GATE -->|否| ACT{有 install/new/copy/repo/create?}
+    ACT -->|否| USAGE[打印 usage, 返回 0]
+    ACT -->|是| RET0[返回 0]
+    GATE -->|是| C[构造 writer]
     C --> Q{--check?}
     Q -->|是| CHK[check: 干跑校验并打印报告, 返回 0/1]
     Q -->|否| WD[chdir workdir]
@@ -85,7 +95,9 @@ flowchart TD
 
 要点：
 
-- `--new <dir>` 先把目标解析为「`--workdir` 下的相对路径」或绝对路径并创建，随后等同于同时传入 `--install`：补齐 `camus.yaml`、`posts`（含 `SUMMARY.md`、`posts/private/`）与 `.gitignore`。之后若指定 `--repo` 再初始化仓库，最后继续构建。
+- 只有指定 `--build`、`-W`、`--check` 或 `--open` 时才构建。仅执行安装 / 复制 / 建目录 / 创建文章 / `git init` 时完成后直接返回 0；完全没有操作时打印 usage 并返回 0（不再默认构建）。
+- `--new <dir>` 先把目标解析为「`--workdir` 下的相对路径」或绝对路径并创建，随后等同于同时传入 `--install`：补齐 `camus.yaml`、`posts`（含 `SUMMARY.md`、`posts/private/`）与 `.gitignore`。之后若指定 `--repo` 再初始化仓库；需要构建时另加 `--build`。
+- `--create <path>` 在源目录下创建文章：源目录按 `src/` → `posts/` → 默认 `src/` 探测（与构建一致）。路径必须是相对路径且不含 `.` / `..` 段，最后一级为文件名，未以 `.md` 结尾时自动补 `.md`，缺失父目录递归创建；目标文件已存在时打印告警但不覆盖，仍返回 0。
 - `-i` 只补齐工作目录根部的 `posts`（含各目录的 `SUMMARY.md` 与空的 `posts/private/`）、`camus.yaml`、`.gitignore`，同名路径已存在则保持不动；`posts/private/` 每次都会确保存在。
 - `-c` 默认最小复制：只创建 `<workdir>/assets/css`、`assets/js`、`assets/fonts`，并从数据目录复制 `style.css`、`onload.js`；`fonts/` 只创建空目录（合并查找，无需复制内置字体），随后补齐工作目录根部缺失的示例文件。
 - `-c --full` 复制完整资源（`theme/`、`assets/`、`posts/`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`camus.yaml`、`.gitignore`）到 `.camus`，并补齐工作目录根部缺失的示例文件。
@@ -134,23 +146,24 @@ Build Time: 2025-07-24 15:44:00 hash=<40 位 git hash>
 ## 2.7 常用示例
 
 ```bash
-camus -iw mysite          # 安装示例配置/文章到 mysite 并构建
-camus -cw mysite          # 复制最小资源骨架到 mysite/assets 并构建
-camus -c --full -w mysite  # 复制完整资源到 mysite/.camus 并构建
-camus -cf --full -w mysite # 强制重装完整资源到 mysite/.camus 并构建
+camus -iw mysite --build  # 安装示例配置/文章到 mysite 并构建
+camus -cw mysite --build  # 复制最小资源骨架到 mysite/assets 并构建
+camus -c --full -w mysite --build  # 复制完整资源到 mysite/.camus 并构建
+camus -cf --full -w mysite --build # 强制重装完整资源到 mysite/.camus 并构建
 camus -c --theme -w mysite          # 只复制整个 theme 到 mysite/theme
 camus -c --theme pixel -w mysite    # 只复制 theme/pixel 到 mysite/theme/pixel
 camus -cf --theme pixel -w mysite   # 强制覆盖已存在的 pixel 主题文件
-camus -icw mysite         # 安装示例文件并复制完整资源后构建
-camus -w mysite           # 构建 mysite
-camus -Ww mysite          # 监听 mysite 并自动重建
+camus -icw mysite --build # 安装示例文件并复制最小资源后构建
+camus -w mysite --build   # 构建 mysite
+camus -Ww mysite          # 监听 mysite 并自动重建（隐含构建）
 camus --check             # 校验配置、资源与 PDF 设置，并输出目录树
-camus --new mysite        # 创建 mysite、安装示例文件并构建
-camus --new mysite --repo git@github.com:user/site.git  # 创建并初始化仓库后构建
+camus --create notes/idea # 在源目录创建 notes/idea.md（自动建目录）
+camus --new mysite        # 创建 mysite、安装示例文件（不构建）
+camus --new mysite --repo git@github.com:user/site.git  # 创建并初始化仓库（不构建）
 camus --repo              # 在当前工作目录 git init
 camus --repo git@github.com:user/site.git               # git init 并设置 origin
 camus -D -v               # 版本信息（-D 对 -v 无影响）
-camus -dw /tmp/site       # 调试日志 + 构建
+camus -dw /tmp/site --build # 调试日志 + 构建
 camus --open              # 构建后在 VS Code 打开工作目录
 camus --open runtime      # 构建后用文件管理器打开数据目录
 ```
