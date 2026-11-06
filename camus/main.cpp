@@ -8,30 +8,32 @@
 #include "common/filesystem/filesystem.h"
 #include "install.h"
 #include "open.h"
+#include "repo.h"
 #include "writer.h"
 
 namespace
 {
-	// cmdline 的带值选项会强制消费下一个参数，这里把裸 --open 归一化为 --open=project，
-	// 同时允许 --open runtime 这种可选值写法。
-	std::vector<std::string> normalize_open_args(const int argc, char **argv)
+	// cmdline 的带值选项会强制消费下一个参数，这里把可选值选项的裸写法归一化：
+	// 裸 --open 等价 --open=project，裸 --repo 等价 --repo=（只执行 git init）。
+	std::vector<std::string> normalize_optional_value_args(const int argc, char **argv)
 	{
 		std::vector<std::string> args;
 		for (int i = 0; i < argc; i++) {
-			if (const std::string current = argv[i]; current != "--open") {
+			const std::string current = argv[i];
+			if (current != "--open" && current != "--repo" && current != "--new") {
 				args.push_back(current);
 				continue;
 			}
 
-			std::string target = CAMUS_OPEN_TARGET_PROJECT;
+			std::string value = current == "--open" ? CAMUS_OPEN_TARGET_PROJECT : "";
 			if (i + 1 < argc) {
 				if (const std::string next = argv[i + 1]; !next.empty() && next.front() != '-') {
-					target = next;
+					value = next;
 					i++;
 				}
 			}
 
-			args.push_back("--open=" + target);
+			args.push_back(current + "=" + value);
 		}
 
 		return args;
@@ -45,13 +47,21 @@ int main(const int argc, char **argv)
 	arg.add("help", 'h', "print this help and exit");
 	arg.add("version", 'v', "print version and exit");
 	arg.add("install", 'i', "install camus.yaml, posts and .gitignore from data dir");
+	arg.add<std::string>("new", 0, "create a new site directory and install the example files", false, "");
 	arg.add("copy", 'c', "copy resources into .camus from data dir");
 	arg.add("full", 0, "copy the complete resource tree with --copy");
 	arg.add("force", 'f', "overwrite existing .camus when copying");
 	arg.add("debug", 'd', "enable debugging");
 	arg.add("watch", 'W', "automate building when changes occur");
 	arg.add("dryrun", 'D', "dry run");
-	arg.add("inspect", 'I', "inspect current configure");
+	arg.add("check", 'C', "validate configuration and run a dry build");
+	arg.add<std::string>(
+		"repo",
+		0,
+		"git init in workdir; optional value sets remote origin",
+		false,
+		""
+	);
 	arg.add<std::string>(
 		"open",
 		0,
@@ -61,9 +71,14 @@ int main(const int argc, char **argv)
 	);
 	arg.add<std::string>("workdir", 'w', "work dir", false, ".");
 
-	const std::vector<std::string> args = normalize_open_args(argc, argv);
+	const std::vector<std::string> args = normalize_optional_value_args(argc, argv);
 	if (const bool parse_result = arg.parse(args); !parse_result || arg.exist("help")) {
 		std::cout << arg.error_full() << std::endl << arg.usage();
+		return 1;
+	}
+
+	if (arg.exist("new") && arg.get<std::string>("new").empty()) {
+		std::cout << "option needs value: --new" << std::endl << std::endl << arg.usage();
 		return 1;
 	}
 
@@ -80,13 +95,21 @@ int main(const int argc, char **argv)
 	}
 
 	try {
+		std::filesystem::path workdir = filesystem::path_abs(arg.get<std::string>("workdir"));
+		if (arg.exist("new")) {
+			const std::filesystem::path target(arg.get<std::string>("new"));
+			workdir = filesystem::path_abs(target.is_absolute() ? target : workdir / target);
+		}
+
+		workdir = workdir.lexically_normal();
+
 		const camus::cmdline cmd{
-			.workdir = filesystem::path_abs(arg.get<std::string>("workdir")),
+			.workdir = workdir,
 			.dryrun = arg.exist("dryrun"),
 			.watch = arg.exist("watch"),
 		};
 
-		if (arg.exist("install")) {
+		if (arg.exist("install") || arg.exist("new")) {
 			if (const int installed = camus::install_templates(cmd.workdir); installed != 0) {
 				return installed;
 			}
@@ -99,10 +122,16 @@ int main(const int argc, char **argv)
 			}
 		}
 
+		if (arg.exist("repo")) {
+			if (const int initialized = camus::init_repository(cmd.workdir, arg.get<std::string>("repo"));
+				initialized != 0) {
+				return initialized;
+			}
+		}
+
 		const auto c = new camus::writer(cmd);
-		if (arg.exist("inspect")) {
-			c->inspect();
-			return 0;
+		if (arg.exist("check")) {
+			return c->check();
 		}
 
 		std::filesystem::current_path(cmd.workdir);

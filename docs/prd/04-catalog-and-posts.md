@@ -197,4 +197,4 @@ link_url():
 
 ## 4.11 目录遍历
 
-`traverse_catalog_tree(node, fn, depth)` 为**先序**深度优先：先对当前节点调用 `fn`，再依次递归子节点，`depth` 从 0 开始。路由、Front Matter、渲染、sitemap、inspect 复用它；`finalize_directory_properties()` 为计算目录统计单独使用后序递归。
+`traverse_catalog_tree(node, fn, depth)` 为**先序**深度优先：先对当前节点调用 `fn`，再依次递归子节点，`depth` 从 0 开始。路由、Front Matter、渲染、sitemap、check 复用它；`finalize_directory_properties()` 为计算目录统计单独使用后序递归。

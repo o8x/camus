@@ -13,8 +13,8 @@
 | `.camus/` | 工作目录 | `-c` 复制的本地主题、PDF 模板、资源与示例模板 | 是 |
 | `<数据目录>/` | macOS `~/Library/Application Support/Camus`；Linux `/var/lib/camus` | 默认主题、静态资源与示例模板（由安装包写入） | 是 |
 
-- `build()` 先 `reload()` 再 `chdir(workdir)`（`writer.cpp:806-808`），因此**构建时**配置从 `-w` 指定的工作目录读取。
-- `inspect()` 在 `chdir` 之前执行（`main.cpp:135-140`），因此 **`-I` 从进程原始当前目录读取 `camus.yaml`**，与 `-w` 无关。
+- `build()` 先 `chdir(workdir)` 再 `reload()`，因此**构建时**配置从 `-w` 指定的工作目录读取。
+- `check()` 同样先切到 `workdir` 再 `reload()`，因此 `-w <dir> --check` 读取的是该目录下的配置。
 - 每次 `reload()` 重新读取 `camus.yaml` 并扫描各目录的 `SUMMARY.md`；热重载（watch）依赖此行为。
 
 ## 3.2 解析总则
@@ -233,16 +233,16 @@ PDF 模板在上述配置 JSON 之外额外接收 `pdf` 对象（封面、目录
 - 配置本身持久于磁盘；运行期不写回配置。
 - `reload()` 每次全量重读 `camus.yaml` 并重新扫描 `SUMMARY.md`，先重置上一轮的 `camus_`、`routes_`、`transfers_`、`public_config_`，因此反复构建/热重载不会累积路由或友链。
 - 路由/友链的新增在下次构建生效。
-- `writer::inspect()` 与 `writer::build()` 会先把进程工作目录切到 `--workdir`，因此 `-w <dir> -I` 读取的是该目录下的配置。
+- `writer::check()` 与 `writer::build()` 会先把进程工作目录切到 `--workdir`，因此 `-w <dir> --check` 读取的是该目录下的配置。
 
-## 3.9 `inspect` 输出
+## 3.9 `--check` 输出
 
-`writer::inspect()`（`writer.cpp:742`）会：
+`writer::check()` 会：
 
-1. 将 `cmd_.dryrun` 置为 true 并 `reload()`。
-2. 以扁平化的 `key = value` 形式打印全部配置（`yaml_config::map()`，数组下标形如 `route.0.title`）。
-3. 构建目录树（空则 WARN `No articles found`）。
-4. 开启 DEBUG 日志并执行一次干跑构建。
-5. 按树形打印 `[D]` 目录与每个节点的 `link_url`。
+1. 将 `cmd_.dryrun` 置为 true，切到 `--workdir` 并 `reload()` 配置。
+2. 在日志抑制为 ERROR 的情况下执行一次干跑构建，验证完整渲染流水线且不写文件。
+3. 统计目录/文章/隐藏文章/字数，并校验资源目录、output/pdf 目录文件数保护、PDF 引擎、PDF 模板/样式/字体与 `cover_image`。
+4. 打印精炼报告：`workdir`、`config`、`source`、`theme`、`site`、`public`、`output`、`assets`、`pdf`、`catalog`、`build` 以及按树形展示的 `Catalog`。
+5. 汇总 `Issues`（error/warn），最后输出 `Result: OK` 或 `Result: FAILED`，并返回 0/1。
 
-注意：`-I` 与 `-D` 组合时仍只执行一次 inspect 构建。
+`--check` 与 `-D` 组合不会额外写文件。

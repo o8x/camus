@@ -49,8 +49,11 @@ mkdir my-site && cd my-site
 | `camus -w <dir>` | Build a site in another workdir |
 | `camus -W` | Watch for changes and serve locally |
 | `camus -D` | Dry run: parse and render without writing files |
-| `camus -I` | Inspect the parsed configuration and catalog tree |
+| `camus --check` | Validate configuration, assets, PDF settings and run a dry build |
 | `camus -i` | Install example `camus.yaml`, `posts` (with `SUMMARY.md`, plus `posts/private/`) and `.gitignore` |
+| `camus --new <dir>` | Create a site directory, install example files, then build |
+| `camus --repo [url]` | Run `git init`; set `origin` when a URL is provided |
+| `camus --new <dir> --repo <url>` | Create, install, initialize git and then build |
 | `camus -c` | Copy minimal editable resources (`assets/css/style.css`, `assets/js/onload.js`) into `./.camus` |
 | `camus -c --full` | Copy the complete bundled resource tree into `./.camus` |
 | `camus -c -f` | Force re-copy the selected `./.camus` resources |

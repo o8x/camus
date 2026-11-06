@@ -6,6 +6,7 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <map>
 #include <ranges>
 #include <string>
@@ -1407,63 +1408,213 @@ namespace camus
 		}
 	}
 
-	void writer::inspect()
+	int writer::check()
 	{
 		cmd_.dryrun = true;
 		std::filesystem::current_path(cmd_.workdir);
-		conf_.reload();
 
-		uint16_t max_length = 0;
-		for (const auto &[k, v] : conf_.map()) {
-			if (k.length() > max_length) {
-				max_length = k.length();
+		struct check_issue {
+			bool error;
+			std::string text;
+		};
+
+		std::vector<check_issue> issues;
+		const auto report_issue = [&issues](const bool error, std::string text) {
+			issues.push_back({error, std::move(text)});
+		};
+
+		const logging::logging_level previous_level = logging::set_level(logging::ERROR_LEVEL);
+		const int build_code = build();
+		logging::set_level(previous_level);
+
+		const auto camus = conf_.camus();
+
+		if (build_code != 0) {
+			report_issue(true, std::format("dry-run build failed code={}", build_code));
+		}
+
+		size_t directories = 0;
+		size_t articles = 0;
+		size_t hidden = 0;
+		size_t hidden_in_toc = 0;
+		size_t words = 0;
+		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
+			if (node.is_directory()) {
+				++directories;
+				return;
 			}
-		}
 
-		std::cout << std::endl << strings::coloring_yellow("Configure: ") << std::endl;
-		for (const auto &[k, v] : conf_.map()) {
-			std::cout << "    " << std::left << std::setw(max_length) << k << " : " << strings::coloring_green(v)
-					  << std::endl
-					  << std::flush;
-		}
+			if (node.path.extension() != ".md") {
+				return;
+			}
 
-		if (catalog_ = catalog::build_catalog_tree(conf_.camus().source_dir); catalog_.empty()) {
-			logging::warn("No articles found");
-		}
+			++articles;
+			words += node.render_data_.stats.word_count;
 
-		logging::set_level(logging::DEBUG_LEVEL);
-		std::cout << std::endl << strings::coloring_yellow("Dry Build: ") << std::endl;
-		build();
-		logging::set_level(logging::DEBUG_LEVEL);
-
-		max_length = 0;
-		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
-			if (const size_t w = strings::get_display_width(item.path); w > max_length) {
-				max_length = w;
+			if (node.property.visibility == catalog::hidden) {
+				++hidden;
+			} else if (node.property.visibility == catalog::hidden_in_toc) {
+				++hidden_in_toc;
 			}
 		});
 
-		std::cout << std::endl << strings::coloring_yellow("Catalog: ") << std::endl;
-		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &item, const int depth) {
-			const int spaces = (depth == 0 ? 0 : depth - 1) * 4;
-
-			std::string path = strings::padding_left(item.path, max_length);
-			std::string name = item.link_url();
-			if (item.link_url().parent_path() != "/") {
-				path = strings::coloring_bright_green(path);
-				name = strings::coloring_green(item.link_url());
+		const auto count_files = [](const std::filesystem::path &path) -> int {
+			std::error_code ec;
+			if (path.empty() || !std::filesystem::is_directory(path, ec) || ec) {
+				return -1;
 			}
 
-			std::cout << std::format(
-							 "{}{}{} -> {}",
-							 item.is_directory() ? strings::coloring_bright_green("[D] ") : "    ",
-							 std::string(spaces, ' '),
-							 path,
-							 strings::coloring_simple(name)
-						 )
-					  << std::endl
-					  << std::flush;
+			return filesystem::scan_path_files(path, 10000);
+		};
+
+		const int user_assets = count_files(camus.assets_dir);
+		const int local_assets = count_files(paths::local_data_dir() / "assets");
+		const int data_assets = count_files(paths::resource_assets_dir());
+
+		if (user_assets <= 0 && local_assets <= 0 && data_assets <= 0) {
+			report_issue(false, "no assets found; generated pages may have no styles or scripts");
+		}
+
+		const auto check_output_dir = [&report_issue](const std::filesystem::path &path, const std::string &name) {
+			std::error_code ec;
+			if (!std::filesystem::is_directory(path, ec) || ec) {
+				return;
+			}
+
+			const int files = filesystem::scan_path_files(path, 10000);
+			if (files > 200) {
+				report_issue(
+					true,
+					std::format("{} has {} files (>200); build will abort: {}", name, files, path.string())
+				);
+			}
+		};
+
+		check_output_dir(camus.dest_dir(), "output dir");
+		check_output_dir(camus.pdf_dir(), "pdf dir");
+
+		const std::string pdf_engine_name = strings::trim_space(camus.render.pdf_engine);
+		std::string pdf_state = "disabled";
+		if (!pdf_engine_name.empty() && strings::to_lower(pdf_engine_name) != "disable") {
+			const std::string engine = resolve_pdf_engine(pdf_engine_name);
+			if (engine.empty()) {
+				report_issue(true, std::format("pdf engine not found name={}", pdf_engine_name));
+			}
+
+			const bool has_template = !find_pdf_theme_path(CAMUS_PDF_TEMPLATE_NAME).empty();
+			const bool has_style = !find_pdf_theme_path(CAMUS_PDF_STYLE_NAME).empty();
+			const bool has_fonts = !find_pdf_theme_path(CAMUS_PDF_FONTS_NAME).empty();
+
+			if (!has_template) {
+				report_issue(true, "pdf theme page.html not found");
+			}
+
+			if (!has_style) {
+				report_issue(true, "pdf theme style.css not found");
+			}
+
+			pdf_state = std::format(
+				"{} template={} style={} fonts={}",
+				engine.empty() ? pdf_engine_name : engine,
+				has_template ? "ok" : "missing",
+				has_style ? "ok" : "missing",
+				has_fonts ? "ok" : "optional"
+			);
+
+			if (const std::string cover = strings::trim_space(camus.site.cover_image); !cover.empty()) {
+				std::filesystem::path cover_path(cover);
+				if (cover_path.is_relative()) {
+					cover_path = cmd_.workdir / cover_path;
+				}
+
+				if (!std::filesystem::is_regular_file(cover_path)) {
+					report_issue(false, std::format("pdf cover image not found path={}", cover_path.string()));
+				} else {
+					pdf_state += " cover=" + cover_path.string();
+				}
+			}
+		}
+
+		const auto count_text = [](const int value) {
+			return value < 0 ? std::string("-") : std::to_string(value);
+		};
+
+		const auto row = [](const std::string &name, const std::string &value) {
+			std::cout << "  " << std::format("{:<10}", name) << value << '\n';
+		};
+
+		std::cout << '\n' << strings::coloring_bright_yellow("Check:") << '\n';
+		row("workdir", cmd_.workdir.string());
+		row("config", (cmd_.workdir / CAMUS_CONF_NAME).string());
+		row("source", camus.source_dir.string());
+		row("theme", camus.render.theme_name);
+		row("site", camus.site.title);
+		row("public", camus.public_url.url.empty() ? "(none)" : camus.public_url.url);
+		row("output", camus.dest_dir().string());
+		row(
+			"assets",
+			std::format(
+				"local={} .camus={} data={}",
+				count_text(user_assets),
+				count_text(local_assets),
+				count_text(data_assets)
+			)
+		);
+		row("pdf", pdf_state);
+		row(
+			"catalog",
+			std::format(
+				"dirs={} articles={} hidden={} hidden_in_toc={} words={}",
+				directories,
+				articles,
+				hidden,
+				hidden_in_toc,
+				words
+			)
+		);
+		row("build", build_code == 0 ? "ok (dry-run)" : std::format("failed code={}", build_code));
+
+		size_t max_width = 0;
+		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, int) {
+			max_width = std::max(max_width, strings::get_display_width(node.path.generic_string()));
 		});
+
+		std::cout << '\n' << strings::coloring_bright_yellow("Catalog:") << '\n';
+		catalog::traverse_catalog_tree(catalog_, [&](const catalog::catalog_node &node, const int depth) {
+			std::string tag = "[page]";
+			if (node.is_directory()) {
+				tag = "[dir ]";
+			} else if (node.property.visibility == catalog::hidden) {
+				tag = "[hide]";
+			} else if (node.property.visibility == catalog::hidden_in_toc) {
+				tag = "[toc-]";
+			}
+
+			const std::string indent(depth == 0 ? 0 : (depth - 1) * 2, ' ');
+			const std::string path = strings::padding_left(
+				node.path.empty() ? "/" : node.path.generic_string(),
+				max_width
+			);
+			std::cout << "  " << tag << " " << indent << path << " -> " << node.link_url().string() << '\n';
+		});
+
+		if (!issues.empty()) {
+			std::cout << '\n' << strings::coloring_bright_yellow("Issues:") << '\n';
+			for (const auto &issue : issues) {
+				std::cout << "  " << (issue.error ? strings::coloring_red("[error]") : strings::coloring_yellow("[warn ]"))
+						  << " " << issue.text << '\n';
+			}
+		}
+
+		bool failed = build_code != 0;
+		for (const auto &issue : issues) {
+			failed = failed || issue.error;
+		}
+
+		std::cout << '\n'
+				  << (failed ? strings::coloring_red("Result: FAILED") : strings::coloring_green("Result: OK"))
+				  << '\n';
+		return failed ? 1 : 0;
 	}
 
 	int writer::build()

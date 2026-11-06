@@ -49,8 +49,11 @@ mkdir my-site && cd my-site
 | `camus -w <dir>` | 构建指定工作目录中的站点 |
 | `camus -W` | 监听文件变化并启动本地服务 |
 | `camus -D` | 干跑：解析与渲染，但不写文件 |
-| `camus -I` | 打印解析后的配置与目录树 |
+| `camus --check` | 校验配置、资源与 PDF 设置，并执行干跑构建 |
 | `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `SUMMARY.md` 与 `posts/private/`）与 `.gitignore` |
+| `camus --new <dir>` | 创建站点目录、安装示例文件并构建 |
+| `camus --repo [url]` | 执行 `git init`；提供地址时设置 `origin` |
+| `camus --new <dir> --repo <url>` | 创建、安装、初始化 git 后构建 |
 | `camus -c` | 把最小可编辑资源（`assets/css/style.css`、`assets/js/onload.js`）复制到 `./.camus` |
 | `camus -c --full` | 把完整内置资源树复制到 `./.camus` |
 | `camus -c -f` | 强制重装所选 `./.camus` 资源 |

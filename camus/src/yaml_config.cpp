@@ -258,7 +258,7 @@ namespace camus::config
 			error::panic("config file not fount name={}", filename_);
 		}
 
-		// 允许重复 reload（watch / inspect / build），先重置上一轮状态，避免路由与友链累积
+		// 允许重复 reload（watch / check / build），先重置上一轮状态，避免路由与友链累积
 		camus_ = camus_conf{};
 		routes_.clear();
 		transfers_.clear();

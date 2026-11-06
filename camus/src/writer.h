@@ -78,7 +78,7 @@ namespace camus
 	  public:
 		explicit writer(const cmdline &cmd);
 
-		void inspect();
+		int check();
 		void watch();
 		int build();
 	};
