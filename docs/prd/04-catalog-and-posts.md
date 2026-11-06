@@ -183,6 +183,7 @@ link_url():
   - 移除 `invalid()` 的文件节点（`display_name` 为空，即隐藏文章与非 `.md` 文件）；
   - 移除因此变空的目录节点（`directory = true` 且 `children` 为空）。
 - TOC 排序：目录优先，然后按 `write_time` 降序，时间相同按 `path` 升序。
+- 以上为 HTML 站点排序；PDF 的排列规则不同（同层先文件后目录、各自按路径字典序），见 §6.11。
 - 上一篇/下一篇（`fill_article_nav`）：在降序文章列表中，`prev` 指向更新的一篇（索引 - 1），`next` 指向更旧的一篇（索引 + 1）；路径会加上 `public_url.path_prefix`。
 
 ## 4.10 字数与阅读时长

@@ -1162,8 +1162,23 @@ namespace camus
 				return;
 			}
 
+			// PDF 顺序：同层文件在前、目录在后，各自按相对路径字典序升序。
+			std::vector<const catalog::catalog_node *> ordered;
+			ordered.reserve(node.children.size());
 			for (const auto &child : node.children) {
-				append_node(child, depth + 1);
+				ordered.push_back(&child);
+			}
+
+			std::ranges::sort(ordered, [](const catalog::catalog_node *a, const catalog::catalog_node *b) {
+				if (a->is_directory() != b->is_directory()) {
+					return !a->is_directory();
+				}
+
+				return a->path.string() < b->path.string();
+			});
+
+			for (const auto *child : ordered) {
+				append_node(*child, depth + 1);
 			}
 		};
 

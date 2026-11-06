@@ -186,7 +186,7 @@ flowchart TD
     A[pdf_engine 为空或为 disable] -->|是| Z[跳过]
     A -->|否| B[解析 Chrome/Edge 可执行文件]
     B -->|未找到| W[WARN 并跳过]
-    B -->|找到| C[按目录树先序收集 visibility != hidden 的 .md]
+    B -->|找到| C[按目录树顺序收集 visibility != hidden 的 .md：同层文件在前、目录在后，各自按路径字典序]
     C --> D[合并为单个 Markdown]
     D --> E[写 dist/pdf/index.md]
     E --> F[逐篇 cmark-gfm 渲染为 HTML, 组装 pdf.toc / pdf.articles / 封面等数据]
@@ -206,6 +206,7 @@ flowchart TD
 ```
 
 - 合并文档以 `# {site.title}` 开头，每篇文章为 `## {display_name}` + 正文，文章间用 `---` 分隔。
+- PDF 内文章与目录的排序：同一层内**先文件、后子目录**，两组内部均按相对路径字符串**字典序升序**（`writer.cpp` `emit_pdf()` 的 `append_node`）。该顺序同时决定 PDF 正文、目录页 `pdf.toc` 与书签大纲的排列；与 HTML 站点（TOC 目录优先、按 `write_time` 降序）不同。
 - PDF 中间 HTML 由 `theme/pdf/page.html`（inja）渲染，打印样式来自 `theme/pdf/style.css`，字体样式来自 `theme/pdf/fonts.css`；字体文件使用站点 `assets/fonts/`，构建时复制到 `dist/pdf/assets/fonts/`，`fonts.css` 以 `assets/fonts/<file>` 引用。PDF 模板/样式可被工作目录 `theme/pdf/`、`.camus/theme/pdf/` 或平台数据目录覆盖（详见 §5.10）。
 - `pdf_options.page.size` / `pdf_options.page.margin` 会生成 `@page { size: ...; margin: ...; }` 追加在打印样式末尾，覆盖未命名页的尺寸与边距；默认 `A4` / `20mm 18mm`。同时追加 `@page cover { size: ...; margin: 0; }`，封面页也使用配置的尺寸（边距仍为 0）。
 - HTML 站点的 `assets/` 会复制并渲染到站点输出目录（如 `dist/html/`）；PDF 阶段再单独把 `dist/html/css/style.css` 复制为 `dist/pdf/assets.css` 并以 `<link>` 引用，PDF 主题样式仍内联在 `<style>` 中且位于该链接之后，因此不会被覆盖或反向压制。
