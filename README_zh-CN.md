@@ -28,7 +28,7 @@ make build          # 产物：build/release/bin/camus
 
 ```bash
 cd example
-../build/release/bin/camus
+../build/release/bin/camus --build
 ```
 
 在空目录中新建站点：
@@ -36,24 +36,26 @@ cd example
 ```bash
 mkdir my-site && cd my-site
 /path/to/camus -i      # 安装示例 camus.yaml、posts（含 SUMMARY.md 与 posts/private/）与 .gitignore
-/path/to/camus         # 构建
+/path/to/camus --build # 构建
 ```
 
-`camus` 优先从 `src/` 读取 Markdown，不存在时回退 `posts/`。生成的站点写入 `dist/html/`（配置 PDF 时另写入 `dist/pdf/`）。
+`camus` 优先从 `src/` 读取 Markdown，不存在时回退 `posts/`。生成的站点写入 `dist/html/`（配置 PDF 时另写入 `dist/pdf/`）。只有显式指定 `--build`、`-W`、`--check` 或 `--open` 时才会构建；直接运行 `camus` 只打印用法。
 
 ### 常用命令
 
 | 命令 | 说明 |
 |---|---|
-| `camus` | 构建站点 |
-| `camus -w <dir>` | 构建指定工作目录中的站点 |
-| `camus -W` | 监听文件变化并启动本地服务 |
-| `camus -D` | 干跑：解析与渲染，但不写文件 |
+| `camus` | 打印用法（不构建） |
+| `camus --build` | 构建站点 |
+| `camus -w <dir> --build` | 构建指定工作目录中的站点 |
+| `camus -W` | 监听文件变化并启动本地服务（隐含构建） |
+| `camus -D --build` | 干跑：解析与渲染，但不写文件 |
 | `camus --check` | 校验配置、资源与 PDF 设置，并执行干跑构建 |
 | `camus -i` | 安装示例 `camus.yaml`、`posts`（含 `SUMMARY.md` 与 `posts/private/`）与 `.gitignore` |
-| `camus --new <dir>` | 创建站点目录、安装示例文件并构建 |
+| `camus --new <dir>` | 创建站点目录并安装示例文件 |
+| `camus --create <path>` | 在 `src/` 或 `posts/` 下创建文章 `.md`（自动创建缺失目录；最后一级为文件名） |
 | `camus --repo [url]` | 执行 `git init`；提供地址时设置 `origin` |
-| `camus --new <dir> --repo <url>` | 创建、安装、初始化 git 后构建 |
+| `camus --new <dir> --repo <url>` | 创建、安装并初始化 git |
 | `camus -c` | 把最小可编辑资源（`assets/css/style.css`、`assets/js/onload.js`，并创建空 `assets/fonts/`）复制到 `./assets` |
 | `camus -c --full` | 把完整内置资源树复制到 `./.camus` |
 | `camus -c --theme` | 把整个 `theme/` 复制到 `./theme`，并创建最小 `assets/` |
@@ -185,14 +187,14 @@ Markdown 文件放在 `src/` 或 `posts/` 下。可选 Front Matter 位于 `---`
 
 ```markdown
 ---
-display-name: My article
-date: 2026-01-01
+title: My article
+create-time: 2026-01-01
 tags: [ "notes", "cpp" ]
 visibility: open
 ---
 ```
 
-支持 `display-name`、`short-path`、`date`、`visibility`（`open` / `hidden` / `hidden_in_toc`）与 `tags` 等字段。`hidden` 文章不渲染；`hidden_in_toc` 文章正常渲染，但不进入 TOC/导航列表。
+支持 `title`、`short-path`、`create-time`、`visibility`（`open` / `hidden` / `hidden_in_toc`）与 `tags` 等字段。`hidden` 文章不渲染；`hidden_in_toc` 文章正常渲染，但不进入 TOC/导航列表。
 
 ## 主题与模板函数
 

@@ -94,7 +94,7 @@ flowchart TD
     H -->|否| J[处理隐藏片段标记]
     J --> K{存在 tags?}
     K -->|是| L[按 JSON 解析 tags, 失败 fatal]
-    K -->|否| M[解析 date]
+    K -->|否| M[解析 create-time]
     L --> M
     M --> N{日期有效?}
     N -->|否| O[回退文件 st_mtime]
@@ -119,9 +119,9 @@ flowchart TD
 
 | 字段 | 类型 | 默认 | 说明 |
 |---|---|---|---|
-| `display-name` | 字符串 | 文件名词干 | 页面标题与输出文件名；会先做 inja 变量渲染，再把 `/`、`\`、`'`、`"` 替换为空格 |
+| `title` | 字符串 | 文件名词干 | 页面标题与输出文件名；会先做 inja 变量渲染，再把 `/`、`\`、`'`、`"` 替换为空格 |
 | `short-path` | 字符串 | 空 | 为空则不启用短链；`auto` 用节点路径 hash 生成；否则原样使用 |
-| `date` | 字符串 | 文件 mtime | 发布/修改时间 |
+| `create-time` | 字符串 | 文件 mtime | 发布/修改时间 |
 | `visibility` | 字符串 | `open` | `hidden`：不渲染、从树中移除；`hidden_in_toc`：见 §4.6 |
 | `tags` | JSON 数组字符串 | 空 | 文章标签，参与统计页 |
 

@@ -28,7 +28,7 @@ The repository ships a complete example in `example/`:
 
 ```bash
 cd example
-../build/release/bin/camus
+../build/release/bin/camus --build
 ```
 
 Or create a new site in an empty directory:
@@ -36,24 +36,26 @@ Or create a new site in an empty directory:
 ```bash
 mkdir my-site && cd my-site
 /path/to/camus -i      # install example camus.yaml, posts (with SUMMARY.md, plus posts/private/) and .gitignore
-/path/to/camus         # build
+/path/to/camus --build # build
 ```
 
-`camus` looks for Markdown sources in `src/` first, then `posts/`. The generated site is written to `dist/html/` (and PDF to `dist/pdf/` when configured).
+`camus` looks for Markdown sources in `src/` first, then `posts/`. The generated site is written to `dist/html/` (and PDF to `dist/pdf/` when configured). Building only happens when explicitly requested with `--build`, `-W`, `--check` or `--open`; running `camus` without any option prints usage.
 
 ### Common commands
 
 | Command | Description |
 |---|---|
-| `camus` | Build the site |
-| `camus -w <dir>` | Build a site in another workdir |
-| `camus -W` | Watch for changes and serve locally |
-| `camus -D` | Dry run: parse and render without writing files |
+| `camus` | Print usage (does not build) |
+| `camus --build` | Build the site |
+| `camus -w <dir> --build` | Build a site in another workdir |
+| `camus -W` | Watch for changes and serve locally (implies build) |
+| `camus -D --build` | Dry run: parse and render without writing files |
 | `camus --check` | Validate configuration, assets, PDF settings and run a dry build |
 | `camus -i` | Install example `camus.yaml`, `posts` (with `SUMMARY.md`, plus `posts/private/`) and `.gitignore` |
-| `camus --new <dir>` | Create a site directory, install example files, then build |
+| `camus --new <dir>` | Create a site directory and install example files |
+| `camus --create <path>` | Create an article `.md` under `src/` or `posts/` (missing directories are created; last segment is the file name) |
 | `camus --repo [url]` | Run `git init`; set `origin` when a URL is provided |
-| `camus --new <dir> --repo <url>` | Create, install, initialize git and then build |
+| `camus --new <dir> --repo <url>` | Create, install and initialize git |
 | `camus -c` | Copy minimal editable resources (`assets/css/style.css`, `assets/js/onload.js`, empty `assets/fonts/`) into `./assets` |
 | `camus -c --full` | Copy the complete bundled resource tree into `./.camus` |
 | `camus -c --theme` | Copy the whole `theme/` directory into `./theme`, plus minimal `assets/` |
@@ -186,14 +188,14 @@ Markdown files live under `src/` or `posts/`. Optional front matter sits between
 
 ```markdown
 ---
-display-name: My article
-date: 2026-01-01
+title: My article
+create-time: 2026-01-01
 tags: [ "notes", "cpp" ]
 visibility: open
 ---
 ```
 
-Supported fields include `display-name`, `short-path`, `date`, `visibility` (`open` / `hidden` / `hidden_in_toc`) and `tags`. `hidden` articles are not rendered; `hidden_in_toc` articles are rendered but omitted from TOC/navigation lists.
+Supported fields include `title`, `short-path`, `create-time`, `visibility` (`open` / `hidden` / `hidden_in_toc`) and `tags`. `hidden` articles are not rendered; `hidden_in_toc` articles are rendered but omitted from TOC/navigation lists.
 
 ## Themes and template helpers
 

@@ -1,9 +1,9 @@
 ---
 short-path: auto
-display-name: Mozart!
-date: 2026-07-16 14:05:00
+title: Mozart!
 visibility: open
 tags: [ "example" ]
+create-time: 2026-07-16 14:05:00
 ---
 
 Here are a few well-known musicals：

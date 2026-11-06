@@ -471,7 +471,7 @@ namespace camus
 				}
 			}
 
-			node.property.write_time = functions::datetime_to_unix(params["date"]);
+			node.property.write_time = functions::datetime_to_unix(params["create-time"]);
 			if (node.property.write_time <= 0) {
 				node.property.write_time = 0;
 				struct stat fileStat{};
@@ -487,7 +487,7 @@ namespace camus
 			if (conf_.camus().output.filename_case == "uuid") {
 				node.property.display_name = strings::uuid_v4();
 			} else {
-				node.property.display_name = params["display-name"];
+				node.property.display_name = params["title"];
 			}
 
 			if (node.property.display_name.empty()) {

@@ -1,5 +1,9 @@
 ---
-date: 2026-07-16 14:00:00
+# title: Comparisons with opera # 页面标题，默认使用文件名
+# short-path: auto # 短链标识，auto 自动生成，留空不启用
+# visibility: open # open / hidden / hidden_in_toc
+# tags: ["musical", "opera"] # 文章标签，JSON 数组
+create-time: 2026-07-16 14:00:00 # 发布时间，默认使用文件修改时间
 ---
 
 Musical theatre is closely related to the theatrical form of opera, but the two are usually distinguished by weighing a number of factors. First, musicals generally have a greater focus on spoken dialogue.[7] Some musicals, however, are entirely accompanied and sung-through, while some operas, such as Die Zauberflöte, and most operettas, have some unaccompanied dialogue.[7] Second, musicals usually include more dancing as an essential part of the storytelling, particularly by the principal performers as well as the chorus. Third, musicals often use various genres of popular music or at least popular singing and musical styles.[8]

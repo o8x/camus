@@ -1,8 +1,8 @@
 ---
-display-name: Mozart!
-date: 2026-07-16 14:08:00
+title: Mozart!
 visibility: open
 tags: [ "example" ]
+create-time: 2026-07-16 14:08:00
 ---
 
 Mozart! is an Austrian musical, originally written in German. The original book and lyrics were written by Michael Kunze and the music and arrangements were composed by Sylvester Levay. The show reinterprets the life of the famous composer Wolfgang Amadeus Mozart. It presents him as a complex figure shaped by both extraordinary genius and personal struggle.

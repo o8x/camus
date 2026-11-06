@@ -1,8 +1,8 @@
 ---
-display-name: The Phantom of the Opera (1986 musical)
-date: 2026-07-16 14:06:00
+title: The Phantom of the Opera (1986 musical)
 visibility: open
 tags: [ "example" ]
+create-time: 2026-07-16 14:06:00
 ---
 
 

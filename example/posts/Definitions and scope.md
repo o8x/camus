@@ -1,5 +1,9 @@
 ---
-date: 2026-07-16 14:01:00
+# title: Definitions and scope # 页面标题，默认使用文件名
+# short-path: auto # 短链标识，auto 自动生成，留空不启用
+# visibility: open # open / hidden / hidden_in_toc
+# tags: ["musical", "definition"] # 文章标签，JSON 数组
+create-time: 2026-07-16 14:01:00 # 发布时间，默认使用文件修改时间
 ---
 
 Since the 20th century, the "book musical" has been defined as a musical play where songs and dances are fully integrated into a well-made story with serious dramatic goals and which is able to evoke genuine emotions other than laughter.[2][3] The three main components of a book musical are its music, lyrics and book. The book or script of a musical refers to the story, character development and dramatic structure, including the spoken dialogue and stage directions, but it can also refer to the dialogue and lyrics together, which are sometimes referred to as the libretto (Italian for "small book"). The music and lyrics together form the score of a musical and include songs, incidental music and musical scenes, which are "theatrical sequence[s] set to music, often combining song with spoken dialogue."[4] The interpretation of a musical is the responsibility of its creative team, which includes a director, a musical director, usually a choreographer and sometimes an orchestrator. A musical's production is also creatively characterized by technical aspects, such as set design, costumes, stage properties (props), lighting and sound. The creative team, designs and interpretations generally change from the original production to succeeding productions. Some production elements, however, may be retained from the original production, for example, Bob Fosse's choreography in Chicago.

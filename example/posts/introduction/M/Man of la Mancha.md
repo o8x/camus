@@ -1,8 +1,8 @@
 ---
-display-name: 堂吉诃德
-date: 2026-07-16 14:07:00
+title: 堂吉诃德
 visibility: open
 tags: [ "example" ]
+create-time: 2026-07-16 14:07:00
 ---
 
 《堂吉诃hē德》（西班牙语：Don Quijote de la Mancha，西班牙语发音：[doŋ kiˈxote] ⓘ），全名为《奇情异想的绅士吉诃德·德拉曼查先生》[1]（西班牙语：El ingenioso hidalgo don Quijote de la Mancha），是西班牙作家塞万提斯于1605年和1615年分两部分出版的反骑士小说。故事背景是个早就没有骑士的年代，主角吉诃德先生在阅读了骑士小说之后，曾幻想自己是个骑士，并作出种种令人匪夷所思的行径，最终从梦幻中苏醒过来。
