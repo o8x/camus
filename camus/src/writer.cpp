@@ -230,6 +230,50 @@ namespace
 		return true;
 	}
 
+	// 解析 PDF 封面图：绝对路径直接使用；相对路径依次按 camus.yaml 所在目录（workdir）、
+	// 源目录与站点 assets 目录尝试，命中第一个普通文件。返回空表示未找到。
+	std::filesystem::path resolve_cover_image(
+		const std::filesystem::path &workdir,
+		const std::filesystem::path &source_dir,
+		const std::filesystem::path &assets_dir,
+		const std::string &cover_image,
+		std::vector<std::filesystem::path> *attempted = nullptr
+	)
+	{
+		const std::filesystem::path raw = strings::trim_space(cover_image);
+		if (raw.empty()) {
+			return {};
+		}
+
+		std::vector<std::filesystem::path> candidates;
+		if (raw.is_absolute()) {
+			candidates.push_back(raw);
+		} else {
+			candidates.push_back(workdir / raw);
+
+			if (!source_dir.empty()) {
+				candidates.push_back(source_dir / raw);
+			}
+
+			if (!assets_dir.empty()) {
+				candidates.push_back(assets_dir / raw);
+			}
+		}
+
+		for (const auto &candidate : candidates) {
+			std::error_code ec;
+			if (std::filesystem::is_regular_file(candidate, ec) && !ec) {
+				return candidate;
+			}
+
+			if (attempted != nullptr) {
+				attempted->push_back(candidate);
+			}
+		}
+
+		return {};
+	}
+
 	std::string pdf_page_style(const camus::config::pdf_page_conf &page)
 	{
 		std::string size = strings::trim_space(page.size);
@@ -1140,13 +1184,26 @@ namespace camus
 
 		if (const std::string cover_image = strings::trim_space(conf_.camus().site.cover_image);
 			!cover_image.empty()) {
-			std::filesystem::path cover_path(cover_image);
-			if (cover_path.is_relative()) {
-				cover_path = cmd_.workdir / cover_path;
-			}
+			std::vector<std::filesystem::path> attempted;
+			const std::filesystem::path cover_path = resolve_cover_image(
+				cmd_.workdir,
+				conf_.camus().source_dir,
+				conf_.camus().assets_dir,
+				cover_image,
+				&attempted
+			);
 
-			if (!std::filesystem::is_regular_file(cover_path)) {
-				logging::warn("pdf cover image not found path={}", cover_path.string());
+			if (cover_path.empty()) {
+				std::string tried;
+				for (const auto &path : attempted) {
+					if (!tried.empty()) {
+						tried += ", ";
+					}
+
+					tried += path.string();
+				}
+
+				logging::warn("pdf cover image not found path={} tried=[{}]", cover_image, tried);
 			} else {
 				const std::string extension = cover_path.extension().string();
 				const std::string target_name = "cover" + (extension.empty() ? ".png" : extension);
@@ -1606,13 +1663,26 @@ namespace camus
 			);
 
 			if (const std::string cover = strings::trim_space(camus.site.cover_image); !cover.empty()) {
-				std::filesystem::path cover_path(cover);
-				if (cover_path.is_relative()) {
-					cover_path = cmd_.workdir / cover_path;
-				}
+				std::vector<std::filesystem::path> attempted;
+				const std::filesystem::path cover_path = resolve_cover_image(
+					cmd_.workdir,
+					camus.source_dir,
+					camus.assets_dir,
+					cover,
+					&attempted
+				);
 
-				if (!std::filesystem::is_regular_file(cover_path)) {
-					report_issue(false, std::format("pdf cover image not found path={}", cover_path.string()));
+				if (cover_path.empty()) {
+					std::string tried;
+					for (const auto &path : attempted) {
+						if (!tried.empty()) {
+							tried += ", ";
+						}
+
+						tried += path.string();
+					}
+
+					report_issue(false, std::format("pdf cover image not found path={} tried=[{}]", cover, tried));
 				} else {
 					pdf_state += " cover=" + cover_path.string();
 				}

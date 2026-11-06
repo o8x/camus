@@ -132,7 +132,7 @@ cover_image: assets/cover.jpg
 解析规则：
 
 - `title` / `subtitle` / `description` / `cover_image` 可写在可选的 YAML Front Matter 中。
-- 根目录 `SUMMARY.md` 的 `cover_image` 用作 PDF 封面；相对路径以 `camus.yaml` 所在目录为起点，绝对路径直接使用。
+- 根目录 `SUMMARY.md` 的 `cover_image` 用作 PDF 封面；相对路径以 `camus.yaml` 所在目录为起点，找不到时依次回退到源目录与站点 `assets` 目录，绝对路径直接使用。
 - 缺少 `title` 时使用正文中第一个 `# 标题`。
 - 缺少 `description` 时使用剩余正文。
 - 未设置的字段继承根目录；根目录的 `SUMMARY.md`（`posts/SUMMARY.md` 或 `src/SUMMARY.md`）定义站点标题/副标题/简介。

@@ -116,7 +116,7 @@ Markdown 引擎固定为 `cmark-gfm`，顶层 `markdown_options` 始终按本表
 | Front Matter `title` | 目录显示名 / 页面标题 |
 | Front Matter `subtitle` | 目录副标题 |
 | Front Matter `description` | 目录描述 |
-| Front Matter `cover_image` | PDF 封面图片路径（仅根目录 `SUMMARY.md` 生效；相对路径以 `camus.yaml` 所在目录为起点） |
+| Front Matter `cover_image` | PDF 封面图片路径（仅根目录 `SUMMARY.md` 生效；相对路径以 `camus.yaml` 所在目录为起点，找不到时依次回退到源目录与站点 `assets` 目录） |
 | 正文第一个 `# 标题` | `title` 缺失时的回退值 |
 | 正文剩余内容 | `description` 缺失时的回退值 |
 

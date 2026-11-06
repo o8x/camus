@@ -133,7 +133,7 @@ Optional description shown on the directory page.
 Parsing rules:
 
 - `title`, `subtitle`, `description` and `cover_image` may be provided in an optional YAML front matter block.
-- `cover_image` in the root `SUMMARY.md` sets the PDF cover. Relative paths are resolved from the directory containing `camus.yaml`; absolute paths are used as-is.
+- `cover_image` in the root `SUMMARY.md` sets the PDF cover. Relative paths are resolved from the directory containing `camus.yaml`, then fall back to the source directory and the site `assets` directory; absolute paths are used as-is.
 - If `title` is missing, the first `# Heading` in the body is used.
 - If `description` is missing, the remaining body is used.
 - Unset fields inherit from the root route; the root `SUMMARY.md` (`posts/SUMMARY.md` or `src/SUMMARY.md`) defines the site title/subtitle/description.
