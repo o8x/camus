@@ -14,13 +14,14 @@
 namespace
 {
 	// cmdline 的带值选项会强制消费下一个参数，这里把可选值选项的裸写法归一化：
-	// 裸 --open 等价 --open=project，裸 --repo 等价 --repo=（只执行 git init）。
+	// 裸 --open 等价 --open=project，裸 --repo 等价 --repo=（只执行 git init），
+	// 裸 --theme 等价 --theme=（复制整个 theme 目录）。
 	std::vector<std::string> normalize_optional_value_args(const int argc, char **argv)
 	{
 		std::vector<std::string> args;
 		for (int i = 0; i < argc; i++) {
 			const std::string current = argv[i];
-			if (current != "--open" && current != "--repo" && current != "--new") {
+			if (current != "--open" && current != "--repo" && current != "--new" && current != "--theme") {
 				args.push_back(current);
 				continue;
 			}
@@ -49,6 +50,13 @@ int main(const int argc, char **argv)
 	arg.add("install", 'i', "install camus.yaml, posts and .gitignore from data dir");
 	arg.add<std::string>("new", 0, "create a new site directory and install the example files", false, "");
 	arg.add("copy", 'c', "copy resources into .camus from data dir");
+	arg.add<std::string>(
+		"theme",
+		0,
+		"with --copy: copy only themes; no value copies all, value copies theme/<name>",
+		false,
+		""
+	);
 	arg.add("full", 0, "copy the complete resource tree with --copy");
 	arg.add("force", 'f', "overwrite existing .camus when copying");
 	arg.add("debug", 'd', "enable debugging");
@@ -115,9 +123,16 @@ int main(const int argc, char **argv)
 			}
 		}
 
+		if (arg.exist("theme") && !arg.exist("copy")) {
+			std::cout << "option --theme requires --copy" << std::endl << std::endl << arg.usage();
+			return 1;
+		}
+
 		if (arg.exist("copy")) {
-			if (const int copied = camus::copy_resources(cmd.workdir, arg.exist("force"), arg.exist("full"));
-				copied != 0) {
+			const int copied = arg.exist("theme")
+								   ? camus::copy_theme(cmd.workdir, arg.get<std::string>("theme"), arg.exist("force"))
+								   : camus::copy_resources(cmd.workdir, arg.exist("force"), arg.exist("full"));
+			if (copied != 0) {
 				return copied;
 			}
 		}

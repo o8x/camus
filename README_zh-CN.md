@@ -56,6 +56,8 @@ mkdir my-site && cd my-site
 | `camus --new <dir> --repo <url>` | 创建、安装、初始化 git 后构建 |
 | `camus -c` | 把最小可编辑资源（`assets/css/style.css`、`assets/js/onload.js`）复制到 `./.camus` |
 | `camus -c --full` | 把完整内置资源树复制到 `./.camus` |
+| `camus -c --theme` | 只把整个 `theme/` 复制到 `./.camus/theme` |
+| `camus -c --theme <name>` | 只把 `theme/<name>/` 复制到 `./.camus/theme/<name>` |
 | `camus -c -f` | 强制重装所选 `./.camus` 资源 |
 | `camus --open` | 构建后在 VS Code 中打开工作目录 |
 | `camus --open runtime` | 构建后用文件管理器打开数据目录 |

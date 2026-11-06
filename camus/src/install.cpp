@@ -158,4 +158,63 @@ namespace camus
 
 		return 0;
 	}
+
+	int copy_theme(const std::filesystem::path &workdir, const std::string &name, const bool force)
+	{
+		const std::filesystem::path source_root = paths::source_data_dir();
+		if (source_root.empty()) {
+			logging::error("theme copy failed: no resources found in data directories");
+			return 1;
+		}
+
+		const std::filesystem::path source_theme = source_root / "theme";
+		if (!std::filesystem::is_directory(source_theme)) {
+			logging::error("theme copy failed: theme directory not found path={}", source_theme.string());
+			return 1;
+		}
+
+		std::filesystem::path relative;
+		if (!name.empty()) {
+			relative = std::filesystem::path(name);
+			if (relative.is_absolute()) {
+				logging::error("theme copy failed: invalid theme name={}", name);
+				return 1;
+			}
+
+			for (const auto &part : relative) {
+				if (part == "." || part == "..") {
+					logging::error("theme copy failed: invalid theme name={}", name);
+					return 1;
+				}
+			}
+		}
+
+		const std::filesystem::path source = relative.empty() ? source_theme : source_theme / relative;
+		if (!std::filesystem::is_directory(source)) {
+			logging::error("theme copy failed: theme not found name={}", name);
+			return 1;
+		}
+
+		const std::filesystem::path target =
+			workdir / paths::local_data_dir() / "theme" / relative;
+
+		try {
+			std::filesystem::create_directories(target.parent_path());
+
+			std::filesystem::copy_options options = std::filesystem::copy_options::recursive;
+			options |= force ? std::filesystem::copy_options::overwrite_existing
+							 : std::filesystem::copy_options::skip_existing;
+			std::filesystem::copy(source, target, options);
+		} catch (const std::exception &e) {
+			logging::error("theme copy failed error={}", e.what());
+			return 1;
+		}
+
+		logging::info(
+			"theme copied from '{}' to '{}'",
+			filesystem::path_abs(source),
+			filesystem::path_abs(target)
+		);
+		return 0;
+	}
 } // namespace camus

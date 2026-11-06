@@ -2,7 +2,7 @@
 
 实现：`camus/src/install.h`、`camus/src/install.cpp`、`common/common/paths/paths.h`、`common/common/paths/paths.cpp`、`camus/src/yaml_config.cpp`、`camus/src/writer.cpp`、`camus/CMakeLists.txt`。
 
-> 旧版的「单文件自包含」已移除：可执行文件不再追加示例压缩包。`-i/--install` 只把示例配置与文章安装到工作目录根部；`-c/--copy` 默认复制最小资源骨架，`-c --full` 才复制完整资源到 `.camus`。
+> 旧版的「单文件自包含」已移除：可执行文件不再追加示例压缩包。`-i/--install` 只把示例配置与文章安装到工作目录根部；`-c/--copy` 默认复制最小资源骨架，`-c --full` 才复制完整资源到 `.camus`，`-c --theme [name]` 只复制整个或单个主题。
 
 ## 8.1 数据目录
 
@@ -93,6 +93,30 @@ flowchart TD
 - 复制完成后，对 `posts`、`camus.yaml`、`.gitignore`：仅当工作目录根部不存在同名路径时才补齐；`posts/private/` 始终确保存在。
 - 工作目录不存在时由 `<workdir>/.camus` 的 `create_directories` 一并创建。
 - 复制结果持久于磁盘；`-c` 成功后不会退出，主程序继续构建（见 §2.4）。
+
+### 8.2.3 `-c --theme [name]`（只复制主题）
+
+`copy_theme()` 只处理 `source_data_dir()/theme`，目标为 `<workdir>/.camus/theme`：
+
+- `-c --theme`：复制整个 `theme/`（含 `theme/pdf/`）。
+- `-c --theme pixel`：只复制 `theme/pixel/` 到 `.camus/theme/pixel`。
+- 不复制 `assets/`，不补齐工作目录根部的 `posts` / `camus.yaml` / `.gitignore`，也不受 `--full` 影响。
+- 不加 `-f` 时跳过目标中已存在的文件（可重复执行补齐缺失主题）；加 `-f` 时覆盖同名文件。
+- `--theme` 未搭配 `-c` 时打印错误并返回 1；主题名非法（绝对路径或含 `.` / `..`）时返回 1。
+
+```mermaid
+flowchart TD
+    A[解析 source_data_dir] -->|无资源| X[报错, 返回 1]
+    A -->|找到| T{name 为空?}
+    T -->|是| C[复制整个 theme -> .camus/theme]
+    T -->|否| O[校验主题名并复制 theme/name -> .camus/theme/name]
+    C --> S{--force?}
+    O --> S
+    S -->|是| W[覆盖同名文件]
+    S -->|否| K[跳过已存在文件]
+    W --> OK[返回 0, 继续构建]
+    K --> OK
+```
 
 ## 8.3 资源查找顺序
 

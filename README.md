@@ -56,6 +56,8 @@ mkdir my-site && cd my-site
 | `camus --new <dir> --repo <url>` | Create, install, initialize git and then build |
 | `camus -c` | Copy minimal editable resources (`assets/css/style.css`, `assets/js/onload.js`) into `./.camus` |
 | `camus -c --full` | Copy the complete bundled resource tree into `./.camus` |
+| `camus -c --theme` | Copy the whole `theme/` directory into `./.camus/theme` |
+| `camus -c --theme <name>` | Copy only `theme/<name>/` into `./.camus/theme/<name>` |
 | `camus -c -f` | Force re-copy the selected `./.camus` resources |
 | `camus --open` | Build, then open the workdir in VS Code |
 | `camus --open runtime` | Build, then open the data directory in the file manager |

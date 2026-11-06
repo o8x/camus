@@ -46,7 +46,7 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 - PDF 模板/样式/字体：工作目录 `theme/pdf/{page.html,style.css,fonts.css,fonts/}` → `.camus/theme/pdf/...` → 数据目录。
 - 静态资源：工作目录 `./assets` 优先；否则 `.camus/assets`，再否则数据目录 `assets/`。
 
-构建不再向可执行文件追加模板。`-i` 从数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与自动创建的 `posts/private/`）、`.gitignore` 到工作目录根部。`-c` 默认复制最小资源骨架，`-c --full` 复制完整资源到 `.camus`，`-f` 覆盖已有资源（详见 §8）。
+构建不再向可执行文件追加模板。`-i` 从数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与自动创建的 `posts/private/`）、`.gitignore` 到工作目录根部。`-c` 默认复制最小资源骨架，`-c --full` 复制完整资源到 `.camus`，`-c --theme [name]` 只复制整个或单个主题，`-f` 覆盖已有资源（详见 §8）。
 
 ## 1.4 构建流水线
 
