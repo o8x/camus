@@ -24,7 +24,7 @@ build:
 	@cmake --build $(BUILD_DIR) --target all
 
 .PHONY: install
-install: build package
+install: package
 	@sudo installer -pkg build/release/_CPack_Packages/Darwin/productbuild/camus-*-arm64.pkg -target /
 
 .PHONY: serve
