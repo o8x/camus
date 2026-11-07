@@ -30,7 +30,7 @@ jobs:
             -   name: Install dependencies
                 run: |
                     apt update -y
-                    apt install -y git ninja-build make cmake pkg-config gcc g++ mold dpkg-dev
+                    apt install -y git ninja-build make cmake pkg-config gcc g++ mold dpkg-dev libssl-dev
 
             -   uses: actions/checkout@v4
 
@@ -62,7 +62,7 @@ jobs:
             -   name: Install dependencies
                 run: |
                     brew update
-                    brew install git make cmake pkg-config ninja llvm@21
+                    brew install git make cmake pkg-config ninja llvm@21 openssl@3
 
             -   name: Checkout
                 uses: actions/checkout@v4
@@ -71,6 +71,7 @@ jobs:
                 run: |
                     git config --global --add safe.directory "$GITHUB_WORKSPACE"
                     git submodule update --init --recursive
+                    export PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig:$PKG_CONFIG_PATH"
                     make package
 
             -   name: Install Test
@@ -104,12 +105,47 @@ jobs:
                 working-directory: packages
                 run: ls -l
 
+            -   name: Generate latest.json
+                working-directory: packages
+                run: |
+                    python3 - <<'PY'
+                    import datetime
+                    import glob
+                    import json
+                    import os
+
+                    tag = os.environ["GITHUB_REF_NAME"]
+                    version = tag.lstrip("vV")
+                    repo = os.environ["GITHUB_REPOSITORY"]
+                    extensions = (".dmg", ".pkg", ".rpm", ".deb", ".exe")
+                    assets = []
+                    for path in sorted(glob.glob("*")):
+                        name = os.path.basename(path)
+                        if not name.endswith(extensions):
+                            continue
+                        assets.append({
+                            "name": name,
+                            "url": f"https://github.com/{repo}/releases/download/{tag}/{name}",
+                        })
+
+                    data = {
+                        "version": version,
+                        "tag": tag,
+                        "published_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "assets": assets,
+                    }
+                    with open("latest.json", "w", encoding="utf-8") as stream:
+                        json.dump(data, stream, ensure_ascii=False, indent=2)
+                    print(open("latest.json", encoding="utf-8").read())
+                    PY
+
             -   name: Release ${{ github.ref_name }}
                 uses: softprops/action-gh-release@v3
                 if: github.ref_type == 'tag'
                 with:
                     name: Release ${{ github.ref_name }}
                     files: |
+                        packages/latest.json
                         packages/*.dmg
                         packages/*.pkg
                         packages/*.rpm

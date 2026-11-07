@@ -13,7 +13,7 @@
 | 构建系统 | CMake 3.28.3+ / Ninja / Make |
 | 版本来源 | `CMakeLists.txt` 中 `project(Camus VERSION ...)`，与本表「当前版本」保持一致 |
 | 许可证 | 见仓库根目录 `LICENSE` |
-| 仓库地址 | https://github.com/o8x/camus |
+| 仓库地址 | https://github.com/the-writer/camus |
 
 ## 核心设计
 

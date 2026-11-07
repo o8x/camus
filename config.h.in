@@ -12,7 +12,7 @@
 
 #define GIT_FOUND "@GIT_FOUND@"
 #define GIT_BRANCH "@GIT_BRANCH@"
-#define GIT_REPO "https://github.com/o8x/camus"
+#define GIT_REPO "https://github.com/the-writer/camus"
 #define GIT_COMMIT_HASH "@GIT_COMMIT_LONG@"
 
 #define CAMUS_LOCAL_DATA_DIR ".camus"
