@@ -87,7 +87,7 @@
 
 `build-ubuntu` / `build-macos` 的 Install Test 与 pages 构建均显式使用 `--build`（仅 `-dw` 不会触发构建），并设置 `CAMUS_AUTO_CHECK_UPDATE=false` 避免 CI 额外发起更新检查。
 
-依赖缓存：`build-ubuntu` 使用 `actions/cache` 缓存 `/var/cache/apt/archives` 与 `/var/lib/apt/lists`（key `Linux-apt-v1`）；`build-macos` 缓存 `~/Library/Caches/Homebrew`（key `macOS-homebrew-v1`），并移除了每次运行的 `brew update`。缓存 key 带手动版本号，依赖列表变化时可递增该版本使缓存失效。
+依赖缓存：`build-macos` 使用 `actions/cache` 缓存 `~/Library/Caches/Homebrew`（key `macOS-homebrew-v1`），并移除了每次运行的 `brew update`；缓存 key 带手动版本号，依赖列表变化时可递增该版本使缓存失效。`build-ubuntu` 不缓存 apt，安装依赖后再 checkout（确保容器内 `git` 可用并生成真实 `.git` 仓库）。
 
 工作流权限：`contents: write`、`pages: write`、`id-token: write`；`pages` concurrency。
 
