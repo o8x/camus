@@ -2,7 +2,7 @@
 # meta: true                                # 是否生成元信息 /meta.json，其内容会因构建类型不同而不同
 # sitemap: true                             # 自动生成 sitemap.xml
 # filename_case: keep                       # 转换md的输出文件名：keep 不转换，uuid 自动转换为 /uuid.html
-# public_url: ''                            # 对外访问地址，默认空；示例：https://stdout.com.cn/camus（自动拆解为 protocol/domain_name/path_prefix）
+# public_url: ''                            # 对外访问地址，默认空；示例：https://the-writer.github.io/camus/（自动拆解为 protocol/domain_name/path_prefix）
 # cdn_url: ''                               # CDN 地址，默认空；为空时 with_cdn(path) 返回 with_prefix(path)（含 path_prefix）
 auto_check_update: true                     # 启动构建时自动检测更新（成功/失败都打印，不影响构建）
 # 页面渲染配置
@@ -38,7 +38,7 @@ markdown:                                   # markdown 引擎参数
 friends:
     -   title: Alex                                # 站点标题
         link_url: https://github.com/o8x/camus     # 跳转地址
-        image_url: https://stdout.com.cn/logo.png  # 头像链接
+        image_url: https://the-writer.github.io/camus/logo.png  # 头像链接
         desc: What's past is prologue.             # 简短描述
 
     -   title: 一言网

@@ -54,9 +54,9 @@
 
 | 输入 | `protocol` | `domain_name` | `path_prefix` | `url`（归一化） |
 |---|---|---|---|---|
-| `https://stdout.com.cn/camus` | `https://` | `stdout.com.cn` | `/camus` | `https://stdout.com.cn/camus` |
-| `stdout.com.cn` | `https://` | `stdout.com.cn` | 空 | `https://stdout.com.cn` |
-| `https://stdout.com.cn/` | `https://` | `stdout.com.cn` | 空 | `https://stdout.com.cn` |
+| `https://the-writer.github.io/camus/` | `https://` | `the-writer.github.io` | `/camus` | `https://the-writer.github.io/camus` |
+| `the-writer.github.io/camus` | `https://` | `the-writer.github.io` | `/camus` | `https://the-writer.github.io/camus` |
+| `https://the-writer.github.io/` | `https://` | `the-writer.github.io` | 空 | `https://the-writer.github.io` |
 | `http://localhost:8080/blog/` | `http://` | `localhost:8080` | `/blog` | `http://localhost:8080/blog` |
 
 `public_url_conf::full_prefix()` = `protocol + domain_name + path_prefix`，用于绝对链接与 sitemap。

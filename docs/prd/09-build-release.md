@@ -69,7 +69,7 @@
 | `CPACK_PACKAGE_FILE_NAME` | `${NAME}-v${VERSION}_${OS_NAME}${OS_RELEASE}-${PROCESSOR}`，整体转小写 |
 
 - Linux：可执行文件安装到 `./usr/local/bin`，资源安装到 `var/lib/camus`，生成 DEB（`CPACK_MONOLITHIC_INSTALL ON`）。
-- macOS `productbuild`：可执行文件安装到 `./usr/local/bin`（组件 `Runtime`），资源安装到 `Library/Application Support/Camus`（组件 `Resources`），identifier `cn.com.stdout.Camus`。
+- macOS `productbuild`：可执行文件安装到 `./usr/local/bin`（组件 `Runtime`），资源安装到 `Library/Application Support/Camus`（组件 `Resources`），identifier `io.github.the-writer.Camus`。
 - macOS `productbuild` 启用用户域与系统域：用户域落到 `~/Library/Application Support/Camus`，系统域（如 `installer -target /`）落到 `/Library/Application Support/Camus`。
 - macOS `DragNDrop` 分支存在但当前 Makefile 默认用 `productbuild`。
 - 产物命名示例：`camus-v{PROJECT_VERSION}_ubuntu24.04-x86_64.deb`（实际版本号见 `CMakeLists.txt`，`OS_RELEASE` 由主机决定）。

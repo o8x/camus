@@ -79,12 +79,12 @@ sitemap: true              # generate sitemap.xml
 filename_case: keep        # keep | uuid
 
 # Public URL of the site. It is split into protocol/domain_name/path_prefix:
-# https://stdout.com.cn/camus -> https:// + stdout.com.cn + /camus
-public_url: https://stdout.com.cn/camus
+# https://the-writer.github.io/camus/ -> https:// + the-writer.github.io + /camus
+public_url: https://the-writer.github.io/camus/
 
 # Optional CDN base URL used by with_cdn(). Empty by default; when empty,
 # with_cdn(path) returns with_prefix(path) (including path_prefix).
-cdn_url: ''                # e.g. https://cdn.stdout.com.cn/camus
+cdn_url: ''                # e.g. https://the-writer.github.io/camus
 
 theme: terminal
 pdf:
@@ -104,7 +104,7 @@ markdown:
 friends:
   - title: Alex
     link_url: https://github.com/o8x/camus
-    image_url: https://stdout.com.cn/logo.png
+    image_url: https://the-writer.github.io/camus/logo.png
     desc: What's past is prologue.
 
 # Move directory contents to another output path

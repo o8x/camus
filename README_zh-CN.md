@@ -79,11 +79,11 @@ sitemap: true              # 生成 sitemap.xml
 filename_case: keep        # keep | uuid
 
 # 站点对外访问地址，会自动拆解为 protocol/domain_name/path_prefix：
-# https://stdout.com.cn/camus -> https:// + stdout.com.cn + /camus
-public_url: https://stdout.com.cn/camus
+# https://the-writer.github.io/camus/ -> https:// + the-writer.github.io + /camus
+public_url: https://the-writer.github.io/camus/
 
 # 可选的 CDN 地址，供 with_cdn() 使用；默认空，为空时 with_cdn(path) 返回 with_prefix(path)（含 path_prefix）
-cdn_url: ''                # 例如 https://cdn.stdout.com.cn/camus
+cdn_url: ''                # 例如 https://the-writer.github.io/camus
 
 theme: terminal
 pdf:
@@ -103,7 +103,7 @@ markdown:
 friends:
   - title: Alex
     link_url: https://github.com/o8x/camus
-    image_url: https://stdout.com.cn/logo.png
+    image_url: https://the-writer.github.io/camus/logo.png
     desc: What's past is prologue.
 
 # 目录搬运规则：把 path 目录的内容映射到 target 输出路径

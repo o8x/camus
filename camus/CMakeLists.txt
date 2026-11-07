@@ -58,10 +58,10 @@ if (APPLE)
                 DESTINATION "${CAMUS_RESOURCE_DIR}")
     elseif (CPACK_GENERATOR MATCHES "productbuild")
         # pkgutil --pkgs
-        # pkgutil --pkg-info cn.com.stdout.Camus.Runtime
+        # pkgutil --pkg-info io.github.the-writer.Camus.Runtime
         # 手动卸载
         # rm -f /usr/local/bin/Camus
-        # pkgutil --forget cn.com.stdout.Camus.Runtime
+        # pkgutil --forget io.github.the-writer.Camus.Runtime
         install(TARGETS Camus DESTINATION "./usr/local/bin" COMPONENT Runtime)
         install(DIRECTORY "${CMAKE_SOURCE_DIR}/example/theme" "${CMAKE_SOURCE_DIR}/example/assets"
                 "${CMAKE_SOURCE_DIR}/example/posts"
@@ -76,7 +76,7 @@ if (APPLE)
         set(CPACK_COMPONENT_RESOURCES_DESCRIPTION "${CMAKE_PROJECT_NAME} themes, assets and example template")
         set(CPACK_MONOLITHIC_INSTALL OFF)
         set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
-        set(CPACK_PRODUCTBUILD_IDENTIFIER "cn.com.stdout.Camus")
+        set(CPACK_PRODUCTBUILD_IDENTIFIER "io.github.the-writer.Camus")
         set(CPACK_PRODUCTBUILD_DOMAINS ON)
         set(CPACK_PRODUCTBUILD_DOMAINS_USER ON)
         set(CPACK_PRODUCTBUILD_DOMAINS_ROOT ON)
