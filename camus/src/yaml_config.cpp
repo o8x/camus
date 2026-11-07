@@ -379,6 +379,10 @@ namespace camus::config
 				if (const YAML::Node margin = page["margin"]; margin && margin.IsScalar()) {
 					camus_.pdf.page.margin = strings::trim_space(margin.as<std::string>());
 				}
+
+				if (const YAML::Node font_size = page["font_size"]; font_size && font_size.IsScalar()) {
+					camus_.pdf.page.font_size = strings::trim_space(font_size.as<std::string>());
+				}
 			}
 
 			if (const YAML::Node sort = node["sort"]; sort && sort.IsScalar()) {
@@ -458,6 +462,10 @@ namespace camus::config
 
 						if (const YAML::Node margin = page["margin"]; margin && margin.IsScalar()) {
 							camus_.pdf.page.margin = strings::trim_space(margin.as<std::string>());
+						}
+
+						if (const YAML::Node font_size = page["font_size"]; font_size && font_size.IsScalar()) {
+							camus_.pdf.page.font_size = strings::trim_space(font_size.as<std::string>());
 						}
 					}
 				}
@@ -590,6 +598,10 @@ namespace camus::config
 			camus_.pdf.page.margin = strings::trim_space(*value);
 		} else if (const auto legacy = env_override("pdf_options.page.margin"); legacy.has_value()) {
 			camus_.pdf.page.margin = strings::trim_space(*legacy);
+		}
+
+		if (const auto value = env_override("pdf.page.font_size"); value.has_value()) {
+			camus_.pdf.page.font_size = strings::trim_space(*value);
 		}
 
 		if (const auto value = env_override("pdf.sort"); value.has_value()) {

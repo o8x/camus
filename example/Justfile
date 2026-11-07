@@ -16,7 +16,7 @@ workshop:
 create name="":
     @{{ camus }} --create "{{ name }}.md"
 
-build size="A4":
+build size="A5":
     @CAMUS_PDF_OPTIONS_PAGE_SIZE={{ size }} {{ camus }} --build
 
 serve port="8080":

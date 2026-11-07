@@ -12,7 +12,6 @@
 <body>
 <a class="pdf-anchor-link" href="#pdf-cover" aria-hidden="true"></a>
 <a class="pdf-anchor-link" href="#pdf-toc" aria-hidden="true"></a>
-<a class="pdf-anchor-link" href="#pdf-intro" aria-hidden="true"></a>
 <section id="pdf-cover" class="pdf-cover{% if pdf.cover.has_image %} pdf-cover--image{% endif %}">
 {% if pdf.cover.has_image %}<img class="pdf-cover__image" src="{{ pdf.cover.image }}" alt="">
 {% else %}<h1 class="pdf-cover__title">{{ pdf.cover.title }}</h1>
@@ -39,9 +38,6 @@
 {% endif %}{% endfor %}</ul>
 </section>
 <main>
-<section id="pdf-intro" class="pdf-intro">
-{{ pdf.intro }}
-</section>
 {% for article in pdf.articles %}<section id="{{ article.anchor }}" class="pdf-article">
 {{ article.content }}
 </section>

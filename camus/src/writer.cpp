@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <filesystem>
@@ -274,7 +275,41 @@ namespace
 		return {};
 	}
 
-	std::string pdf_page_style(const camus::config::pdf_page_conf &page)
+	std::string normalize_pdf_font_size(const std::string &raw)
+	{
+		const std::string default_size = camus::config::pdf_page_font_size_default;
+		const std::string value = strings::trim_space(raw);
+		if (value.empty()) {
+			return default_size;
+		}
+
+		constexpr const char *unit = "pt";
+		const std::size_t unit_size = 2;
+		bool valid = value.size() > unit_size && value.ends_with(unit);
+		if (valid) {
+			const std::string number = value.substr(0, value.size() - unit_size);
+			std::size_t consumed = 0;
+			try {
+				const double parsed = std::stod(number, &consumed);
+				valid = consumed == number.size() && parsed > 0 && std::isfinite(parsed);
+			} catch (...) {
+				valid = false;
+			}
+		}
+
+		if (!valid) {
+			logging::warn(
+				"invalid pdf.page.font_size '{}', only pt is supported, fallback to {}",
+				value,
+				default_size
+			);
+			return default_size;
+		}
+
+		return value;
+	}
+
+	std::string pdf_page_style(const camus::config::pdf_page_conf &page, const std::string &font_size)
 	{
 		std::string size = strings::trim_space(page.size);
 		std::string margin = strings::trim_space(page.margin);
@@ -286,9 +321,10 @@ namespace
 			margin = camus::config::pdf_page_margin_default;
 		}
 
-				// 封面使用独立的命名页（margin: 0），这里同步使用配置的页面尺寸，
+		// 封面使用独立的命名页（margin: 0），这里同步使用配置的页面尺寸，
 		// 否则会在全局尺寸之外继续沿用主题里硬编码的 A4。
-		return "\n@page { size: " + size + "; margin: " + margin + "; }\n@page cover { size: " + size + "; margin: 0; }\n";
+		return "\n:root { --pdf-font-size: " + font_size + "; }\n@page { size: " + size + "; margin: " + margin +
+			   "; }\n@page cover { size: " + size + "; margin: 0; }\n";
 	}
 } // namespace
 
@@ -1047,22 +1083,19 @@ namespace camus
 		const std::string page_margin = strings::trim_space(page_conf.margin).empty()
 											? camus::config::pdf_page_margin_default
 											: strings::trim_space(page_conf.margin);
+		const std::string page_font_size = normalize_pdf_font_size(page_conf.font_size);
 
 		nlohmann::json pdf;
 		pdf["lang"] = site_title.empty() ? "en" : "zh-CN";
 		pdf["title"] = cover_title;
-		pdf["style"] = render::inja_render(inja_, style_source, view) + pdf_page_style(page_conf);
+		pdf["style"] = render::inja_render(inja_, style_source, view) + pdf_page_style(page_conf, page_font_size);
 		pdf["page"] = {
 			{"size", page_size},
 			{"margin", page_margin},
+			{"font_size", page_font_size},
 		};
 		pdf["fonts"] = fonts_source.empty() ? "" : render::inja_render(inja_, fonts_source, view);
 		pdf["asset_style"] = false;
-		pdf["intro"] = render::render_markdown(
-			markdown.c_str(),
-			conf_.camus().render.markdown_engine,
-			conf_.camus().render.markdown_options
-		);
 		pdf["cover"] = {
 			{"eyebrow", "Camus"},
 			{"title", cover_title},
@@ -1362,9 +1395,24 @@ namespace camus
 
 		const std::map<std::string, int> anchor_pages = pdf::read_anchor_pages(pdf_path);
 
+		// 正文第一篇文章的起始页计为第 1 页；引导页已移除，直接以其锚点计算偏移。
+		std::string first_article_anchor;
+		for (const auto &item : view["pdf"]["toc"]) {
+			if (item.value("is_dir", false)) {
+				continue;
+			}
+
+			const std::string anchor = item.value("anchor", "");
+			if (!anchor.empty()) {
+				first_article_anchor = anchor;
+				break;
+			}
+		}
+
 		int page_offset = 0;
-		if (const auto intro = anchor_pages.find("pdf-intro"); intro != anchor_pages.end()) {
-			page_offset = 1 - intro->second;
+		if (const auto first = anchor_pages.find(first_article_anchor); !first_article_anchor.empty() &&
+																	first != anchor_pages.end()) {
+			page_offset = 1 - first->second;
 		}
 
 		bool numbered = page_offset != 0;
@@ -1402,7 +1450,7 @@ namespace camus
 
 			view["pdf_page_offset"] = page_offset;
 			view["pdf"]["style"] =
-				render::inja_render(inja_, style_source, view) + pdf_page_style(page_conf) + counter_css;
+				render::inja_render(inja_, style_source, view) + pdf_page_style(page_conf, page_font_size) + counter_css;
 			logging::debug(
 				"pdf page offset={} toc page numbers resolved count={} total_pages={}",
 				page_offset,
@@ -1417,11 +1465,10 @@ namespace camus
 
 		std::vector<pdf::outline_entry> outline_entries;
 
-		// 前置封面、目录页与正文第一页（页码 001）的顶层书签；仅当当前模板生成了对应命名目标时加入。
+		// 前置封面、目录页的顶层书签；仅当当前模板生成了对应命名目标时加入。
 		const std::pair<std::string, std::string> fixed_entries[] = {
 			{"Cover", "pdf-cover"},
 			{"Contents", "pdf-toc"},
-			{site_title.empty() ? "Camus" : site_title, "pdf-intro"},
 		};
 
 		for (const auto &[title, anchor] : fixed_entries) {

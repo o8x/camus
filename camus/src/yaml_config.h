@@ -51,12 +51,15 @@ namespace camus::config
 
 	inline constexpr const char *pdf_page_size_default = "A4";
 	inline constexpr const char *pdf_page_margin_default = "20mm 18mm";
+	inline constexpr const char *pdf_page_font_size_default = "10pt";
 
 	struct pdf_page_conf {
 		std::string size = pdf_page_size_default;
 		std::string margin = pdf_page_margin_default;
+		// 正文字号，仅支持 pt；其它字号由模板基于该值按比例计算
+		std::string font_size = pdf_page_font_size_default;
 
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(pdf_page_conf, size, margin);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(pdf_page_conf, size, margin, font_size);
 	};
 
 	enum pdf_sort_mode : uint8_t {

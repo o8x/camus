@@ -15,8 +15,9 @@ pdf:
         - --no-pdf-header-footer
         - --print-to-pdf={{dest_dir}}/index.pdf  # {{dest_dir}} 为 PDF 输出目录，可自定义文件名与位置
     page:                                   # 打印页面尺寸与边距，应用到 @page
-        size: A4
-        margin: 20mm 18mm
+        size: A5
+        margin: 18mm 15mm
+        font_size: 10pt                     # 正文字号，仅支持 pt；其它字号按比例缩放
 markdown:                                   # markdown 引擎参数
     - DEFAULT                               # 默认选项，采用安全模式（过滤原始HTML和危险链接）
     - VALIDATE_UTF8                         # 解析前验证 UTF-8 编码，将非法序列替换为替换字符 U+FFFD
