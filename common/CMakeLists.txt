@@ -41,7 +41,7 @@ target_link_libraries(common PUBLIC
         PkgConfig::OPENSSL
 )
 
-# cpp-httplib 客户端/服务端支持 HTTPS（--update 请求 GitHub API）。
+# cpp-httplib 客户端/服务端支持 HTTPS（--update / --check-update 请求 GitHub API）。
 target_compile_definitions(common PUBLIC CPPHTTPLIB_OPENSSL_SUPPORT)
 
 if (APPLE)

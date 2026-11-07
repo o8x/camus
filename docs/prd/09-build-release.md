@@ -11,7 +11,7 @@
 | GCC / Clang（C++23） | 根 CMake 将 `CMAKE_C_COMPILER`/`CMAKE_CXX_COMPILER` 固定为 `/usr/bin/gcc`、`/usr/bin/g++` |
 | Git | 读取分支与提交 hash；拉取 submodule |
 | mold | Linux Release 链接器（`-fuse-ld=mold`） |
-| pkg-config + OpenSSL | `cpp-httplib` 的 HTTPS 支持（`--update`）；`common/CMakeLists.txt` 通过 `pkg_check_modules(OPENSSL ...)` 引入，macOS 另链接 `Security` / `CoreFoundation` |
+| pkg-config + OpenSSL | `cpp-httplib` 的 HTTPS 支持（`--update` / `--check-update`）；`common/CMakeLists.txt` 通过 `pkg_check_modules(OPENSSL ...)` 引入，macOS 另链接 `Security` / `CoreFoundation` |
 
 依赖来源：`third-party/` 下 yaml-cpp、cmark-gfm、nlohmann_json、inja、cpp-httplib；OpenSSL 由系统提供（Linux 安装 `libssl-dev`，macOS 安装 `openssl@3` 并设置 `PKG_CONFIG_PATH`）。
 

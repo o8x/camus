@@ -16,7 +16,8 @@ camus [选项] [--workdir <目录>]
 |---|---|---|---|---|
 | `-h` | `--help` | 无 | 打印帮助并退出（注意退出码为 1） | `main.cpp:90` |
 | `-v` | `--version` | 无 | 打印版本、构建信息与 git hash 后退出 0 | `main.cpp:91` |
-|  | `--update` | 无 | 请求最新 release 的 `latest.json` 元数据，与当前版本比较；有新版本时提示 `curl -LO <下载地址>`，已是最新则提示 up to date。成功 0，请求/解析失败 1 | `main.cpp`、`update.cpp` |
+|  | `--update` | 无 | 请求最新 release 的 `latest.json`，有新版本时实时显示进度并下载到系统临时目录，随后打印并执行安装命令（macOS `sudo installer -pkg <file> -target /`；Linux `.deb`/`.rpm` 分别用 `sudo dpkg -i`/`sudo rpm -Uvh`）。已是最新或安装成功返回 0，请求/下载/安装失败 1 | `main.cpp`、`update.cpp` |
+|  | `--check-update` | 无 | 仅请求最新 release 并输出下载链接（`curl -LO <地址>`），不下载、不安装；成功 0，请求/解析失败 1 | `main.cpp`、`update.cpp` |
 | `-b` | `--build` | 无 | 构建站点；不指定时默认不构建 | `main.cpp` |
 | `-i` | `--install` | 无 | 从平台数据目录安装 `camus.yaml`、`posts`（含各目录的 `SUMMARY.md` 与 `posts/private/`）、`.gitignore`、`Justfile` 到工作目录（已存在的不覆盖）；不触发构建，除非同时指定 `--build` | `main.cpp` |
 | `-c` | `--copy` | 无 | 把精简资源复制到 `<workdir>/assets`（创建 `assets/css`、`assets/js`、空 `assets/fonts` 并复制 `style.css`、`onload.js`）；不触发构建，除非同时指定 `--build` | `main.cpp` |
@@ -55,8 +56,10 @@ flowchart TD
     P -->|成功| V{-v?}
     V -->|是| VO[打印版本, 退出 0]
     V -->|否| U{--update?}
-    U -->|是| UP[请求 GitHub 最新 release: 打印版本与下载命令, 返回 0/1]
-    U -->|否| N{--new?}
+    U -->|是| UP[请求最新 release: 下载并安装, 返回 0/1]
+    U -->|否| CU{--check-update?}
+    CU -->|是| CUP[请求最新 release: 仅输出下载链接, 返回 0/1]
+    CU -->|否| N{--new?}
     N -->|是| NW[按 workdir/new 计算并创建目标目录]
     N -->|否| I{-i?}
     NW --> INS[install_templates]
@@ -100,7 +103,7 @@ flowchart TD
 
 要点：
 
-- `--update` 独立执行：请求 `GIT_REPO/releases/latest/download/latest.json`（`cpp-httplib` + OpenSSL）。该文件由 release 流程生成并作为 release 资产上传，包含 `version`、`tag`、`published_at` 与 `assets`（每项 `name`、`url`）。程序解析 `version` 与当前 `PROJECT_VERSION` 做语义化数值比较；有新版本时按平台选择资产（macOS 优先 `.dmg`/`.pkg`，Linux 优先 `.deb`/`.rpm`，否则取第一个）并打印 `curl -LO <url>`（`url` 缺失时按 `tag` + `name` 拼出 release 下载地址）。执行时会打印请求 URL 与当前版本、HTTP 状态；失败（网络错误、非 200、无法解析）时打印错误原因、URL，并在有响应体时输出响应内容，返回 1。该检测也会在构建启动时由 `auto_check_update`（默认 `true`）自动调用一次，结果只打印、不影响构建；`--dryrun` 下跳过。
+- `--update` / `--check-update` 独立执行：请求 `GIT_REPO/releases/latest/download/latest.json`（`cpp-httplib` + OpenSSL）。该文件由 release 流程生成并作为 release 资产上传，包含 `version`、`tag`、`published_at` 与 `assets`（每项 `name`、`url`）。程序解析 `version` 与当前 `PROJECT_VERSION` 做语义化数值比较；有新版本时按平台选择资产（macOS 优先 `.dmg`/`.pkg`，Linux 优先 `.deb`/`.rpm`，否则取第一个）。`--check-update` 只打印 `curl -LO <url>`（`url` 缺失时按 `tag` + `name` 拼出 release 下载地址），不下载也不安装；`--update` 则把资产下载到系统临时目录并实时显示进度，完成后先打印安装命令再执行（macOS `sudo installer -pkg <file> -target /`，Linux `.deb`/`.rpm` 用 `sudo dpkg -i`/`sudo rpm -Uvh`），成功后删除临时文件；自动安装不支持的文件类型会保留下载文件并返回 1。执行时会打印请求 URL 与当前版本、HTTP 状态；失败（网络错误、非 200、无法解析、下载/安装失败）时打印错误原因、URL，并在有响应体时输出响应内容，返回 1。构建启动时的更新策略由 `auto_check_update` 控制（默认 `auto` = 下载并安装，`check-only` = 仅检测，`disable` = 跳过）；`--dryrun` 下跳过。
 - 只有指定 `--build`、`-W` 或 `--check` 时才构建。仅执行安装 / 复制 / 建目录 / 创建文章 / `git init` / `--open` 时完成后直接返回 0；完全没有操作时打印 usage 并返回 0（不再默认构建）。
 - `--new <dir>` 先把目标解析为「`--workdir` 下的相对路径」或绝对路径并创建，随后等同于同时传入 `--install`：补齐 `camus.yaml`、`posts`（含 `SUMMARY.md`、`posts/private/`）、`.gitignore` 与 `Justfile`。之后若指定 `--repo` 再初始化仓库；需要构建时另加 `--build`。
 - `--create <path>` 在源目录下创建文章：源目录按 `src/` → `posts/` → 默认 `src/` 探测（与构建一致）。路径必须是相对路径且不含 `.` / `..` 段，最后一级为文件名，未以 `.md` 结尾时自动补 `.md`，缺失父目录递归创建；对本次新建的每个目录（不含源目录本身）生成 `SUMMARY.md`，内容为 `---\ntitle: <目录名>\n---`（目录名与文章名使用同一规则：含 `-` 且出现过数字时取最后一个 `-` 之后的片段），已存在的 `SUMMARY.md` 不覆盖；目标文件已存在时打印告警但不覆盖，仍返回 0。新建文章模板为 `---\ntitle: <名称>\ncreate-time: <UTC 时间>\n---\n`：`<名称>` 取文件名（去扩展名），当名称含 `-` 且包含数字时取最后一个 `-` 之后的部分（用于去掉 `01-` 之类的排序前缀），正文留空、不再写入 `## 标题`。

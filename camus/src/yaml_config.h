@@ -161,8 +161,8 @@ namespace camus::config
 		render_conf render;
 		// PDF 引擎、参数与排序
 		pdf_conf pdf;
-		// 启动时自动检测更新
-		bool auto_check_update = true;
+		// 启动时自动更新策略：auto（下载并安装）/ check-only（仅检测）/ disable
+		std::string auto_check_update = "auto";
 		// 友情链接
 		std::vector<friend_link_conf> friends;
 

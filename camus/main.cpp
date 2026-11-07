@@ -56,7 +56,8 @@ int main(const int argc, char **argv)
 	arg.set_program_name("Great writer Camus");
 	arg.add("help", 'h', "print this help and exit");
 	arg.add("version", 'v', "print version and exit");
-	arg.add("update", 0, "check the latest GitHub release and print download command");
+	arg.add("update", 0, "download and install the latest GitHub release");
+	arg.add("check-update", 0, "check the latest GitHub release and print download link");
 	arg.add("install", 'i', "install camus.yaml, posts and .gitignore from data dir");
 	arg.add<std::string>("new", 0, "create a new site directory and install the example files", false, "");
 	arg.add("copy", 'c', "copy resources into .camus from data dir");
@@ -123,6 +124,10 @@ int main(const int argc, char **argv)
 	}
 
 	if (arg.exist("update")) {
+		return camus::run_update();
+	}
+
+	if (arg.exist("check-update")) {
 		return camus::check_update();
 	}
 

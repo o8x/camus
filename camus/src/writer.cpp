@@ -1962,10 +1962,17 @@ namespace camus
 
 		conf_.reload();
 
-		// 启动时自动检测更新：结果只打印，不影响构建；watch 重建不重复检测。
-		if (!auto_update_checked_ && !cmd_.dryrun && conf_.camus().auto_check_update) {
-			auto_update_checked_ = true;
-			std::ignore = check_update();
+		// 启动时自动更新：结果不影响构建；watch 重建不重复执行。
+		// auto = 下载并安装，check-only = 仅检测并打印链接，disable = 跳过。
+		if (!auto_update_checked_ && !cmd_.dryrun) {
+			const std::string &mode = conf_.camus().auto_check_update;
+			if (mode == "auto") {
+				auto_update_checked_ = true;
+				std::ignore = run_update();
+			} else if (mode == "check-only") {
+				auto_update_checked_ = true;
+				std::ignore = check_update();
+			}
 		}
 
 		if (catalog_ = catalog::build_catalog_tree(conf_.camus().source_dir); catalog_.empty()) {

@@ -219,6 +219,21 @@ namespace camus::config
 			return std::nullopt;
 		}
 
+		std::optional<std::string> parse_update_mode(const std::string &value)
+		{
+			const std::string normalized = strings::to_lower(strings::trim_space(value));
+			if (normalized == "auto" || normalized == "disable" || normalized == "check-only") {
+				return normalized;
+			}
+
+			// 兼容旧布尔配置：true 等价 auto，false 等价 disable
+			if (const auto legacy = parse_bool_override(normalized); legacy.has_value()) {
+				return *legacy ? "auto" : "disable";
+			}
+
+			return std::nullopt;
+		}
+
 		pdf_sort_mode parse_pdf_sort(const std::string &raw)
 		{
 			const std::string value = strings::to_lower(strings::trim_space(raw));
@@ -540,7 +555,15 @@ namespace camus::config
 
 			if (key == "auto_check_update") {
 				if (it.second.IsScalar()) {
-					camus_.auto_check_update = it.second.as<bool>();
+					const std::string raw = get_string(it.second);
+					if (const auto mode = parse_update_mode(raw); mode.has_value()) {
+						camus_.auto_check_update = *mode;
+					} else {
+						logging::warn(
+							"ignore invalid auto_check_update value={} (expected auto/disable/check-only)",
+							raw
+						);
+					}
 				}
 				continue;
 			}
@@ -574,7 +597,14 @@ namespace camus::config
 		}
 
 		if (const auto value = env_override("auto_check_update"); value.has_value()) {
-			camus_.auto_check_update = parse_bool_override(*value).value_or(camus_.auto_check_update);
+			if (const auto mode = parse_update_mode(*value); mode.has_value()) {
+				camus_.auto_check_update = *mode;
+			} else {
+				logging::warn(
+					"ignore invalid CAMUS_AUTO_CHECK_UPDATE value={} (expected auto/disable/check-only)",
+					*value
+				);
+			}
 		}
 
 		if (const auto value = env_override("public_url"); value.has_value()) {

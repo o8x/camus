@@ -4,7 +4,7 @@
 # filename_case: keep                       # 转换md的输出文件名：keep 不转换，uuid 自动转换为 /uuid.html
 # public_url: ''                            # 对外访问地址，默认空；示例：https://the-writer.github.io/camus/（自动拆解为 protocol/domain_name/path_prefix）
 # cdn_url: ''                               # CDN 地址，默认空；为空时 with_cdn(path) 返回 with_prefix(path)（含 path_prefix）
-auto_check_update: true                     # 启动构建时自动检测更新（成功/失败都打印，不影响构建）
+auto_check_update: auto                     # 启动自动更新：auto 下载并安装、check-only 仅检测、disable 关闭
 # 页面渲染配置
 theme: pixel                             # 加载 theme/name/*.html
 pdf:

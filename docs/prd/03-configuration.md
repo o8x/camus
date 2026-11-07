@@ -38,7 +38,7 @@
 | `meta` | bool | 默认 `true` | 是否输出 `meta.json` | `yaml_config.cpp` |
 | `sitemap` | bool | 默认 `true` | 是否输出 `sitemap.xml` | `yaml_config.cpp` |
 | `filename_case` | 字符串 | 默认 `keep` | `uuid` 时文章 `display_name` 生成 UUID 并输出到 `/s/<uuid>.html` 风格短链 | `yaml_config.cpp` |
-| `auto_check_update` | bool | 默认 `true` | 构建启动时自动检测更新：成功/失败都打印，但不影响构建结果；`--dryrun` 下跳过；`-W` 多次重建只检测一次 | `yaml_config.cpp`、`writer.cpp` |
+| `auto_check_update` | 字符串 | 默认 `auto` | 构建启动时的更新策略：`auto` 下载并安装最新 release、`check-only` 仅检测并输出链接、`disable` 跳过；兼容旧布尔值 `true`/`false`（等价 `auto`/`disable`），非法值打印 WARN 并保持默认；`--dryrun` 下跳过；`-W` 多次重建只执行一次 | `yaml_config.cpp`、`writer.cpp` |
 | `public_url` | 字符串 | 可选 | 站点对外访问地址，自动拆解为下方三项；可由 `CAMUS_PUBLIC_URL` 注入（优先级高于配置文件）；`-W` 监听模式下忽略（按空处理） | `yaml_config.cpp` `parse_public_url()` |
 | `protocol` | 字符串（只读派生） | 默认 `https://` | `public_url` 的协议部分，含 `://` | 同上 |
 | `domain_name` | 字符串（只读派生） | 空 | `public_url` 的域名部分（含端口，去除空格） | 同上 |

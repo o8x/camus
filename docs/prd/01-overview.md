@@ -24,8 +24,8 @@ Camus 是一个用 C++23 编写的静态站点生成器：读取 Markdown 文章
 | yaml-cpp | 读取 `camus.yaml` | `third-party/yaml-cpp` |
 | inja | HTML 模板渲染 | `third-party/inja` |
 | nlohmann/json | JSON 数据模型与输出 | `third-party/nlohmann_json` |
-| cpp-httplib | 监听模式本地 HTTP 服务；`--update` 请求 release 的 `latest.json`（启用 OpenSSL） | `third-party/cpp-httplib` |
-| OpenSSL | `cpp-httplib` 的 HTTPS 支持（`--update`），通过 `pkg-config` 引入 | 系统依赖 |
+| cpp-httplib | 监听模式本地 HTTP 服务；`--update` / `--check-update` 请求 release 的 `latest.json`（启用 OpenSSL） | `third-party/cpp-httplib` |
+| OpenSSL | `cpp-httplib` 的 HTTPS 支持（`--update` / `--check-update`），通过 `pkg-config` 引入 | 系统依赖 |
 | CPack | 生成 deb/pkg 等安装包，并安装主题/资源/示例模板 | `camus/CMakeLists.txt` |
 | Chrome / Edge（可选） | 无头模式把中间 HTML 打印为 PDF | 系统已安装的浏览器，按顶层 `pdf.engine` 解析（`disable` 时禁用 PDF） |
 
