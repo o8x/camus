@@ -175,7 +175,7 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 | `pdf.toc` | 数组 | 按真实目录树输出，同层顺序由 `pdf.sort` 决定（见 §3.3.1）。每项含 `anchor`、`index`、`number`（两位序号）、`title`（HTML 转义）、`outline_title`（纯文本，供 PDF 书签使用）、`tags`、`page`（1 起始页码；解析不到时为空串）、`page_label`（`{:03}` 三位补零页码；解析不到时为空串）、`depth`（相对根目录的显示层级，根目录下为 0）、`is_dir`。目录节点 `anchor`/`number`/`tags`/`page`/`page_label` 为空，只作分组标题；文章节点 `anchor` 为 `pdf-article-{n}`。`title`/`tags` 已转义 |
 | `pdf.articles` | 数组 | 每项 `anchor`、`index`、`number`、`title`、`tags`、`content`；`content` 为渲染后的文章 HTML，**未转义** |
 
-- 默认模板的扉页与目录使用英文标签（`Site` / `Version` / `Generated` / `Contents`），不输出文章数；扉页元信息按 `Site → Version → Generated` 顺序排列，`Site` 为空（`pdf.meta.has_domain` 为假）时整行省略。
+- 默认模板的扉页与目录使用英文标签（`Site` / `Generated` / `Compiler` / `Contents`），不输出文章数；扉页元信息按 `Site → Generated → Compiler` 顺序排列，`Site` 为空（`pdf.meta.has_domain` 为假）时整行省略；`Compiler` 行显示 `Camus v{version}` 并链接到对应 GitHub release。
 - 页码从正文第一篇文章开始计为第 1 页（不再生成独立的引导页）：封面使用命名页 `page: cover`（四边 0 边距、整页铺满复制后的封面图），扉页、目录使用命名页 `page: front`，其 `@bottom-center` 内容为空；`html { font-size: var(--pdf-font-size); counter-reset: page {{ pdf_page_offset }}; }` 整体偏移页计数。默认模板在 `<body>` 顶部放置 `display: none` 的 `#pdf-cover`、`#pdf-toc` 链接，使浏览器在 PDF 中生成这些锚点的命名目标（分别对应封面、目录页）。
 - 默认 `style.css` 通过 `@page { @bottom-center { content: counter(page, camus-page); color: #000; } }` 在正文页底部居中输出黑色页码。Chrome 不支持 `@counter-style` 的 `pad` 描述符，因此第二遍渲染前会由 `pdf::page_count()` 读取总页数，并追加一个 `@counter-style camus-page { system: fixed; first: 0; symbols: "001" "002" ... }` 覆盖样式，使页脚与目录页码统一为三位补零（页脚与 `pdf.toc[].page_label` 均从正文第 1 页起算，使用同一套正文页序）。
 - 默认目录模板按 `pdf.toc[].depth` 缩进渲染多级目录：目录节点输出分组标题，文章节点输出标题与 `page_label`（三位补零页码）；不输出序号（`number`）与标签（`tags`），条目之间不画虚线下划线。最终 PDF 另由 `pdf::write_outline()` 按同一 `pdf.toc` 注入可交互书签大纲。

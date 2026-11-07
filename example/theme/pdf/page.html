@@ -25,8 +25,14 @@
 <hr class="pdf-title-page__rule">
 <dl class="pdf-meta">
 {% if pdf.meta.has_domain %}<dt>Site</dt><dd>{{ pdf.meta.domain }}</dd>
-{% endif %}<dt>Version</dt><dd>v{{ pdf.meta.version }}</dd>
-<dt>Generated</dt><dd>{{ pdf.meta.generated_at }}</dd>
+{% endif %}
+    <dt>Generated</dt><dd>{{ pdf.meta.generated_at }}</dd>
+    <dt>Compiler</dt>
+    <dd>
+        <a href="https://github.com/the-writer/camus/releases/tag/v{{ pdf.meta.version }}">
+            Camus v{{ pdf.meta.version }}
+        </a>
+    </dd>
 </dl>
 </div>
 </section>

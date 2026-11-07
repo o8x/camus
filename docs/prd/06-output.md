@@ -215,7 +215,7 @@ flowchart TD
   | 页面 | 模板数据 | 说明 |
   |---|---|---|
   | 封面页 | `pdf.cover` | 使用根目录 `SUMMARY.md` Front Matter 的 `cover_image`：绝对路径直接使用；相对路径先按 `camus.yaml` 所在目录解析，找不到时依次回退到源目录与站点 `assets` 目录（解析顺序见 `resolve_cover_image()`）。有效时复制为 `dist/pdf/cover.<ext>` 并设置 `has_image=true`，整页铺满（`@page cover` 四边 0 边距、尺寸跟随 `pdf.page.size`、`object-fit: cover`）；未配置或文件不存在时 `has_image=false`，回退文字封面：站点标题（为空时 `Camus`）与 `site.subtitle`（空串在 inja 中为真值，模板用 `has_image` 判断而不是 `image`） |
-  | 扉页 | `pdf.title_page`、`pdf.meta` | 站点标题、副标题、站点描述（`site.description`）与元信息，元信息按 `Site`（`public_url.domain_name`）→ `Version` → `Generated` 顺序输出；`Site` 为空（`has_domain=false`）时省略该行；不输出文章数；内容区占满可用宽度并靠上排布，标题等字号已缩小以避免与封面重复 |
+  | 扉页 | `pdf.title_page`、`pdf.meta` | 站点标题、副标题、站点描述（`site.description`）与元信息，元信息按 `Site`（`public_url.domain_name`）→ `Generated` → `Compiler`（`Camus v{version}`，链接到 GitHub release）顺序输出；`Site` 为空（`has_domain=false`）时省略该行；不输出文章数；内容区占满可用宽度并靠上排布，标题等字号已缩小以避免与封面重复 |
   | 目录页 | `pdf.toc` | 标题 `Contents` + 按真实目录树多级缩进的分组标题（目录名）与文章显示名；不显示序号与标签，条目不画虚线下划线；文章条目显示正文起始页码（与页脚一致）并链接到 `#pdf-article-{n}` |
 
 - 页码从正文第一篇文章开始：封面使用独立命名页 `page: cover`（四边 0 边距），扉页、目录使用 `page: front`，均不输出页脚页码。`theme/pdf/style.css` 使用 `html { counter-reset: page {{ pdf_page_offset }}; }` 整体偏移页计数，并由 `@page { @bottom-center { content: counter(page, camus-page); color: #000; } }` 在正文页底部居中输出**黑色**页码。由于 Chrome 不支持 `@counter-style` 的 `pad` 描述符，第二遍渲染前由 `pdf::page_count()` 读取总页数，并追加 `@counter-style camus-page { system: fixed; first: 0; symbols: "001" "002" ... }` 覆盖样式，使页脚与目录页码统一为三位补零（如 `001`）。`--no-pdf-header-footer` 关闭浏览器自带页眉页脚，不影响该自定义页码。
