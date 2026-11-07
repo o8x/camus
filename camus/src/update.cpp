@@ -264,11 +264,14 @@ namespace
 
 				last_percent = percent;
 				if (terminal) {
-					std::cout << std::format("\r  {} / {} ({:3}%)", human_size(current), human_size(total), percent)
-							  << std::flush;
+					logging::print_log_inline(
+						logging::INFO_LEVEL,
+						"UPDT",
+						std::format("{} / {} ({:3}%)", human_size(current), human_size(total), percent)
+					);
 				} else if (percent >= last_report + 10) {
 					last_report = percent;
-					logging::info("download progress: {}%", percent);
+					logging::info_tag("UPDT", "download progress: {}%", percent);
 				}
 
 				return true;
@@ -277,7 +280,7 @@ namespace
 			if (current - last_report >= 1024 * 1024) {
 				last_report = current;
 				if (terminal) {
-					std::cout << std::format("\r  {}", human_size(current)) << std::flush;
+					logging::print_log_inline(logging::INFO_LEVEL, "UPDT", human_size(current));
 				}
 			}
 
@@ -322,7 +325,7 @@ namespace
 			return false;
 		}
 
-		logging::info("downloaded: {} ({})", dest.string(), human_size(std::filesystem::file_size(dest)));
+		logging::info_tag("UPDT", "downloaded: {} ({})", dest.string(), human_size(std::filesystem::file_size(dest)));
 		return true;
 	}
 

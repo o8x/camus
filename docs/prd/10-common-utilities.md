@@ -66,6 +66,8 @@
 
 - 默认级别 `INFO_LEVEL`；`set_level(level)` 返回新级别。
 - 输出格式：`<本地时间> [LEVL] <内容>`，内容两端空白被裁剪，`$HOME` 替换为 `~`。
+- 自定义标签：`print_log(level, tag, content)` 与 `info_tag(tag, format, ...)` 可用任意标签（如 `[UPDT]`）替换默认级别标签，颜色仍按级别着色。
+- `print_log_inline(level, tag, content)` 输出同样前缀但**不换行**，并在每行前输出 `\r\033[2K` 清空整行，用于终端内原地刷新的进度（调用方需确认 stdout 为终端）。
 - 仅当 stdout 是终端、未设置 `NO_COLOR`、且存在 `TERM` 时使用颜色。
 - `logging::fatal(...)` 打印后 `std::exit(127)`。
 - `error::panic(...)` 等价于 `logging::fatal(...)`（`common/common/error/error.h`）。

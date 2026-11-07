@@ -58,7 +58,64 @@ namespace logging
 		return log_level;
 	}
 
+	namespace
+	{
+		const char *default_tag(const logging_level level)
+		{
+			if (level == FATAL_LEVEL) {
+				return "FATA";
+			}
+
+			if (level == ERROR_LEVEL) {
+				return "ERRO";
+			}
+
+			if (level == WARN_LEVEL) {
+				return "WARN";
+			}
+
+			if (level == INFO_LEVEL) {
+				return "INFO";
+			}
+
+			return "DEBU";
+		}
+
+		void append_prefix(std::stringstream &ss, const logging_level level, const std::string &tag)
+		{
+			ss << functions::get_now_time();
+
+			if (level == FATAL_LEVEL) {
+				ss << color::MAGENTA;
+			} else if (level == ERROR_LEVEL) {
+				ss << color::RED;
+			} else if (level == WARN_LEVEL) {
+				ss << color::YELLOW;
+			} else if (level == INFO_LEVEL) {
+				ss << color::GREEN;
+			}
+
+			ss << " [" << tag << "] ";
+		}
+
+		void write_out(const std::string &text)
+		{
+#ifdef HAS_SYNCSTREAM
+			std::osyncstream sync_out(std::cout);
+			sync_out << text;
+#else
+			std::lock_guard guard(mtx);
+			std::cout << text << std::flush;
+#endif
+		}
+	} // namespace
+
 	void print_log(const logging_level level, const std::string &content)
+	{
+		print_log(level, default_tag(level), content);
+	}
+
+	void print_log(const logging_level level, const std::string &tag, const std::string &content)
 	{
 		// 验证日志级别
 		if (level < log_level) {
@@ -66,34 +123,33 @@ namespace logging
 		}
 
 		std::stringstream ss;
-
-		ss << functions::get_now_time();
-
-		if (level == FATAL_LEVEL) {
-			ss << color::MAGENTA << " [FATA] ";
-		} else if (level == ERROR_LEVEL) {
-			ss << color::RED << " [ERRO] ";
-		} else if (level == WARN_LEVEL) {
-			ss << color::YELLOW << " [WARN] ";
-		} else if (level == INFO_LEVEL) {
-			ss << color::GREEN << " [INFO] ";
-		} else if (level == DEBUG_LEVEL) {
-			ss << " [DEBU] ";
-		}
+		append_prefix(ss, level, tag);
 
 		std::string text = content;
 		text = strings::replace(content, std::string(getenv("HOME")), "~");
 		text = strings::trim_space(text);
 		ss << text << color::RESET << std::endl;
 
-		{
-#ifdef HAS_SYNCSTREAM
-			std::osyncstream sync_out(std::cout);
-			sync_out << ss.str();
-#else
-			std::lock_guard guard(mtx);
-			std::cout << ss.str() << std::flush;
-#endif
+		write_out(ss.str());
+	}
+
+	void print_log_inline(const logging_level level, const std::string &tag, const std::string &content)
+	{
+		// 验证日志级别
+		if (level < log_level) {
+			return;
 		}
+
+		std::stringstream ss;
+		// 回到行首并清空整行，避免上一次刷新的残留字符。
+		ss << "\r\033[2K";
+		append_prefix(ss, level, tag);
+
+		std::string text = content;
+		text = strings::replace(content, std::string(getenv("HOME")), "~");
+		text = strings::trim_space(text);
+		ss << text << color::RESET;
+
+		write_out(ss.str());
 	}
 } // namespace logging

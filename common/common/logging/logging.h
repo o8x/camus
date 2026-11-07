@@ -10,6 +10,8 @@ namespace logging
 
 	logging_level set_level(const logging_level level);
 	void print_log(logging_level level, const std::string &content);
+	void print_log(logging_level level, const std::string &tag, const std::string &content);
+	void print_log_inline(logging_level level, const std::string &tag, const std::string &content);
 
 	template <typename... Args> void warn(const std::string &format_str, Args &&...args)
 	{
@@ -24,6 +26,11 @@ namespace logging
 	template <typename... Args> void info(const std::string &format_str, Args &&...args)
 	{
 		print_log(INFO_LEVEL, std::vformat(format_str, std::make_format_args(args...)));
+	}
+
+	template <typename... Args> void info_tag(const std::string &tag, const std::string &format_str, Args &&...args)
+	{
+		print_log(INFO_LEVEL, tag, std::vformat(format_str, std::make_format_args(args...)));
 	}
 
 	template <typename... Args> void error(const std::string &format_str, Args &&...args)
