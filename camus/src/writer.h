@@ -44,6 +44,8 @@ namespace camus
 		inja::Environment inja_;
 		// 待写入文件缓存
 		std::map<std::filesystem::path, std::string> pending_writes_;
+		// 启动时自动检测更新只执行一次（watch 重建时不重复）
+		bool auto_update_checked_ = false;
 
 		void add_write(const std::filesystem::path &path, std::string_view content);
 		void flush_writes();

@@ -538,6 +538,13 @@ namespace camus::config
 				continue;
 			}
 
+			if (key == "auto_check_update") {
+				if (it.second.IsScalar()) {
+					camus_.auto_check_update = it.second.as<bool>();
+				}
+				continue;
+			}
+
 			if (key == "public_url") {
 				camus_.public_url = parse_public_url(get_string(it.second));
 				continue;
@@ -564,6 +571,10 @@ namespace camus::config
 
 		if (const auto value = env_override("filename_case"); value.has_value()) {
 			camus_.output.filename_case = strings::trim_space(*value);
+		}
+
+		if (const auto value = env_override("auto_check_update"); value.has_value()) {
+			camus_.auto_check_update = parse_bool_override(*value).value_or(camus_.auto_check_update);
 		}
 
 		if (const auto value = env_override("public_url"); value.has_value()) {
@@ -855,6 +866,7 @@ namespace camus::config
 		camus_json["meta"] = camus_.output.meta;
 		camus_json["sitemap"] = camus_.output.sitemap;
 		camus_json["filename_case"] = camus_.output.filename_case;
+		camus_json["auto_check_update"] = camus_.auto_check_update;
 		camus_json["public_url"] = camus_.public_url.url;
 		camus_json["protocol"] = camus_.public_url.protocol;
 		camus_json["domain_name"] = camus_.public_url.domain_name;

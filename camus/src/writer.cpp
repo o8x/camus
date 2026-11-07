@@ -17,6 +17,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -33,6 +34,7 @@
 #include "common/str/str.h"
 #include "inja/inja.hpp"
 #include "pdf.h"
+#include "update.h"
 #include "yaml_config.h"
 
 namespace
@@ -1959,6 +1961,12 @@ namespace camus
 		}
 
 		conf_.reload();
+
+		// 启动时自动检测更新：结果只打印，不影响构建；watch 重建不重复检测。
+		if (!auto_update_checked_ && !cmd_.dryrun && conf_.camus().auto_check_update) {
+			auto_update_checked_ = true;
+			std::ignore = check_update();
+		}
 
 		if (catalog_ = catalog::build_catalog_tree(conf_.camus().source_dir); catalog_.empty()) {
 			logging::warn("No articles found");

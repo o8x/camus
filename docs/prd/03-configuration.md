@@ -20,7 +20,7 @@
 
 ## 3.2 解析总则
 
-- 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`public_url`、`theme`、`pdf`、`markdown`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。不再接受 `render` 嵌套段；出现时打印 WARN 并忽略其内容。
+- 根节点必须是映射，顶层直接包含 `meta`、`sitemap`、`filename_case`、`auto_check_update`、`public_url`、`theme`、`pdf`、`markdown`、`friends` 等配置项，否则 `error::panic("config file parse failed")`（退出 127）。不再接受 `render` 嵌套段；出现时打印 WARN 并忽略其内容。
 - `SUMMARY.md` 在目录扫描时跳过，不进入文章树。
 - 字符串值会做 `trim_space`；`SUMMARY.md` 中 `title`/`subtitle`/`description` 的换行符替换为 `<br />`；`cover_image` 只做 `trim_space`，保留原始路径。
 - 源目录、资源目录与输出目录不再可配置：
@@ -29,7 +29,7 @@
   - HTML 输出固定为 `./dist/html`，PDF 输出固定为 `./dist/pdf`。
 - `html_engine` 固定为 `default`，`markdown_engine` 固定为 `cmark-gfm`，均不从配置读取。
 - 路径在解析后转为绝对路径供内部使用；模板 JSON 中保留解析后的值（见 §3.7）。
-- **环境变量注入**：所有标量配置项都可用环境变量覆盖，变量名为 `CAMUS_` + 配置路径（大写、层级与非法字符转为 `_`），例如 `pdf.page.size` → `CAMUS_PDF_PAGE_SIZE`、`pdf.engine` → `CAMUS_PDF_ENGINE`、`pdf.sort` → `CAMUS_PDF_SORT`、`theme` → `CAMUS_THEME`、`meta` → `CAMUS_META`。环境变量优先于 `camus.yaml` 中的值；即使配置文件中没有该键，也可注入已知标量项（`meta`、`sitemap`、`filename_case`、`public_url`、`cdn_url`、`theme`、`pdf.engine`、`pdf.page.size`、`pdf.page.margin`、`pdf.page.font_size`、`pdf.sort`）。为兼容旧配置，仍接受 `CAMUS_PDF_ENGINE`（对应旧 `pdf_engine`，与 `pdf.engine` 同名）与 `CAMUS_PDF_OPTIONS_PAGE_SIZE` / `CAMUS_PDF_OPTIONS_PAGE_MARGIN`（旧 `pdf_options.page.*`），新键优先。数组 / 列表字段（`markdown`、`pdf.build`、`friends`、`build` / `transfer` 及其元素字段）**不支持**注入。`-W` 监听模式仍会清空 `public_url` / `cdn_url`。
+- **环境变量注入**：所有标量配置项都可用环境变量覆盖，变量名为 `CAMUS_` + 配置路径（大写、层级与非法字符转为 `_`），例如 `pdf.page.size` → `CAMUS_PDF_PAGE_SIZE`、`pdf.engine` → `CAMUS_PDF_ENGINE`、`pdf.sort` → `CAMUS_PDF_SORT`、`theme` → `CAMUS_THEME`、`meta` → `CAMUS_META`。环境变量优先于 `camus.yaml` 中的值；即使配置文件中没有该键，也可注入已知标量项（`meta`、`sitemap`、`filename_case`、`auto_check_update`、`public_url`、`cdn_url`、`theme`、`pdf.engine`、`pdf.page.size`、`pdf.page.margin`、`pdf.page.font_size`、`pdf.sort`）。为兼容旧配置，仍接受 `CAMUS_PDF_ENGINE`（对应旧 `pdf_engine`，与 `pdf.engine` 同名）与 `CAMUS_PDF_OPTIONS_PAGE_SIZE` / `CAMUS_PDF_OPTIONS_PAGE_MARGIN`（旧 `pdf_options.page.*`），新键优先。数组 / 列表字段（`markdown`、`pdf.build`、`friends`、`build` / `transfer` 及其元素字段）**不支持**注入。`-W` 监听模式仍会清空 `public_url` / `cdn_url`。
 
 ## 3.3 顶层配置字段
 
@@ -38,6 +38,7 @@
 | `meta` | bool | 默认 `true` | 是否输出 `meta.json` | `yaml_config.cpp` |
 | `sitemap` | bool | 默认 `true` | 是否输出 `sitemap.xml` | `yaml_config.cpp` |
 | `filename_case` | 字符串 | 默认 `keep` | `uuid` 时文章 `display_name` 生成 UUID 并输出到 `/s/<uuid>.html` 风格短链 | `yaml_config.cpp` |
+| `auto_check_update` | bool | 默认 `true` | 构建启动时自动检测更新：成功/失败都打印，但不影响构建结果；`--dryrun` 下跳过；`-W` 多次重建只检测一次 | `yaml_config.cpp`、`writer.cpp` |
 | `public_url` | 字符串 | 可选 | 站点对外访问地址，自动拆解为下方三项；可由 `CAMUS_PUBLIC_URL` 注入（优先级高于配置文件）；`-W` 监听模式下忽略（按空处理） | `yaml_config.cpp` `parse_public_url()` |
 | `protocol` | 字符串（只读派生） | 默认 `https://` | `public_url` 的协议部分，含 `://` | 同上 |
 | `domain_name` | 字符串（只读派生） | 空 | `public_url` 的域名部分（含端口，去除空格） | 同上 |
@@ -196,7 +197,7 @@ build:
 
 | 顶层键 | 结构 | 说明 |
 |---|---|---|
-| `camus` | 对象 | 兼容保留的聚合对象：`source_dir`、`assets_dir`、`site`、`meta`、`sitemap`、`filename_case`、`public_url`、`protocol`、`domain_name`、`path_prefix`、`cdn_url`、`render`、`pdf`、`friends`；`render.options` 为选项展示串 |
+| `camus` | 对象 | 兼容保留的聚合对象：`source_dir`、`assets_dir`、`site`、`meta`、`sitemap`、`filename_case`、`auto_check_update`、`public_url`、`protocol`、`domain_name`、`path_prefix`、`cdn_url`、`render`、`pdf`、`friends`；`render.options` 为选项展示串 |
 | `source_dir` | 字符串 | 解析后的源目录绝对路径（`src`→`posts` 探测） |
 | `assets_dir` | 字符串 | 解析后的资源目录绝对路径 |
 | `meta` | bool | 是否输出 `meta.json` |

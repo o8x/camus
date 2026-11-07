@@ -1,7 +1,6 @@
 #include "update.h"
 
 #include <algorithm>
-#include <cstdio>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -10,6 +9,7 @@
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
+#include "common/logging/logging.h"
 #include "common/str/str.h"
 
 namespace
@@ -125,40 +125,31 @@ namespace camus
 			{"User-Agent", "camus"},
 		});
 
-		std::printf("checking latest release: GET %s (current v%s)\n", request_url.c_str(), PROJECT_VERSION);
-		std::fflush(stdout);
+		logging::info("checking for updates: GET {} (current v{})", request_url, PROJECT_VERSION);
 
 		const auto response = client.Get(path);
 		if (!response) {
-			std::fprintf(
-				stderr,
-				"failed to fetch latest release: %s (error=%d) url=%s\n",
-				httplib::to_string(response.error()).c_str(),
-				static_cast<int>(response.error()),
-				request_url.c_str()
+			logging::warn(
+				"update check failed: {} (error={})",
+				httplib::to_string(response.error()),
+				static_cast<int>(response.error())
 			);
 			return 1;
 		}
 
-		std::printf(
-			"response: status=%d content-type=%s\n",
-			response->status,
-			response->get_header_value("Content-Type").c_str()
-		);
-		std::fflush(stdout);
 		if (response->status != 200) {
-			std::fprintf(stderr, "release metadata error: status=%d url=%s\n", response->status, request_url.c_str());
+			logging::warn("update check failed: status={}", response->status);
 			if (!response->body.empty()) {
-				std::fprintf(stderr, "response body: %s\n", response->body.c_str());
+				logging::warn("response: {}", response->body);
 			}
 			return 1;
 		}
 
 		const nlohmann::json release = nlohmann::json::parse(response->body, nullptr, false);
 		if (release.is_discarded() || !release.is_object()) {
-			std::fprintf(stderr, "failed to parse release metadata url=%s\n", request_url.c_str());
+			logging::warn("update check failed: invalid release metadata");
 			if (!response->body.empty()) {
-				std::fprintf(stderr, "response body: %s\n", response->body.c_str());
+				logging::warn("response: {}", response->body);
 			}
 			return 1;
 		}
@@ -166,31 +157,24 @@ namespace camus
 		const std::string tag = release.value("tag", "");
 		const std::string version = release.value("version", tag);
 		if (version.empty()) {
-			std::fprintf(stderr, "release version not found url=%s\n", request_url.c_str());
+			logging::warn("update check failed: release version not found");
 			return 1;
 		}
 
-		std::printf(
-			"latest release: version=%s tag=%s published=%s\n",
-			version.c_str(),
-			tag.c_str(),
-			release.value("published_at", "").c_str()
-		);
-
 		if (compare_version(version, PROJECT_VERSION) <= 0) {
-			std::printf("already up to date: v%s (latest: %s)\n", PROJECT_VERSION, version.c_str());
+			logging::info("already up to date: v{} (latest: {})", PROJECT_VERSION, version);
 			return 0;
 		}
 
-		std::printf("new version available: %s (current v%s)\n", version.c_str(), PROJECT_VERSION);
+		logging::info("new version available: {} (current v{})", version, PROJECT_VERSION);
 
 		const std::string tag_for_url = tag.empty() ? "v" + version : tag;
 		const std::string download_url =
 			select_download_url(release.value("assets", nlohmann::json::array()), repo, tag_for_url);
 		if (!download_url.empty()) {
-			std::printf("download: curl -LO %s\n", download_url.c_str());
+			logging::info("download: curl -LO {}", download_url);
 		} else {
-			std::printf("download: %s/releases/latest\n", GIT_REPO);
+			logging::info("download: {}/releases/latest", GIT_REPO);
 		}
 
 		return 0;

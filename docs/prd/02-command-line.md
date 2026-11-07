@@ -100,7 +100,7 @@ flowchart TD
 
 要点：
 
-- `--update` 独立执行：请求 `GIT_REPO/releases/latest/download/latest.json`（`cpp-httplib` + OpenSSL）。该文件由 release 流程生成并作为 release 资产上传，包含 `version`、`tag`、`published_at` 与 `assets`（每项 `name`、`url`）。程序解析 `version` 与当前 `PROJECT_VERSION` 做语义化数值比较；有新版本时按平台选择资产（macOS 优先 `.dmg`/`.pkg`，Linux 优先 `.deb`/`.rpm`，否则取第一个）并打印 `curl -LO <url>`（`url` 缺失时按 `tag` + `name` 拼出 release 下载地址）。执行时会打印请求 URL 与当前版本、HTTP 状态；失败（网络错误、非 200、无法解析）时打印错误原因、URL，并在有响应体时输出响应内容，返回 1。
+- `--update` 独立执行：请求 `GIT_REPO/releases/latest/download/latest.json`（`cpp-httplib` + OpenSSL）。该文件由 release 流程生成并作为 release 资产上传，包含 `version`、`tag`、`published_at` 与 `assets`（每项 `name`、`url`）。程序解析 `version` 与当前 `PROJECT_VERSION` 做语义化数值比较；有新版本时按平台选择资产（macOS 优先 `.dmg`/`.pkg`，Linux 优先 `.deb`/`.rpm`，否则取第一个）并打印 `curl -LO <url>`（`url` 缺失时按 `tag` + `name` 拼出 release 下载地址）。执行时会打印请求 URL 与当前版本、HTTP 状态；失败（网络错误、非 200、无法解析）时打印错误原因、URL，并在有响应体时输出响应内容，返回 1。该检测也会在构建启动时由 `auto_check_update`（默认 `true`）自动调用一次，结果只打印、不影响构建；`--dryrun` 下跳过。
 - 只有指定 `--build`、`-W` 或 `--check` 时才构建。仅执行安装 / 复制 / 建目录 / 创建文章 / `git init` / `--open` 时完成后直接返回 0；完全没有操作时打印 usage 并返回 0（不再默认构建）。
 - `--new <dir>` 先把目标解析为「`--workdir` 下的相对路径」或绝对路径并创建，随后等同于同时传入 `--install`：补齐 `camus.yaml`、`posts`（含 `SUMMARY.md`、`posts/private/`）、`.gitignore` 与 `Justfile`。之后若指定 `--repo` 再初始化仓库；需要构建时另加 `--build`。
 - `--create <path>` 在源目录下创建文章：源目录按 `src/` → `posts/` → 默认 `src/` 探测（与构建一致）。路径必须是相对路径且不含 `.` / `..` 段，最后一级为文件名，未以 `.md` 结尾时自动补 `.md`，缺失父目录递归创建；对本次新建的每个目录（不含源目录本身）生成 `SUMMARY.md`，内容为 `---\ntitle: <目录名>\n---`（目录名与文章名使用同一规则：含 `-` 且出现过数字时取最后一个 `-` 之后的片段），已存在的 `SUMMARY.md` 不覆盖；目标文件已存在时打印告警但不覆盖，仍返回 0。新建文章模板为 `---\ntitle: <名称>\ncreate-time: <UTC 时间>\n---\n`：`<名称>` 取文件名（去扩展名），当名称含 `-` 且包含数字时取最后一个 `-` 之后的部分（用于去掉 `01-` 之类的排序前缀），正文留空、不再写入 `## 标题`。
