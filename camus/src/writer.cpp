@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <ctime>
 #include <filesystem>
@@ -311,24 +312,77 @@ namespace
 		return value;
 	}
 
-	// 返回中文占比（%）：统计中文字符与 ASCII 字母的数量比例，用于决定 PDF 预定义名称的语言。
+	// 严格的 UTF-8 解码：非法序列返回 U+FFFD 并前进一个字节。
+	std::uint32_t decode_utf8(const std::string_view text, std::size_t &index)
+	{
+		const auto lead = static_cast<unsigned char>(text[index]);
+		if (lead < 0x80) {
+			++index;
+			return lead;
+		}
+
+		int length = 0;
+		std::uint32_t code = 0;
+		if ((lead & 0xE0) == 0xC0) {
+			length = 2;
+			code = lead & 0x1F;
+		} else if ((lead & 0xF0) == 0xE0) {
+			length = 3;
+			code = lead & 0x0F;
+		} else if ((lead & 0xF8) == 0xF0) {
+			length = 4;
+			code = lead & 0x07;
+		} else {
+			++index;
+			return 0xFFFD;
+		}
+
+		if (index + static_cast<std::size_t>(length) > text.size()) {
+			index = text.size();
+			return 0xFFFD;
+		}
+
+		for (int i = 1; i < length; ++i) {
+			const auto next = static_cast<unsigned char>(text[index + static_cast<std::size_t>(i)]);
+			if ((next & 0xC0) != 0x80) {
+				++index;
+				return 0xFFFD;
+			}
+
+			code = (code << 6) | (next & 0x3F);
+		}
+
+		index += static_cast<std::size_t>(length);
+		return code;
+	}
+
+	bool is_cjk_ideograph(const std::uint32_t code)
+	{
+		return (code >= 0x3400 && code <= 0x4DBF) || (code >= 0x4E00 && code <= 0x9FFF) ||
+			   (code >= 0xF900 && code <= 0xFAFF) || (code >= 0x20000 && code <= 0x2FA1F) ||
+			   (code >= 0x30000 && code <= 0x3134F);
+	}
+
+	bool is_cjk_punctuation(const std::uint32_t code)
+	{
+		// CJK 符号与标点（排除 U+3000 全角空格）、全角标点、常见中文引号/破折号/省略号/间隔号。
+		return (code >= 0x3001 && code <= 0x303F) || (code >= 0xFF01 && code <= 0xFF0F) ||
+			   (code >= 0xFF1A && code <= 0xFF20) || (code >= 0xFF3B && code <= 0xFF40) ||
+			   (code >= 0xFF5B && code <= 0xFF65) || (code >= 0x2018 && code <= 0x201F) || code == 0x00B7 ||
+			   code == 0x2014 || code == 0x2026;
+	}
+
+	// 返回中文占比（%）：汉字与中文标点计入中文，ASCII 字母计入非中文；空白、数字、其它符号忽略。
 	double chinese_ratio(const std::string_view text)
 	{
 		long long cn = 0;
 		long long en = 0;
 		for (std::size_t i = 0; i < text.size();) {
-			const auto c = static_cast<unsigned char>(text[i]);
-			if (c < 0x80) {
-				en += std::isalpha(c) != 0 ? 1 : 0;
-				++i;
-			} else if (c >= 0xE4 && c <= 0xE9) {
+			const std::uint32_t code = decode_utf8(text, i);
+			if (is_cjk_ideograph(code) || is_cjk_punctuation(code)) {
 				++cn;
-				i += 3;
-			} else {
-				++i;
-				while (i < text.size() && (static_cast<unsigned char>(text[i]) & 0xC0) == 0x80) {
-					++i;
-				}
+			} else if (code < 0x80 && std::isalpha(static_cast<unsigned char>(code)) != 0) {
+				++en;
 			}
 		}
 
