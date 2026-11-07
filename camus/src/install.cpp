@@ -12,13 +12,13 @@
 #include "common/functions/functions.h"
 #include "common/logging/logging.h"
 #include "common/paths/paths.h"
+#include "common/str/str.h"
 
 namespace
 {
 	const std::vector<std::string> template_entries{"posts", "camus.yaml", ".gitignore", "Justfile"};
 	const std::vector<std::filesystem::path> minimal_asset_entries{
-		std::filesystem::path("css") / "style.css",
-		std::filesystem::path("js") / "onload.js"
+		std::filesystem::path("css") / "style.css", std::filesystem::path("js") / "onload.js"
 	};
 
 	constexpr const char *private_readme = R"(# private
@@ -61,7 +61,8 @@ This directory is excluded from builds.
 		ensure_private_dir(workdir);
 	}
 
-	void copy_minimal_assets(const std::filesystem::path &source, const std::filesystem::path &local_dir, const bool force)
+	void
+	copy_minimal_assets(const std::filesystem::path &source, const std::filesystem::path &local_dir, const bool force)
 	{
 		const std::filesystem::path source_assets = source / "assets";
 		const std::filesystem::path target_assets = local_dir / "assets";
@@ -218,11 +219,7 @@ namespace camus
 			return 1;
 		}
 
-		logging::info(
-			"theme copied from '{}' to '{}'",
-			filesystem::path_abs(source),
-			filesystem::path_abs(target)
-		);
+		logging::info("theme copied from '{}' to '{}'", filesystem::path_abs(source), filesystem::path_abs(target));
 		return 0;
 	}
 
@@ -281,19 +278,20 @@ namespace camus
 					continue;
 				}
 
-				filesystem::write_file(
-					summary,
-					std::format("---\ntitle: {}\n---\n", it->filename().string())
-				);
+				filesystem::write_file(summary, std::format("---\ntitle: {}\n---\n", it->filename().string()));
 				logging::info("summary created at '{}'", filesystem::path_abs(summary));
 			}
 
-			const std::string name = relative.stem().string();
+			std::string name = relative.stem().string();
+			// 拆分掉序号
+			if (name.find_first_of("0123456789") != std::string::npos && name.contains('-')) {
+				name = strings::split(name, '-').back();
+			}
+
 			const std::string content = std::format(
-				"---\n# title: {}\ncreate-time: {}\n---\n\n\n## {}\n",
+				"---\ntitle: {}\ncreate-time: {}\n---\n",
 				name,
-				functions::format_time_t(std::time(nullptr)),
-				name
+				functions::format_time_t(std::time(nullptr))
 			);
 			filesystem::write_file(target, content);
 			logging::info("article created at '{}'", filesystem::path_abs(target));
