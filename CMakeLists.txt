@@ -5,8 +5,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_COMPILER /usr/bin/gcc)
 set(CMAKE_CXX_COMPILER /usr/bin/g++)
+set(APP_VERSION "16.10.0")
+set(APP_DESCRIPTION "It reads Markdown posts and theme templates and renders them into a static HTML site")
 
-project(Camus VERSION 16.10.0 LANGUAGES CXX DESCRIPTION "Static blog generation tool developed by C++")
+project(Camus VERSION ${APP_VERSION} LANGUAGES CXX DESCRIPTION ${APP_DESCRIPTION})
 
 enable_testing()
 
