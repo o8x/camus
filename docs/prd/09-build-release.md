@@ -85,6 +85,8 @@
 | `release` | `ubuntu-24.04` | 仅在 tag 上运行：下载并合并产物 → 生成 `latest.json`（`version` / `tag` / `published_at` / `assets`）→ `softprops/action-gh-release` 发布（含 `latest.json` 与 `*.dmg/*.pkg/*.rpm/*.deb/*.exe`） | GitHub Release |
 | `pages` | `ubuntu-24.04` 容器 | 仅在 tag 上运行且 tag 提交位于 `main` 历史时部署：安装 git → 全量 checkout → `safe.directory` 后校验 tag 在 `main` → `actions/configure-pages` 取得 `base_url` 并经 `CAMUS_PUBLIC_URL` 注入 → 安装 deb → `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |
 
+依赖缓存：`build-ubuntu` 使用 `actions/cache` 缓存 `/var/cache/apt/archives` 与 `/var/lib/apt/lists`（key `Linux-apt-v1`）；`build-macos` 缓存 `~/Library/Caches/Homebrew`（key `macOS-homebrew-v1`），并移除了每次运行的 `brew update`。缓存 key 带手动版本号，依赖列表变化时可递增该版本使缓存失效。
+
 工作流权限：`contents: write`、`pages: write`、`id-token: write`；`pages` concurrency。
 
 `release` 与 `pages` 仅在 tag 推送（`github.ref_type == 'tag'`）时运行；`pages` 还要求 tag 提交是 `main` 的祖先，否则只执行构建 / 测试，不部署。`main` 分支推送与 PR 只运行 `build-ubuntu` / `build-macos`。

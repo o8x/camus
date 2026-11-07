@@ -27,12 +27,22 @@ jobs:
             image: docker.io/ubuntu:24.04
 
         steps:
+            -   uses: actions/checkout@v4
+
+            -   name: Cache apt packages
+                uses: actions/cache@v4
+                with:
+                    path: |
+                        /var/cache/apt/archives
+                        /var/lib/apt/lists
+                    key: ${{ runner.os }}-apt-v1
+                    restore-keys: |
+                        ${{ runner.os }}-apt-
+
             -   name: Install dependencies
                 run: |
                     apt update -y
                     apt install -y git ninja-build make cmake pkg-config gcc g++ mold dpkg-dev libssl-dev
-
-            -   uses: actions/checkout@v4
 
             -   name: Build
                 run: |
@@ -59,13 +69,20 @@ jobs:
     build-macos:
         runs-on: macos-15
         steps:
-            -   name: Install dependencies
-                run: |
-                    brew update
-                    brew install git make cmake pkg-config ninja llvm@21 openssl@3
-
             -   name: Checkout
                 uses: actions/checkout@v4
+
+            -   name: Cache Homebrew downloads
+                uses: actions/cache@v4
+                with:
+                    path: ~/Library/Caches/Homebrew
+                    key: ${{ runner.os }}-homebrew-v1
+                    restore-keys: |
+                        ${{ runner.os }}-homebrew-
+
+            -   name: Install dependencies
+                run: |
+                    brew install git make cmake pkg-config ninja llvm@21 openssl@3
 
             -   name: Build
                 run: |
