@@ -80,10 +80,12 @@
 
 | Job | Runner | 主要步骤 | 产物 |
 |---|---|---|---|
-| `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `mold`、`libssl-dev`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` + `camus -cw /tmp/site-copy` | `build/release/packages` |
-| `build-macos` | `macos-15` | brew 安装依赖（含 `openssl@3`，并设置 `PKG_CONFIG_PATH`）→ submodule → `make package` → `sudo installer -pkg *.pkg -target /` + `camus -v` + `camus -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` | `build/release/packages` |
+| `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `mold`、`libssl-dev`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus --build -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` + `camus -cw /tmp/site-copy` | `build/release/packages` |
+| `build-macos` | `macos-15` | brew 安装依赖（含 `openssl@3`，并设置 `PKG_CONFIG_PATH`）→ submodule → `make package` → `sudo installer -pkg *.pkg -target /` + `camus -v` + `camus --build -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` | `build/release/packages` |
 | `release` | `ubuntu-24.04` | 仅在 tag 上运行：下载并合并产物 → 生成 `latest.json`（`version` / `tag` / `published_at` / `assets`）→ `softprops/action-gh-release` 发布（含 `latest.json` 与 `*.dmg/*.pkg/*.rpm/*.deb/*.exe`） | GitHub Release |
-| `pages` | `ubuntu-24.04` 容器 | 仅在 tag 上运行且 tag 提交位于 `main` 历史时部署：安装 git → 全量 checkout → `safe.directory` 后校验 tag 在 `main` → `actions/configure-pages` 取得 `base_url` 并经 `CAMUS_PUBLIC_URL` 注入 → 安装 deb → `camus -dw example` → 上传并部署 GitHub Pages | `example/dist/html` |
+| `pages` | `ubuntu-24.04` 容器 | 仅在 tag 上运行且 tag 提交位于 `main` 历史时部署：安装 git → 全量 checkout → `safe.directory` 后校验 tag 在 `main` → `actions/configure-pages` 取得 `base_url` 并经 `CAMUS_PUBLIC_URL` 注入 → 安装 deb → `camus --build -dw example`（`CAMUS_AUTO_CHECK_UPDATE=false`）→ 上传并部署 GitHub Pages | `example/dist/html` |
+
+`build-ubuntu` / `build-macos` 的 Install Test 与 pages 构建均显式使用 `--build`（仅 `-dw` 不会触发构建），并设置 `CAMUS_AUTO_CHECK_UPDATE=false` 避免 CI 额外发起更新检查。
 
 依赖缓存：`build-ubuntu` 使用 `actions/cache` 缓存 `/var/cache/apt/archives` 与 `/var/lib/apt/lists`（key `Linux-apt-v1`）；`build-macos` 缓存 `~/Library/Caches/Homebrew`（key `macOS-homebrew-v1`），并移除了每次运行的 `brew update`。缓存 key 带手动版本号，依赖列表变化时可递增该版本使缓存失效。
 

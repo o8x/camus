@@ -52,10 +52,12 @@ jobs:
 
             -   name: Install Test
                 working-directory: build/release/packages
+                env:
+                    CAMUS_AUTO_CHECK_UPDATE: "false"
                 run: |
                     dpkg -i *.deb
                     camus -v
-                    camus -dw "$GITHUB_WORKSPACE/example"
+                    camus --build -dw "$GITHUB_WORKSPACE/example"
                     camus -iw /tmp/site
                     camus -cw /tmp/site-copy
 
@@ -93,10 +95,12 @@ jobs:
 
             -   name: Install Test
                 working-directory: build/release/packages
+                env:
+                    CAMUS_AUTO_CHECK_UPDATE: "false"
                 run: |
                     sudo installer -pkg *.pkg -target /
                     camus -v
-                    camus -dw "$GITHUB_WORKSPACE/example"
+                    camus --build -dw "$GITHUB_WORKSPACE/example"
                     camus -iw /tmp/site
                     camus -cw /tmp/site-copy
 
@@ -213,10 +217,11 @@ jobs:
                 if: steps.verify.outputs.deploy == 'true'
                 env:
                     CAMUS_PUBLIC_URL: ${{ steps.pages.outputs.base_url }}
+                    CAMUS_AUTO_CHECK_UPDATE: "false"
                 run: |
                     apt update -y
                     dpkg -i packages/camus-*.deb
-                    camus -dw example
+                    camus --build -dw example
 
             -   name: Upload artifact
                 if: steps.verify.outputs.deploy == 'true'
