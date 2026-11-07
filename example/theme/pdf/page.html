@@ -24,10 +24,10 @@
 <p class="pdf-title-page__desc">{{ pdf.title_page.description }}</p>
 <hr class="pdf-title-page__rule">
 <dl class="pdf-meta">
-{% if pdf.meta.has_domain %}<dt>Site</dt><dd>{{ pdf.meta.domain }}</dd>
+{% if pdf.meta.has_domain %}<dt>{{ pdf.labels.site }}</dt><dd>{{ pdf.meta.domain }}</dd>
 {% endif %}
-    <dt>Generated</dt><dd>{{ pdf.meta.generated_at }}</dd>
-    <dt>Compiler</dt>
+    <dt>{{ pdf.labels.generated }}</dt><dd>{{ pdf.meta.generated_at }}</dd>
+    <dt>{{ pdf.labels.compiler }}</dt>
     <dd>
         <a href="https://github.com/the-writer/camus/releases/tag/v{{ pdf.meta.version }}">
             Camus v{{ pdf.meta.version }}
@@ -37,7 +37,7 @@
 </div>
 </section>
 <section id="pdf-toc" class="pdf-toc">
-<h2 class="pdf-toc__heading">Contents</h2>
+<h2 class="pdf-toc__heading">{{ pdf.labels.contents }}</h2>
 <ul class="pdf-toc__list">
 {% for item in pdf.toc %}{% if item.is_dir %}<li class="pdf-toc__item pdf-toc__item--section" style="padding-left: calc({{ item.depth }} * 1.4em)"><span class="pdf-toc__section">{{ item.title }}</span></li>
 {% else %}<li class="pdf-toc__item" style="padding-left: calc({{ item.depth }} * 1.4em)"><a class="pdf-toc__link" href="#{{ item.anchor }}"><span class="pdf-toc__title">{{ item.title }}</span><span class="pdf-toc__page">{{ item.page_label }}</span></a></li>

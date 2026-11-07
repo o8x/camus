@@ -171,11 +171,13 @@ PDF 的 HTML 模板与打印样式不再硬编码在 `writer.cpp`，而是作为
 | `pdf.asset_style` | 布尔 | 站点输出 `css/style.css` 是否存在并成功复制为 `dist/pdf/assets.css`；默认模板为真时在 `<style>` 前输出 `<link rel="stylesheet" href="assets.css">`，保证 PDF 主题样式优先 |
 | `pdf.cover` | 对象 | `eyebrow`、`title`、`subtitle`、`description`、`meta`（生成日期）、`image`（根 `SUMMARY.md` 的 `cover_image` 指向有效文件时为其复制后的文件名，否则空串）、`has_image`（是否存在有效封面图；空串在 inja 中为真值，模板须用该布尔值判断）；标题等字段按模板需要预转义；默认模板优先输出整页封面图，无图时输出 `title`、`subtitle` |
 | `pdf.title_page` | 对象 | `title`、`subtitle`、`description`（`site.description`），均按模板需要预转义 |
-| `pdf.meta` | 对象 | `article_count`、`generated_at`、`domain`、`has_domain`（域名是否为空）、`version`；默认模板不显示 `article_count`，且 `has_domain` 为假时不输出 `Site` 行 |
+| `pdf.meta` | 对象 | `article_count`、`generated_at`、`domain`、`has_domain`（域名是否为空）、`version`；默认模板不显示 `article_count`，且 `has_domain` 为假时不输出站点行 |
+| `pdf.labels` | 对象 | 预定义名称的本地化文案：`cover`（封面）、`contents`（目录）、`site`（站点）、`generated`（生成时间）、`compiler`（编译器）。根据合并后 Markdown 的中文占比选择中文或英文，供扉页、TOC 标题与 PDF 书签大纲使用 |
 | `pdf.toc` | 数组 | 按真实目录树输出，同层顺序由 `pdf.sort` 决定（见 §3.3.1）。每项含 `anchor`、`index`、`number`（两位序号）、`title`（HTML 转义）、`outline_title`（纯文本，供 PDF 书签使用）、`tags`、`page`（1 起始页码；解析不到时为空串）、`page_label`（`{:03}` 三位补零页码；解析不到时为空串）、`depth`（相对根目录的显示层级，根目录下为 0）、`is_dir`。目录节点 `anchor`/`number`/`tags`/`page`/`page_label` 为空，只作分组标题；文章节点 `anchor` 为 `pdf-article-{n}`。`title`/`tags` 已转义 |
 | `pdf.articles` | 数组 | 每项 `anchor`、`index`、`number`、`title`、`tags`、`content`；`content` 为渲染后的文章 HTML，**未转义** |
 
-- 默认模板的扉页与目录使用英文标签（`Site` / `Generated` / `Compiler` / `Contents`），不输出文章数；扉页元信息按 `Site → Generated → Compiler` 顺序排列，`Site` 为空（`pdf.meta.has_domain` 为假）时整行省略；`Compiler` 行显示 `Camus v{version}` 并链接到对应 GitHub release。
+- 默认模板的扉页与目录使用 `pdf.labels` 提供的标签（`site` / `generated` / `compiler` / `contents`），不输出文章数；扉页元信息按 `site → generated → compiler` 顺序排列，`site` 行为空（`pdf.meta.has_domain` 为假）时整行省略；`compiler` 行显示 `Camus v{version}` 并链接到对应 GitHub release。
+- **预定义名称语言**：`emit_pdf()` 在合并 Markdown 后调用 `chinese_ratio()`（统计中文字符与 ASCII 字母数量），中文占比 `> 50%` 时 `pdf.labels` 使用中文（封面 / 目录 / 站点 / 生成时间 / 编译器），否则使用英文（Cover / Contents / Site / Generated / Compiler）。默认模板的标题页、目录标题与 `pdf::write_outline()` 注入的书签大纲均使用该标签；自定义模板可读取 `pdf.labels` 保持一致。
 - 页码从正文第一篇文章开始计为第 1 页（不再生成独立的引导页）：封面使用命名页 `page: cover`（四边 0 边距、整页铺满复制后的封面图），扉页、目录使用命名页 `page: front`，其 `@bottom-center` 内容为空；`html { font-size: var(--pdf-font-size); counter-reset: page {{ pdf_page_offset }}; }` 整体偏移页计数。默认模板在 `<body>` 顶部放置 `display: none` 的 `#pdf-cover`、`#pdf-toc` 链接，使浏览器在 PDF 中生成这些锚点的命名目标（分别对应封面、目录页）。
 - 默认 `style.css` 通过 `@page { @bottom-center { content: counter(page, camus-page); color: #000; } }` 在正文页底部居中输出黑色页码。Chrome 不支持 `@counter-style` 的 `pad` 描述符，因此第二遍渲染前会由 `pdf::page_count()` 读取总页数，并追加一个 `@counter-style camus-page { system: fixed; first: 0; symbols: "001" "002" ... }` 覆盖样式，使页脚与目录页码统一为三位补零（页脚与 `pdf.toc[].page_label` 均从正文第 1 页起算，使用同一套正文页序）。
 - 默认目录模板按 `pdf.toc[].depth` 缩进渲染多级目录：目录节点输出分组标题，文章节点输出标题与 `page_label`（三位补零页码）；不输出序号（`number`）与标签（`tags`），条目之间不画虚线下划线。最终 PDF 另由 `pdf::write_outline()` 按同一 `pdf.toc` 注入可交互书签大纲。

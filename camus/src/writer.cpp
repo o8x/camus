@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
@@ -13,6 +14,7 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -307,6 +309,30 @@ namespace
 		}
 
 		return value;
+	}
+
+	// 返回中文占比（%）：统计中文字符与 ASCII 字母的数量比例，用于决定 PDF 预定义名称的语言。
+	double chinese_ratio(const std::string_view text)
+	{
+		long long cn = 0;
+		long long en = 0;
+		for (std::size_t i = 0; i < text.size();) {
+			const auto c = static_cast<unsigned char>(text[i]);
+			if (c < 0x80) {
+				en += std::isalpha(c) != 0 ? 1 : 0;
+				++i;
+			} else if (c >= 0xE4 && c <= 0xE9) {
+				++cn;
+				i += 3;
+			} else {
+				++i;
+				while (i < text.size() && (static_cast<unsigned char>(text[i]) & 0xC0) == 0x80) {
+					++i;
+				}
+			}
+		}
+
+		return cn + en > 0 ? 100.0 * static_cast<double>(cn) / static_cast<double>(cn + en) : 0.0;
 	}
 
 	std::string pdf_page_style(const camus::config::pdf_page_conf &page, const std::string &font_size)
@@ -1219,6 +1245,25 @@ namespace camus
 
 		append_node(catalog_, 0);
 
+		// 依据合并后 Markdown 的中文占比决定 PDF 预定义名称使用中文还是英文。
+		const double cn_ratio = chinese_ratio(markdown);
+		// chinese_ratio() 返回百分比，0.5 即 50%。
+		const bool use_chinese = cn_ratio > 50.0;
+		const std::string label_cover = use_chinese ? "封面" : "Cover";
+		const std::string label_contents = use_chinese ? "目录" : "Contents";
+		const std::string label_site = use_chinese ? "站点" : "Site";
+		const std::string label_generated = use_chinese ? "生成时间" : "Generated";
+		const std::string label_compiler = use_chinese ? "编译器" : "Compiler";
+		logging::debug("pdf language ratio={:.2f}% chinese={}", cn_ratio, use_chinese);
+
+		pdf["labels"] = {
+			{"cover", label_cover},
+			{"contents", label_contents},
+			{"site", label_site},
+			{"generated", label_generated},
+			{"compiler", label_compiler},
+		};
+
 		pdf["toc"] = std::move(toc_items);
 		pdf["articles"] = std::move(article_items);
 
@@ -1467,8 +1512,8 @@ namespace camus
 
 		// 前置封面、目录页的顶层书签；仅当当前模板生成了对应命名目标时加入。
 		const std::pair<std::string, std::string> fixed_entries[] = {
-			{"Cover", "pdf-cover"},
-			{"Contents", "pdf-toc"},
+			{label_cover, "pdf-cover"},
+			{label_contents, "pdf-toc"},
 		};
 
 		for (const auto &[title, anchor] : fixed_entries) {
