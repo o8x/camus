@@ -76,7 +76,7 @@ int main(const int argc, char **argv)
 		false,
 		""
 	);
-	arg.add("build", 0, "build the site");
+	arg.add("build", 'b', "build the site");
 	arg.add("debug", 'd', "enable debugging");
 	arg.add("watch", 'W', "automate building when changes occur");
 	arg.add("dryrun", 'D', "dry run");
