@@ -70,7 +70,6 @@ hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.5em 0; }
 .pdf-cover__title { font-size: var(--pdf-fs-cover-title); line-height: 1.25; margin: 0 0 0.5em; }
 .pdf-cover__subtitle { font-size: var(--pdf-fs-cover-subtitle); color: #525252; margin: 0 auto 1.6em; max-width: 80%; }
 .pdf-title-page, .pdf-toc { page: front; page-break-after: always; break-after: page; }
-.pdf-title-page { padding-top: 34mm; }
 .pdf-title-page__inner { margin: 0; max-width: 100%; }
 .pdf-title-page__title { font-size: var(--pdf-fs-title-page-title); margin: 0 0 0.4em; }
 .pdf-title-page__subtitle { font-size: var(--pdf-fs-title-page-subtitle); color: #525252; margin: 0 0 0.6em; }
