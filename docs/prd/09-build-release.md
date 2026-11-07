@@ -76,12 +76,13 @@
 
 ## 9.6 CI 工作流
 
-`.github/workflows/auto-release-tag.yml`（名称「CMake on multiple platforms」）触发：`push` 到 `main`、`v*.*.*` tag、指向 `main` 的 PR。
+`.github/workflows/auto-release-tag.yml`（名称「CMake on multiple platforms」）仅在推送 `v*.*.*` tag 时触发；`main` 分支推送与 PR 不再触发构建，且只有在 tag 提交位于 `main` 历史时才构建 / 发布。
 
 | Job | Runner | 主要步骤 | 产物 |
 |---|---|---|---|
-| `build-ubuntu` | `ubuntu-24.04` 容器 | 安装依赖（含 `mold`、`libssl-dev`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus --build -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` + `camus -cw /tmp/site-copy` | `build/release/packages` |
-| `build-macos` | `macos-15` | brew 安装依赖（含 `openssl@3`，并设置 `PKG_CONFIG_PATH`）→ submodule → `make package` → `sudo installer -pkg *.pkg -target /` + `camus -v` + `camus --build -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` | `build/release/packages` |
+| `check-main` | `ubuntu-24.04` | 全量 checkout → `safe.directory` → `git fetch origin main` → 用 `merge-base --is-ancestor` 判断 tag 提交是否在 `main` 上，输出 `build` | `build=true/false` |
+| `build-ubuntu` | `ubuntu-24.04` 容器 | 仅当 `check-main` 判定 `build=true`：安装依赖（含 `mold`、`libssl-dev`）→ submodule → `make package` → `dpkg -i` + `camus -v` + `camus --build -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` + `camus -cw /tmp/site-copy` | `build/release/packages` |
+| `build-macos` | `macos-15` | 仅当 `check-main` 判定 `build=true`：brew 安装依赖（含 `openssl@3`，并设置 `PKG_CONFIG_PATH`）→ submodule → `make package` → `sudo installer -pkg *.pkg -target /` + `camus -v` + `camus --build -dw "$GITHUB_WORKSPACE/example"` + `camus -iw /tmp/site` | `build/release/packages` |
 | `release` | `ubuntu-24.04` | 仅在 tag 上运行：下载并合并产物 → 生成 `latest.json`（`version` / `tag` / `published_at` / `assets`）→ `softprops/action-gh-release` 发布（含 `latest.json` 与 `*.dmg/*.pkg/*.rpm/*.deb/*.exe`） | GitHub Release |
 | `pages` | `ubuntu-24.04` 容器 | 仅在 tag 上运行且 tag 提交位于 `main` 历史时部署：安装 git → 全量 checkout → `safe.directory` 后校验 tag 在 `main` → `actions/configure-pages` 取得 `base_url` 并经 `CAMUS_PUBLIC_URL` 注入 → 安装 deb → `camus --build -dw example`（`CAMUS_AUTO_CHECK_UPDATE=false`）→ 上传并部署 GitHub Pages | `example/dist/html` |
 
@@ -91,7 +92,7 @@
 
 工作流权限：`contents: write`、`pages: write`、`id-token: write`；`pages` concurrency。
 
-`release` 与 `pages` 仅在 tag 推送（`github.ref_type == 'tag'`）时运行；`pages` 还要求 tag 提交是 `main` 的祖先，否则只执行构建 / 测试，不部署。`main` 分支推送与 PR 只运行 `build-ubuntu` / `build-macos`。
+`release` 与 `pages` 仅在 tag 推送（`github.ref_type == 'tag'`）时运行；`release` 的产物依赖 `build-ubuntu` / `build-macos`，二者又被 `check-main` 门控，因此 tag 不在 `main` 历史时整条构建与发布链路都会跳过。`pages` 仍自行校验 tag 在 `main` 上，确保只从 `main` 部署。
 
 ## 9.7 版本变更
 
