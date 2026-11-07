@@ -21,6 +21,16 @@ namespace
 		std::filesystem::path("css") / "style.css", std::filesystem::path("js") / "onload.js"
 	};
 
+	// 目录 / 文件显示名：含 '-' 且出现过数字时，取最后一个 '-' 之后的片段，去掉 01- 之类的排序前缀。
+	std::string strip_order_prefix(std::string name)
+	{
+		if (name.find_first_of("0123456789") != std::string::npos && name.contains('-')) {
+			name = strings::split(name, '-').back();
+		}
+
+		return name;
+	}
+
 	constexpr const char *private_readme = R"(# private
 
 This directory is excluded from builds.
@@ -278,15 +288,14 @@ namespace camus
 					continue;
 				}
 
-				filesystem::write_file(summary, std::format("---\ntitle: {}\n---\n", it->filename().string()));
+				filesystem::write_file(
+					summary,
+					std::format("---\ntitle: {}\n---\n", strip_order_prefix(it->filename().string()))
+				);
 				logging::info("summary created at '{}'", filesystem::path_abs(summary));
 			}
 
-			std::string name = relative.stem().string();
-			// 拆分掉序号
-			if (name.find_first_of("0123456789") != std::string::npos && name.contains('-')) {
-				name = strings::split(name, '-').back();
-			}
+			std::string name = strip_order_prefix(relative.stem().string());
 
 			const std::string content = std::format(
 				"---\ntitle: {}\ncreate-time: {}\n---\n",
