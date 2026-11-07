@@ -99,3 +99,21 @@
 - 版本号只定义在 `docs/PRD.md` 项目表与 `CMakeLists.txt` 的 `project(... VERSION ...)`，两者保持一致。
 - 修改版本号后只需同步上述两处；AGENTS 与其它章节不写入具体版本号，需要引用时使用 `v{PROJECT_VERSION}` 等占位形式。
 - CMake 会把版本编入 `build/build.h`，并通过 `-v` 与模板变量 `{{ build.version }}` 对外体现。
+
+## 9.8 安装脚本
+
+实现：`scripts/install.sh`（Bash）。
+
+安装**最新**发布的快捷脚本，可直接通过管道执行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/the-writer/camus/main/scripts/install.sh | bash
+```
+
+行为：
+
+1. 仅支持两种平台组合：`Darwin-arm64`（macOS Apple Silicon，用 `.pkg`）与 `Linux-x86_64` / `Linux-amd64`（用 `.deb`）；其它组合报错退出（退出码 1）。
+2. 下载 `https://github.com/the-writer/camus/releases/latest/download/latest.json`（与 `--update` 同一份元数据），用 `grep` 取第一条以对应扩展名结尾的资产 URL，不依赖 `jq`。
+3. 下载资产到临时目录（退出时清理），非 root 时用 `sudo` 安装：macOS 执行 `installer -pkg <file> -target /`；Linux 执行 `dpkg -i <file>`，失败时回退 `apt-get -f install -y` 后重试。
+
+对 `curl` 下载重定向 `< /dev/null`，避免 `curl ... | bash` 时命令消费脚本自身的标准输入。

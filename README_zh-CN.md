@@ -8,6 +8,14 @@ Camus 是一个使用 C++23 编写的静态站点生成器，读取 Markdown 文
 
 <a href="README.md">English</a>
 
+## 安装
+
+在 macOS（Apple Silicon）或 Linux（amd64）上，一条命令安装最新版：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/the-writer/camus/main/scripts/install.sh | bash
+```
+
 ## 环境要求
 
 - CMake 3.28+

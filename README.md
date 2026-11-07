@@ -8,6 +8,14 @@ Camus is a static site generator written in C++23. It reads Markdown posts and t
 
 <a href="README_zh-CN.md">中文</a>
 
+## Install
+
+On macOS (Apple Silicon) or Linux (amd64), install the latest release with one command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/the-writer/camus/main/scripts/install.sh | bash
+```
+
 ## Requirements
 
 - CMake 3.28+
